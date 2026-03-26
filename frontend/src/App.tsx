@@ -9,6 +9,7 @@ import HowItWorksPage from "./components/HowItWorksPage";
 import FAQ from "./components/FAQ";
 import Upload from "./components/Upload";
 import Orders from "./components/Orders";
+import OrderDetail from "./components/OrderDetail";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:id" element={<OrderDetail />} />
       </Routes>
     </BrowserRouter>
   );

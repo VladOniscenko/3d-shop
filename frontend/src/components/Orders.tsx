@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Package,
   Clock,
@@ -9,15 +9,9 @@ import {
   Loader2,
 } from "lucide-react";
 import Navbar from "./Navbar";
+import type { Order } from "../types";
 import api from "../services/api";
-
-interface Order {
-  id: string;
-  fileUrl: string;
-  notes: string;
-  status: string;
-  createdAt: string;
-}
+import { Link } from "react-router-dom";
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -105,7 +99,7 @@ export default function Orders() {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 truncate max-w-[200px] md:max-w-xs">
-                      {order.fileUrl.split("/").pop()}
+                      {order.fileUrl?.split("/").pop()}
                     </h3>
                     <p className="text-sm text-gray-400 mb-2">
                       Requested on{" "}
@@ -127,9 +121,12 @@ export default function Orders() {
                 </div>
 
                 {/* Action */}
-                <button className="flex items-center gap-2 text-emerald-700 font-bold text-sm hover:underline">
+                <Link
+                  to={`/orders/${order.id}`}
+                  className="flex items-center gap-2 text-emerald-700 font-bold text-sm hover:underline"
+                >
                   View Details <ChevronRight size={16} />
-                </button>
+                </Link>
               </div>
             ))}
           </div>
