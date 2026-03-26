@@ -7,7 +7,6 @@ import Materials from "./components/Materials";
 import Gallery from "./components/Gallery";
 import HowItWorksPage from "./components/HowItWorksPage";
 import FAQ from "./components/FAQ";
-import Upload from "./components/Upload";
 import Orders from "./components/Orders";
 import OrderDetail from "./components/OrderDetail";
 
@@ -23,7 +22,6 @@ export default function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/faq" element={<FAQ />} />
-        <Route path="/upload" element={<Upload />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/orders/:id" element={<OrderDetail />} />
       </Routes>
