@@ -5,19 +5,23 @@ import {
   FileText,
   Clock,
   CheckCircle2,
-  Truck,
   Box,
   Calendar,
   MessageSquare,
   Loader2,
+  Layers,
+  Palette,
+  MapPin,
+  User,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
+import type { Order } from "../types"; // Import your updated Order interface
 
 export default function OrderDetail() {
-  const { id } = useParams(); // Gets the ID from the URL
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +35,7 @@ export default function OrderDetail() {
         setLoading(false);
       }
     };
-    fetchOrderDetails();
+    if (id) fetchOrderDetails();
   }, [id]);
 
   if (loading) {
@@ -50,7 +54,7 @@ export default function OrderDetail() {
           onClick={() => navigate("/orders")}
           className="text-emerald-700 font-bold underline"
         >
-          Go back to my orders
+          Go back to my projects
         </button>
       </div>
     );
@@ -61,7 +65,6 @@ export default function OrderDetail() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Back Button */}
         <button
           onClick={() => navigate("/orders")}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-8 group"
@@ -73,50 +76,51 @@ export default function OrderDetail() {
           Back to Projects
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Main Details (Left Side) */}
-          <div className="md:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {/* 3. Items List (Supporting Multiple Models) */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-start mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Project Details
-                </h1>
-                <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100">
-                  {order.status.replace("_", " ")}
-                </span>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <Box className="text-emerald-600" size={32} />
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                3D Models in this Project
+              </h2>
+              <div className="space-y-4">
+                {order.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-5 bg-gray-50 rounded-2xl border border-gray-100"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                        <Box className="text-emerald-600" size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 truncate">
+                          {item.fileName}
+                        </p>
+                        <div className="flex gap-3 mt-1">
+                          <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                            <Layers size={12} /> {item.material}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">
+                            <Palette size={12} /> {item.color}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {item.notes && (
+                      <div className="flex items-start gap-2 text-sm text-gray-500 italic bg-white/50 p-3 rounded-lg">
+                        <MessageSquare size={14} className="mt-1 shrink-0" />"
+                        {item.notes}"
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium">
-                      Design File
-                    </p>
-                    <p className="font-bold text-gray-900 break-all">
-                      {order.fileUrl.split("/").pop()}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 text-gray-900 font-bold mb-2">
-                    <MessageSquare size={18} className="text-emerald-600" />
-                    <h3>Your Instructions</h3>
-                  </div>
-                  <div className="p-4 bg-white border border-gray-100 rounded-xl text-gray-600 leading-relaxed italic">
-                    {order.notes ||
-                      "No special instructions provided for this project."}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Timeline / Progress Section */}
+            {/* Timeline */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-lg mb-6">Project Timeline</h3>
+              <h3 className="font-bold text-lg mb-8">Project Timeline</h3>
               <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-100">
                 <TimelineItem
                   icon={<FileText size={16} />}
@@ -126,13 +130,13 @@ export default function OrderDetail() {
                 />
                 <TimelineItem
                   icon={<Clock size={16} />}
-                  title="Printing in Progress"
+                  title="Printing"
                   date="Pending"
                   active={order.status === "printing"}
                 />
                 <TimelineItem
                   icon={<CheckCircle2 size={16} />}
-                  title="Completed & Ready"
+                  title="Completed"
                   date="Pending"
                   active={order.status === "completed"}
                 />
@@ -140,31 +144,44 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {/* Sidebar (Right Side) */}
+          {/* Sidebar: Address & Info */}
           <div className="space-y-6">
-            <div className="bg-[#133827] text-white rounded-2xl p-6 shadow-lg">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <Calendar size={18} />
-                Order Info
+            <div className="bg-[#133827] text-white rounded-2xl p-8 shadow-lg">
+              <h3 className="font-bold mb-6 flex items-center gap-2 text-emerald-400">
+                <MapPin size={20} />
+                Shipping Details
               </h3>
               <div className="space-y-4 text-sm">
-                <div className="border-b border-white/10 pb-2">
-                  <div className="text-emerald-100/60">Order ID</div>
-                  <span className="font-mono">{order.id}</span>
+                <div className="flex gap-3">
+                  <User size={16} className="text-emerald-500 shrink-0" />
+                  <p className="font-bold">{order.fullName}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-emerald-100/60">
-                    Estimated Delivery
-                  </span>
-                  <span>TBD</span>
+                <div className="flex gap-3">
+                  <MapPin size={16} className="text-emerald-500 shrink-0" />
+                  <div className="text-emerald-50/80">
+                    <p>{order.addressLine1}</p>
+                    <p>
+                      {order.city}, {order.postalCode}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-emerald-100/40 text-xs uppercase font-bold tracking-widest mb-1">
+                    Status
+                  </p>
+                  <p className="text-xl font-bold text-emerald-400 uppercase tracking-tight">
+                    {order.status.replace("_", " ")}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100">
-              <p className="text-sm text-emerald-800 font-medium leading-relaxed">
-                Need help with this project? Contact our support team quoting
-                your Project ID.
+            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <h4 className="font-bold text-sm text-gray-900 mb-2 flex items-center gap-2">
+                <Calendar size={16} className="text-emerald-600" /> Reference ID
+              </h4>
+              <p className="text-[10px] font-mono text-gray-400 break-all">
+                {order.id}
               </p>
             </div>
           </div>
@@ -174,7 +191,6 @@ export default function OrderDetail() {
   );
 }
 
-// Small helper for the timeline steps
 function TimelineItem({ icon, title, date, active }: any) {
   return (
     <div className="relative flex items-center gap-6">

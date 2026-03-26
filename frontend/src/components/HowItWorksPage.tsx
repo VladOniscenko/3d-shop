@@ -14,7 +14,7 @@ export default function HowItWorksPage() {
     {
       number: 1,
       icon: <Upload size={40} className="text-emerald-600" />,
-      title: "Upload or Request",
+      title: "Request",
       desc: "Start by sending us your 3D design file (like an STL or OBJ file). If you do not have a file but have a great idea, you can describe it to us, and we can help you design it from scratch.",
     },
     {

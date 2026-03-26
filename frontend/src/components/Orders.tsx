@@ -7,6 +7,8 @@ import {
   FileText,
   ChevronRight,
   Loader2,
+  Box,
+  MapPin,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import type { Order } from "../types";
@@ -32,7 +34,6 @@ export default function Orders() {
     fetchOrders();
   }, []);
 
-  // Helper to style the status badges
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending_quote":
@@ -41,6 +42,8 @@ export default function Orders() {
         return "bg-blue-50 text-blue-700 border-blue-100";
       case "completed":
         return "bg-emerald-50 text-emerald-700 border-emerald-100";
+      case "shipped":
+        return "bg-purple-50 text-purple-700 border-purple-100";
       default:
         return "bg-gray-50 text-gray-600 border-gray-100";
     }
@@ -51,82 +54,99 @@ export default function Orders() {
       <Navbar />
 
       <main className="max-w-5xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
-            <p className="text-gray-500">
-              Track your 3D printing requests and orders.
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              My Projects
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Track your 3D printing requests and shipping status.
             </p>
           </div>
-          <Package size={40} className="text-emerald-600 opacity-20" />
+          <div className="hidden sm:block p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <Package size={32} className="text-emerald-600" />
+          </div>
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="animate-spin text-emerald-600 mb-4" size={40} />
-            <p className="text-gray-500 font-medium">Fetching your orders...</p>
+          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+            <Loader2 className="animate-spin text-emerald-600 mb-4" size={48} />
+            <p className="font-medium">Loading your order history...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-16 text-center">
-            <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="text-gray-400" size={32} />
+          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-16 text-center">
+            <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Box className="text-gray-300" size={40} />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
               No projects yet
             </h3>
-            <p className="text-gray-500 mb-8 max-w-sm mx-auto">
-              Upload your first 3D design to get a custom quote from our
-              experts.
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
+              Upload your 3D designs to get a custom price quote from our shop.
             </p>
-            <a
-              href="/quote"
-              className="bg-[#133827] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#1c4d37] transition-colors"
+            <Link
+              to="/quote"
+              className="inline-block bg-[#133827] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#1c4d37] transition-all shadow-lg shadow-emerald-900/10"
             >
-              Start a New Project
-            </a>
+              Start New Project
+            </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl hover:shadow-gray-200/50 transition-all group"
               >
-                {/* Info Section */}
-                <div className="flex items-start gap-4">
-                  <div className="bg-emerald-50 p-3 rounded-xl">
-                    <BoxIcon status={order.status} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 truncate max-w-[200px] md:max-w-xs">
-                      {order.fileUrl?.split("/").pop()}
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-2">
-                      Requested on{" "}
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                    <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getStatusStyle(order.status)} uppercase tracking-wider`}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  {/* Status & Date */}
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`p-4 rounded-2xl border ${getStatusStyle(order.status)}`}
                     >
-                      {order.status.replace("_", " ")}
-                    </span>
+                      <BoxIcon status={order.status} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">
+                          Project #{order.id.slice(0, 8)}
+                        </h3>
+                        <span
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getStatusStyle(order.status)}`}
+                        >
+                          {order.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        Placed on{" "}
+                        {new Date(order.createdAt).toLocaleDateString(
+                          undefined,
+                          { dateStyle: "long" },
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Progress Notes */}
-                <div className="flex-1 md:px-8 border-l border-gray-100 hidden md:block">
-                  <p className="text-sm text-gray-500 italic">
-                    "{order.notes || "No extra instructions provided."}"
-                  </p>
-                </div>
+                  {/* Summary of items */}
+                  <div className="flex-1 lg:px-10 border-gray-100 lg:border-x">
+                    <div className="flex items-center gap-2 text-gray-600 mb-1 text-sm font-bold">
+                      <Package size={14} />
+                      {order.items?.length || 0}{" "}
+                      {order.items?.length === 1 ? "Model" : "Models"}
+                    </div>
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <MapPin size={12} /> Shipping to {order.city}
+                    </p>
+                  </div>
 
-                {/* Action */}
-                <Link
-                  to={`/orders/${order.id}`}
-                  className="flex items-center gap-2 text-emerald-700 font-bold text-sm hover:underline"
-                >
-                  View Details <ChevronRight size={16} />
-                </Link>
+                  {/* View Button */}
+                  <Link
+                    to={`/orders/${order.id}`}
+                    className="flex items-center justify-center gap-2 bg-gray-50 text-gray-900 px-6 py-3 rounded-xl font-bold text-sm group-hover:bg-emerald-600 group-hover:text-white transition-all"
+                  >
+                    Manage Project <ChevronRight size={18} />
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -136,11 +156,11 @@ export default function Orders() {
   );
 }
 
-// Dynamic Icon based on status
+// Icon Logic
 function BoxIcon({ status }: { status: string }) {
-  if (status === "printing") return <Clock className="text-blue-600" />;
-  if (status === "completed")
-    return <CheckCircle className="text-emerald-600" />;
-  if (status === "shipped") return <Truck className="text-purple-600" />;
-  return <FileText className="text-amber-600" />;
+  const s = status.toLowerCase();
+  if (s === "printing") return <Clock size={24} />;
+  if (s === "completed") return <CheckCircle size={24} />;
+  if (s === "shipped") return <Truck size={24} />;
+  return <FileText size={24} />;
 }

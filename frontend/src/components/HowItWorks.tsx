@@ -7,7 +7,7 @@ export default function HowItWorks() {
     {
       number: 1,
       icon: <Upload size={32} />,
-      title: "Upload or Request",
+      title: "Request",
       desc: "Upload your 3D file or describe your idea.",
     },
     {
