@@ -1,11 +1,11 @@
-// --- Types ---
-export interface MaterialItem {
+export interface Filament {
+  id: string;
   name: string;
-  tagline: string;
+  material: string;
+  color: string;
+  pricePerGram: number;
+  stockQuantity: number;
   description: string;
-  colorClass: string;
-  icon: React.ReactNode;
-  tags: string[];
 }
 
 export interface StepItem {
@@ -60,4 +60,12 @@ export interface Order {
   notes?: string;
   totalPrice?: number; // Set after you review the quote
   createdAt: Date;
+}
+
+export interface OrderItem {
+  fileUrl: string;
+  fileName: string;
+  notes: string;
+  material: string;
+  color: string;
 }

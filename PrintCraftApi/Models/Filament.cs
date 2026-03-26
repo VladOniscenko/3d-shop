@@ -2,10 +2,11 @@ namespace PrintCraftApi.Models;
 
 public class Filament
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
-    public string HexCode { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public string Material { get; set; } // Make sure this exists!
+    public string Color { get; set; }
     public decimal PricePerGram { get; set; }
-    public bool InStock { get; set; } = true;
+    public int StockQuantity { get; set; }
+    public string Description { get; set; }
 }

@@ -21,10 +21,10 @@ export default function Hero() {
         <div className="flex flex-wrap gap-4">
           {/* 2. Changed to Link and pointed to /upload */}
           <Link
-            to="/upload"
+            to="/quote"
             className="flex items-center gap-2 bg-white text-gray-900 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg"
           >
-            <Upload size={20} /> Upload Your File
+            <Upload size={20} /> Request a Quote
           </Link>
         </div>
 

@@ -36,7 +36,7 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       // 3. Redirect to the upload page (or dashboard)
-      navigate("/upload");
+      navigate("/quote");
     } catch (err: any) {
       console.error("Login error", err);
       setError("Invalid email or password. Please try again.");

@@ -79,7 +79,7 @@ export default function Orders() {
               experts.
             </p>
             <a
-              href="/upload"
+              href="/quote"
               className="bg-[#133827] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#1c4d37] transition-colors"
             >
               Start a New Project

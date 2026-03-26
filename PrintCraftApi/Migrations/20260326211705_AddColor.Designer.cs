@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintCraftApi.Data;
 
@@ -10,9 +11,11 @@ using PrintCraftApi.Data;
 namespace PrintCraftApi.Migrations
 {
     [DbContext(typeof(PrintCraftDb))]
-    partial class PrintCraftDbModelSnapshot : ModelSnapshot
+    [Migration("20260326211705_AddColor")]
+    partial class AddColor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -64,13 +67,12 @@ namespace PrintCraftApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("HexCode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Material")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<bool>("InStock")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -78,9 +80,6 @@ namespace PrintCraftApi.Migrations
 
                     b.Property<decimal>("PricePerGram")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
