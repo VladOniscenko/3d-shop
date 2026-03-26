@@ -1,0 +1,30 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./components/Home";
+import Login from "./components/Login";
+import Quote from "./components/Quote";
+import Signup from "./components/Signup";
+import Materials from "./components/Materials";
+import Gallery from "./components/Gallery";
+import HowItWorksPage from "./components/HowItWorksPage";
+import FAQ from "./components/FAQ";
+import Upload from "./components/Upload";
+import Orders from "./components/Orders";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/quote" element={<Quote />} />
+        <Route path="/materials" element={<Materials />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/upload" element={<Upload />} />
+        <Route path="/orders" element={<Orders />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
