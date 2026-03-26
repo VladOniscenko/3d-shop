@@ -58,3 +58,6 @@ pnpm-debug.log*
 *.swp
 *.tmp
 *.cache/
+
+printcraft.db*
+wwwroot

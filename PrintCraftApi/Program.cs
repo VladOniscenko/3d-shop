@@ -9,7 +9,7 @@ using PrintCraftApi.Routes;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES ---
-builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseInMemoryDatabase("PrintCraftDB"));
+builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite("Data Source=printcraft.db"));
 builder.Services.AddEndpointsApiExplorer();
 
 // 2. Updated SwaggerGen to handle JWT Lock icons
