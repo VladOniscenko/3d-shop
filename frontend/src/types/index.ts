@@ -55,17 +55,27 @@ export interface Product {
 export interface Order {
   id: string;
   userId: string;
-  status: "pending_quote" | "printing" | "shipped" | "delivered";
-  fileUrl?: string; // If they uploaded a custom file
-  notes?: string;
-  totalPrice?: number; // Set after you review the quote
-  createdAt: Date;
+  status: "pending_quote" | "printing" | "shipped" | "completed"; // Matches your .NET defaults
+
+  // Shipping Address (New)
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  postalCode: string;
+
+  totalPrice: number;
+  createdAt: string; // Dates from JSON come back as strings
+  items: OrderItem[]; // The list of 3D models
 }
 
 export interface OrderItem {
+  id?: string;
+  orderId?: string;
   fileUrl: string;
   fileName: string;
-  notes: string;
+  notes?: string;
   material: string;
   color: string;
+  price: number;
 }

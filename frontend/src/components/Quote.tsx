@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Upload,
   Trash2,
@@ -9,26 +9,18 @@ import {
   CheckCircle,
   Layers,
   Palette,
+  MessageSquare,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
-
-// 1. Updated Interface to match .NET model
-interface OrderItem {
-  fileUrl: string;
-  fileName: string;
-  notes: string;
-  material: string;
-  color: string;
-}
-
-const MATERIALS = ["PLA", "ABS", "PETG", "Resin", "Nylon"];
-const COLORS = ["Black", "White", "Grey", "Red", "Blue", "Green", "Silver"];
+import type { OrderItem, Filament } from "../types";
 
 export default function Quote() {
   const navigate = useNavigate();
+
   const [items, setItems] = useState<OrderItem[]>([]);
+  const [filaments, setFilaments] = useState<Filament[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,6 +31,25 @@ export default function Quote() {
     postalCode: "",
   });
 
+  // 1. Fetch real filaments from your .NET API
+  useEffect(() => {
+    const fetchFilaments = async () => {
+      try {
+        const res = await api.get("/filaments");
+        setFilaments(res.data);
+      } catch (err) {
+        console.error("Failed to fetch filaments", err);
+      }
+    };
+    fetchFilaments();
+  }, []);
+
+  // Get unique materials for the first dropdown
+  const availableMaterials = Array.from(
+    new Set(filaments.map((f) => f.material)),
+  );
+
+  // 2. Handle File Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -49,17 +60,23 @@ export default function Quote() {
     setIsUploading(true);
     try {
       const res = await api.post("/upload", formData);
-      // 2. Add defaults for material and color
+
+      // Default to the first material and its first available color
+      const defaultMat = availableMaterials[0] || "PLA";
+      const defaultColor =
+        filaments.find((f) => f.material === defaultMat)?.color || "Black";
+
       const newItem: OrderItem = {
         fileUrl: res.data.url,
         fileName: file.name,
         notes: "",
-        material: "PLA",
-        color: "Black",
+        material: defaultMat,
+        color: defaultColor,
+        price: 0,
       };
       setItems([...items, newItem]);
     } catch (err) {
-      alert("Upload failed. Are you logged in?");
+      alert("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -69,7 +86,6 @@ export default function Quote() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  // Helper to update specific fields in the items array
   const updateItem = (index: number, field: keyof OrderItem, value: string) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
@@ -87,7 +103,7 @@ export default function Quote() {
       await api.post("/orders/quote", payload);
       navigate("/orders");
     } catch (err) {
-      alert("Failed to submit quote.");
+      alert("Failed to submit quote. Check your connection.");
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +119,7 @@ export default function Quote() {
             Request a Quote
           </h2>
           <p className="text-gray-500 text-lg">
-            Customize each print with materials and colors.
+            Upload models and choose from our live inventory.
           </p>
         </div>
 
@@ -114,7 +130,7 @@ export default function Quote() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center gap-2">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800">
                   <Package className="text-emerald-600" size={20} />
                   Your 3D Models
                 </h3>
@@ -147,7 +163,7 @@ export default function Quote() {
                       className="p-5 border border-gray-200 rounded-xl bg-gray-50/50"
                     >
                       <div className="flex justify-between items-center mb-4">
-                        <span className="font-bold text-gray-800 truncate">
+                        <span className="font-bold text-gray-800 truncate max-w-[300px]">
                           {item.fileName}
                         </span>
                         <button
@@ -159,54 +175,75 @@ export default function Quote() {
                         </button>
                       </div>
 
-                      {/* 3. New Material and Color Selectors */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Material Selector */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Layers size={12} /> Material
                           </label>
                           <select
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                             value={item.material}
-                            onChange={(e) =>
-                              updateItem(idx, "material", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const newMat = e.target.value;
+                              // Auto-select first available color for this material
+                              const firstColor =
+                                filaments.find((f) => f.material === newMat)
+                                  ?.color || "";
+                              const newItems = [...items];
+                              newItems[idx] = {
+                                ...item,
+                                material: newMat,
+                                color: firstColor,
+                              };
+                              setItems(newItems);
+                            }}
                           >
-                            {MATERIALS.map((m) => (
+                            {availableMaterials.map((m) => (
                               <option key={m} value={m}>
                                 {m}
                               </option>
                             ))}
                           </select>
                         </div>
+
+                        {/* Filtered Color Selector */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Palette size={12} /> Color
                           </label>
                           <select
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                             value={item.color}
                             onChange={(e) =>
                               updateItem(idx, "color", e.target.value)
                             }
                           >
-                            {COLORS.map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
+                            {filaments
+                              .filter((f) => f.material === item.material)
+                              .map((f) => (
+                                <option key={f.id} value={f.color}>
+                                  {f.color} ({f.name})
+                                </option>
+                              ))}
                           </select>
                         </div>
                       </div>
 
-                      <textarea
-                        placeholder="Additional instructions (Infill, layer height, etc.)"
-                        className="w-full p-3 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
-                        value={item.notes}
-                        onChange={(e) =>
-                          updateItem(idx, "notes", e.target.value)
-                        }
-                      />
+                      <div className="relative">
+                        <MessageSquare
+                          className="absolute left-3 top-3 text-gray-300"
+                          size={16}
+                        />
+                        <textarea
+                          placeholder="Instructions (Infill, layer height, etc.)"
+                          className="w-full p-3 pl-10 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                          value={item.notes}
+                          onChange={(e) =>
+                            updateItem(idx, "notes", e.target.value)
+                          }
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -220,7 +257,6 @@ export default function Quote() {
                 <MapPin className="text-emerald-600" size={20} />
                 Shipping Info
               </h3>
-
               <div className="space-y-4">
                 <input
                   required
@@ -265,15 +301,18 @@ export default function Quote() {
               <button
                 type="submit"
                 disabled={isSubmitting || items.length === 0}
-                className="w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-xl hover:bg-[#1c4d37] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-xl hover:bg-[#1c4d37] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" />
                 ) : (
                   <CheckCircle size={20} />
                 )}
-                Submit Order Request
+                Submit Quote Request
               </button>
+              <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest">
+                Safe & Secure 3D Printing
+              </p>
             </div>
           </div>
         </form>
