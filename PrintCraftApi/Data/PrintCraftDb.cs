@@ -15,4 +15,13 @@ public class PrintCraftDb : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Cart>()
+            .HasIndex(c => c.UserId)
+            .IsUnique();
+    }
 }

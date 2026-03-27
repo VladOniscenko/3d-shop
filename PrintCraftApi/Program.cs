@@ -10,7 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 // --- SERVICES ---
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite("Data Source=printcraft.db"));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 // 2. Updated SwaggerGen to handle JWT Lock icons
 builder.Services.AddSwaggerGen(options =>
@@ -54,11 +58,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(opt => opt.AddPolicy("AllowReact", p => p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
-
-builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
-{
-    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-});
 
 var app = builder.Build();
 

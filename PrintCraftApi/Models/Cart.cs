@@ -11,7 +11,4 @@ public class Cart
 
     // Navigation property
     public List<CartItem> Items { get; set; } = new();
-
-    [Timestamp]
-    public byte[]? RowVersion { get; set; }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintCraftApi.Data;
 
@@ -10,9 +11,11 @@ using PrintCraftApi.Data;
 namespace PrintCraftApi.Migrations
 {
     [DbContext(typeof(PrintCraftDb))]
-    partial class PrintCraftDbModelSnapshot : ModelSnapshot
+    [Migration("20260327170317_RemoveCartRowVersion")]
+    partial class RemoveCartRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -74,9 +77,6 @@ namespace PrintCraftApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
                     b.ToTable("Carts");
                 });
 
@@ -116,6 +116,11 @@ namespace PrintCraftApi.Migrations
                     b.Property<string>("ProductName")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("BLOB");
 
                     b.HasKey("Id");
 

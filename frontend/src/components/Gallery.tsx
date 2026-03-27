@@ -61,6 +61,7 @@ export default function Gallery() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
+  const [pendingAddIds, setPendingAddIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchGallery = async () => {
@@ -79,6 +80,10 @@ export default function Gallery() {
   }, [activeFilter]);
 
   const handleAddToCart = async (product: Product) => {
+    if (pendingAddIds.has(product.id)) {
+      return;
+    }
+
     // Check if user is authenticated
     const token = localStorage.getItem("token");
     if (!token) {
@@ -88,6 +93,7 @@ export default function Gallery() {
     }
 
     try {
+      setPendingAddIds((prev) => new Set(prev).add(product.id));
       await addToCart(product.id, 1, "PLA", "Black");
 
       setAddedItemId(product.id);
@@ -95,6 +101,12 @@ export default function Gallery() {
     } catch (err) {
       console.error("Failed to add to cart:", err);
       alert("Failed to add to cart. Please try again.");
+    } finally {
+      setPendingAddIds((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
     }
   };
 
@@ -150,6 +162,7 @@ export default function Gallery() {
               {items.map((item) => {
                 const design = getCategoryDesign(item.category);
                 const isAdded = addedItemId === item.id;
+                const isAdding = pendingAddIds.has(item.id);
 
                 return (
                   <div key={item.id} className="group relative flex flex-col">
@@ -176,9 +189,9 @@ export default function Gallery() {
                       <div className="absolute inset-0 bg-gradient-to-t from-[#133827]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                         <button
                           onClick={() => handleAddToCart(item)}
-                          disabled={isAdded}
+                          disabled={isAdded || isAdding}
                           className={`w-full py-3 rounded-xl font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center justify-center gap-2 ${
-                            isAdded
+                            isAdded || isAdding
                               ? "bg-emerald-500 text-white translate-y-0"
                               : "bg-white text-[#133827] hover:bg-emerald-50 active:scale-95"
                           }`}
@@ -186,6 +199,11 @@ export default function Gallery() {
                           {isAdded ? (
                             <>
                               <Check size={18} /> Added!
+                            </>
+                          ) : isAdding ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />{" "}
+                              Adding...
                             </>
                           ) : (
                             <>

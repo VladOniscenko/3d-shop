@@ -19,118 +19,194 @@ public class CartController : ControllerBase
         _db = db;
     }
 
-    private async Task<Cart> GetOrCreateUserCart()
+    // --------------------------------------------------------
+    // HELPER METHODS
+    // --------------------------------------------------------
+
+    private string GetUserIdFromToken()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
             throw new UnauthorizedAccessException("User ID not found in token");
+        return userId;
+    }
 
-        var userIdGuid = Guid.Parse(userId);
+    private async Task<Cart> GetOrCreateUserCart()
+    {
+        var userIdGuid = Guid.Parse(GetUserIdFromToken());
 
         var cart = await _db.Carts
             .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.UserId == userIdGuid);
 
-        if (cart == null)
+        if (cart != null)
+            return cart;
+
+        // If no cart exists, make one.
+        cart = new Cart { UserId = userIdGuid };
+        _db.Carts.Add(cart);
+
+        try
         {
-            cart = new Cart { UserId = userIdGuid };
-            _db.Carts.Add(cart);
             await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // If two requests try to create a cart at the exact same millisecond, 
+            // one will fail. We just catch the fail and grab the one that succeeded.
+            _db.ChangeTracker.Clear();
+            cart = await _db.Carts.Include(c => c.Items).FirstAsync(c => c.UserId == userIdGuid);
         }
 
         return cart;
     }
 
+    private static object ToCartItemResponse(CartItem item)
+    {
+        return new
+        {
+            item.Id,
+            item.ProductId,
+            item.ProductName,
+            item.ImageUrl,
+            item.Material,
+            item.Color,
+            item.Count,
+            item.Price,
+            item.AddedAt
+        };
+    }
+
+    private static object ToCartResponse(Cart cart)
+    {
+        return new
+        {
+            cart.Id,
+            cart.UserId,
+            cart.CreatedAt,
+            cart.UpdatedAt,
+            Items = cart.Items.Select(ToCartItemResponse).ToList()
+        };
+    }
+
+    // --------------------------------------------------------
+    // API ENDPOINTS
+    // --------------------------------------------------------
+
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
         var cart = await GetOrCreateUserCart();
-        await _db.Entry(cart).Collection(c => c.Items).LoadAsync();
-        return Ok(cart);
+        return Ok(ToCartResponse(cart));
     }
 
     [HttpPost("items")]
     public async Task<IActionResult> AddItem([FromBody] AddCartItemRequest request)
     {
-        // Validate request
-        if (request.ProductId == Guid.Empty)
-            return BadRequest(new { message = "ProductId is required" });
-        if (request.Count <= 0)
-            return BadRequest(new { message = "Count must be greater than 0" });
+        if (request.ProductId == Guid.Empty) return BadRequest(new { message = "ProductId is required" });
+        if (request.Count <= 0) return BadRequest(new { message = "Count must be greater than 0" });
 
-        // Fetch product to validate price
         var product = await _db.Products.FindAsync(request.ProductId);
-        if (product == null)
-            return NotFound(new { message = "Product not found" });
+        if (product == null) return NotFound(new { message = "Product not found" });
+
+        var material = request.Material ?? "PLA";
+        var color = request.Color ?? "Black";
 
         var cart = await GetOrCreateUserCart();
 
-        // Check if item already exists in cart
-        var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+        var existingItem = await _db.CartItems.FirstOrDefaultAsync(i =>
+            i.CartId == cart.Id &&
+            i.ProductId == request.ProductId &&
+            i.Material == material &&
+            i.Color == color);
+
+        if (existingItem != null)
+        {
+            existingItem.Count += request.Count;
+        }
+        else
+        {
+            _db.CartItems.Add(new CartItem
+            {
+                CartId = cart.Id,
+                ProductId = product.Id,
+                ProductName = product.Name,
+                ImageUrl = product.ImageUrl,
+                Material = material,
+                Color = color,
+                Count = request.Count,
+                Price = (decimal)product.Price
+            });
+        }
+
+        cart.UpdatedAt = DateTime.UtcNow;
 
         try
         {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Rare race: if two requests add the same SKU variant at once, reload and merge once.
+            _db.ChangeTracker.Clear();
+
+            cart = await GetOrCreateUserCart();
+            existingItem = await _db.CartItems.FirstOrDefaultAsync(i =>
+                i.CartId == cart.Id &&
+                i.ProductId == request.ProductId &&
+                i.Material == material &&
+                i.Color == color);
+
             if (existingItem != null)
             {
-                // Update count instead of adding duplicate
                 existingItem.Count += request.Count;
-                existingItem.Material = request.Material ?? existingItem.Material;
-                existingItem.Color = request.Color ?? existingItem.Color;
             }
             else
             {
-                // Create new cart item with validated price
-                var cartItem = new CartItem
+                _db.CartItems.Add(new CartItem
                 {
                     CartId = cart.Id,
                     ProductId = product.Id,
                     ProductName = product.Name,
                     ImageUrl = product.ImageUrl,
-                    Material = request.Material ?? "PLA",
-                    Color = request.Color ?? "Black",
+                    Material = material,
+                    Color = color,
                     Count = request.Count,
-                    Price = (decimal)product.Price // Validate from database
-                };
-                cart.Items.Add(cartItem);
+                    Price = (decimal)product.Price
+                });
             }
 
             cart.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Conflict(new { message = "Your cart was updated elsewhere. Please refresh your cart and try again." });
-        }
 
-        return Ok(new { message = "Item added to cart", cart });
+        var updatedCart = await _db.Carts
+            .Include(c => c.Items)
+            .FirstAsync(c => c.Id == cart.Id);
+
+        return Ok(new { message = "Item added to cart", cart = ToCartResponse(updatedCart) });
     }
 
     [HttpPut("items/{id:guid}")]
     public async Task<IActionResult> UpdateItem([FromRoute] Guid id, [FromBody] UpdateCartItemRequest request)
     {
         var cart = await GetOrCreateUserCart();
-        var item = await _db.CartItems.FirstOrDefaultAsync(ci => ci.Id == id && ci.CartId == cart.Id);
 
-        if (item == null)
-            return NotFound(new { message = "Cart item not found" });
+        var item = await _db.CartItems.FirstOrDefaultAsync(ci => ci.Id == id && ci.CartId == cart.Id);
+        if (item == null) return NotFound(new { message = "Cart item not found" });
 
         if (request.Count.HasValue)
         {
-            if (request.Count <= 0)
-                return BadRequest(new { message = "Count must be greater than 0" });
+            if (request.Count <= 0) return BadRequest(new { message = "Count must be greater than 0" });
             item.Count = request.Count.Value;
         }
 
-        if (!string.IsNullOrEmpty(request.Material))
-            item.Material = request.Material;
-
-        if (!string.IsNullOrEmpty(request.Color))
-            item.Color = request.Color;
+        if (!string.IsNullOrEmpty(request.Material)) item.Material = request.Material;
+        if (!string.IsNullOrEmpty(request.Color)) item.Color = request.Color;
 
         cart.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-
-        return Ok(new { message = "Cart item updated", item });
+        return Ok(new { message = "Cart item updated", item = ToCartItemResponse(item) });
     }
 
     [HttpDelete("items/{id:guid}")]
@@ -139,13 +215,11 @@ public class CartController : ControllerBase
         var cart = await GetOrCreateUserCart();
         var item = await _db.CartItems.FirstOrDefaultAsync(ci => ci.Id == id && ci.CartId == cart.Id);
 
-        if (item == null)
-            return NotFound(new { message = "Cart item not found" });
+        if (item == null) return NotFound(new { message = "Cart item not found" });
 
         _db.CartItems.Remove(item);
         cart.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-
         return Ok(new { message = "Item removed from cart" });
     }
 
@@ -153,10 +227,11 @@ public class CartController : ControllerBase
     public async Task<IActionResult> ClearCart()
     {
         var cart = await GetOrCreateUserCart();
-        _db.CartItems.RemoveRange(cart.Items);
+        var items = await _db.CartItems.Where(ci => ci.CartId == cart.Id).ToListAsync();
+
+        _db.CartItems.RemoveRange(items);
         cart.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-
         return Ok(new { message = "Cart cleared" });
     }
 }

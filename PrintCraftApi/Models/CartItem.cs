@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace PrintCraftApi.Models;
 
@@ -22,8 +23,7 @@ public class CartItem
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation property
+    [JsonIgnore]
     public Cart Cart { get; set; } = null!;
 
-    [Timestamp]
-    public byte[]? RowVersion { get; set; }
 }

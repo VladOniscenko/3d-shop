@@ -64,17 +64,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await refreshCart();
       setError(null);
     } catch (err: any) {
-      let message = "Failed to add item to cart";
-      if (
-        err?.response?.status === 409 &&
-        err?.response?.data?.message?.includes(
-          "Your cart was updated elsewhere",
-        )
-      ) {
-        message =
-          "Your cart was updated elsewhere. Please refresh your cart and try again.";
-        await refreshCart();
-      }
+      const message =
+        err?.response?.data?.message || "Failed to add item to cart";
       setError(message);
       throw err;
     } finally {
