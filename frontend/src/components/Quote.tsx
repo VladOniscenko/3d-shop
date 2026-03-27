@@ -17,6 +17,10 @@ import Navbar from "./Navbar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import type { OrderItem, Filament } from "../types";
+import {
+  normalizeShippingInfo,
+  validateShippingInfo,
+} from "../utils/shippingValidation";
 
 export default function Quote() {
   const navigate = useNavigate();
@@ -33,6 +37,9 @@ export default function Quote() {
     postalCode: "",
     phoneNumber: "",
   });
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -102,13 +109,27 @@ export default function Quote() {
     if (items.length === 0)
       return alert("Please upload at least one 3D model.");
 
+    const errors = validateShippingInfo(address);
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return alert("Please fix shipping info before submitting.");
+    }
+
     setIsSubmitting(true);
     try {
-      const payload = { ...address, items };
+      const payload = { ...normalizeShippingInfo(address), items };
       await api.post("/orders/quote", payload);
       navigate("/orders");
-    } catch (err) {
-      alert("Failed to submit quote. Check your connection.");
+    } catch (err: any) {
+      const apiErrors = err?.response?.data?.errors;
+      if (apiErrors && typeof apiErrors === "object") {
+        setValidationErrors(apiErrors);
+      }
+
+      const message =
+        err?.response?.data?.message ||
+        "Failed to submit quote. Check your connection.";
+      alert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -282,12 +303,21 @@ export default function Quote() {
                 <input
                   required
                   placeholder="Full Name"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                    validationErrors.fullName
+                      ? "border-red-300 focus:ring-red-400"
+                      : "border-gray-200 focus:ring-emerald-500"
+                  }`}
                   value={address.fullName}
                   onChange={(e) =>
                     setAddress({ ...address, fullName: e.target.value })
                   }
                 />
+                {validationErrors.fullName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.fullName}
+                  </p>
+                )}
 
                 <div className="relative">
                   <Phone
@@ -298,42 +328,82 @@ export default function Quote() {
                     required
                     type="tel"
                     placeholder="Phone Number"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                      validationErrors.phoneNumber
+                        ? "border-red-300 focus:ring-red-400"
+                        : "border-gray-200 focus:ring-emerald-500"
+                    }`}
                     value={address.phoneNumber}
                     onChange={(e) =>
                       setAddress({ ...address, phoneNumber: e.target.value })
                     }
                   />
                 </div>
+                {validationErrors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.phoneNumber}
+                  </p>
+                )}
 
                 <input
                   required
                   placeholder="Street Address"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                    validationErrors.addressLine1
+                      ? "border-red-300 focus:ring-red-400"
+                      : "border-gray-200 focus:ring-emerald-500"
+                  }`}
                   value={address.addressLine1}
                   onChange={(e) =>
                     setAddress({ ...address, addressLine1: e.target.value })
                   }
                 />
+                {validationErrors.addressLine1 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.addressLine1}
+                  </p>
+                )}
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    required
-                    placeholder="City"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                    value={address.city}
-                    onChange={(e) =>
-                      setAddress({ ...address, city: e.target.value })
-                    }
-                  />
-                  <input
-                    required
-                    placeholder="Postal Code"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                    value={address.postalCode}
-                    onChange={(e) =>
-                      setAddress({ ...address, postalCode: e.target.value })
-                    }
-                  />
+                  <div>
+                    <input
+                      required
+                      placeholder="City"
+                      className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                        validationErrors.city
+                          ? "border-red-300 focus:ring-red-400"
+                          : "border-gray-200 focus:ring-emerald-500"
+                      }`}
+                      value={address.city}
+                      onChange={(e) =>
+                        setAddress({ ...address, city: e.target.value })
+                      }
+                    />
+                    {validationErrors.city && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {validationErrors.city}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      required
+                      placeholder="Postal Code"
+                      className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                        validationErrors.postalCode
+                          ? "border-red-300 focus:ring-red-400"
+                          : "border-gray-200 focus:ring-emerald-500"
+                      }`}
+                      value={address.postalCode}
+                      onChange={(e) =>
+                        setAddress({ ...address, postalCode: e.target.value })
+                      }
+                    />
+                    {validationErrors.postalCode && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {validationErrors.postalCode}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 

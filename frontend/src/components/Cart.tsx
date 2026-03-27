@@ -18,6 +18,10 @@ import Navbar from "./Navbar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import type { Filament } from "../types";
+import {
+  normalizeShippingInfo,
+  validateShippingInfo,
+} from "../utils/shippingValidation";
 
 export default function CheckoutPage() {
   const {
@@ -102,25 +106,7 @@ export default function CheckoutPage() {
   };
 
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!address.fullName.trim()) {
-      errors.fullName = "Full name is required";
-    }
-    if (!address.phoneNumber.trim()) {
-      errors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{10,}/.test(address.phoneNumber.replace(/\s/g, ""))) {
-      errors.phoneNumber = "Please enter a valid phone number";
-    }
-    if (!address.addressLine1.trim()) {
-      errors.addressLine1 = "Address is required";
-    }
-    if (!address.city.trim()) {
-      errors.city = "City is required";
-    }
-    if (!address.postalCode.trim()) {
-      errors.postalCode = "Postal code is required";
-    }
+    const errors = validateShippingInfo(address);
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -141,13 +127,7 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-      const payload = {
-        fullName: address.fullName.trim(),
-        phoneNumber: address.phoneNumber.trim(),
-        addressLine1: address.addressLine1.trim(),
-        city: address.city.trim(),
-        postalCode: address.postalCode.trim(),
-      };
+      const payload = normalizeShippingInfo(address);
 
       const res = await api.post("/payments/create", payload);
 

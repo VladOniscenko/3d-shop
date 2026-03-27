@@ -44,9 +44,9 @@ export default function OrderDetail() {
     if (id) fetchOrderDetails();
   }, [id]);
 
-  const handleCancel = async () => {
+  const handleDeleteQuote = async () => {
     const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this project? This action cannot be undone.",
+      "Are you sure you want to delete this quote? This will permanently remove the quote and uploaded files.",
     );
 
     if (!confirmCancel) return;
@@ -54,10 +54,10 @@ export default function OrderDetail() {
     setIsCancelling(true);
     try {
       await api.put(`/orders/${id}/cancel`);
-      alert("Project cancelled successfully.");
+      alert("Quote deleted successfully.");
       navigate("/orders");
     } catch (err) {
-      alert("Could not cancel project. It might already be in production.");
+      alert("Could not delete quote. It may already be processed.");
       console.error(err);
     } finally {
       setIsCancelling(false);
@@ -114,7 +114,7 @@ export default function OrderDetail() {
 
           {order.status === "pending_quote" && (
             <button
-              onClick={handleCancel}
+              onClick={handleDeleteQuote}
               disabled={isCancelling}
               className="flex items-center gap-2 px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
             >
@@ -123,7 +123,7 @@ export default function OrderDetail() {
               ) : (
                 <XCircle size={18} />
               )}
-              Cancel Request
+              Delete Quote
             </button>
           )}
         </div>
