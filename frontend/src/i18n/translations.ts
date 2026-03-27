@@ -297,7 +297,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "footer.location": "Locatie",
     "footer.hours": "Openingstijden",
     "footer.hoursValue": "Ma - Vr, 09:00 - 18:00",
-    "footer.copyright": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
+    "footer.copyright":
+      "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
 
     // Home
     "home.footer": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
