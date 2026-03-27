@@ -30,7 +30,6 @@ export default function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/faq" element={<FAQ />} />
-        <Route path="/cart" element={<Cart />} />
 
         {/* Private Routes - Only logged-in users can see these */}
         <Route
@@ -54,6 +53,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <OrderDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
             </ProtectedRoute>
           }
         />

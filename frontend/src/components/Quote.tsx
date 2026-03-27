@@ -69,6 +69,7 @@ export default function Quote() {
         fileUrl: res.data.url,
         fileName: file.name,
         notes: "",
+        imageUrl: "",
         material: defaultMat,
         color: defaultColor,
         price: 0,

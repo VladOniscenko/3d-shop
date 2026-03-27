@@ -12,6 +12,7 @@ import {
   ArrowRight,
   ShoppingCart,
   Image as ImageIcon,
+  Truck,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -32,7 +33,13 @@ export default function Cart() {
     postalCode: "",
   });
 
-  // Fetch filaments to populate the dropdowns
+  // Constants
+  const DELIVERY_PRICE = 6.95;
+
+  // Calculations
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.count, 0);
+  const total = subtotal + DELIVERY_PRICE;
+
   useEffect(() => {
     const fetchFilaments = async () => {
       try {
@@ -49,14 +56,11 @@ export default function Cart() {
 
   const handleUpdate = (index: number, field: keyof OrderItem, value: any) => {
     const updatedItem = { ...cart[index], [field]: value };
-
-    // If material changes, reset color to the first available for that material
     if (field === "material") {
       const firstColor =
         filaments.find((f) => f.material === value)?.color || "";
       updatedItem.color = firstColor;
     }
-
     updateCartItem(index, updatedItem);
   };
 
@@ -66,7 +70,7 @@ export default function Cart() {
 
     setIsSubmitting(true);
     try {
-      const payload = { ...address, items: cart };
+      const payload = { ...address, items: cart, totalPrice: total };
       await api.post("/orders/quote", payload);
       clearCart();
       navigate("/orders");
@@ -115,9 +119,12 @@ export default function Cart() {
           onSubmit={handleCheckout}
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
+          {/* Left Side: Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="font-bold text-gray-800 mb-6">Gallery Items</h3>
+              <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
+                Gallery Items
+              </h3>
               <div className="space-y-6">
                 {cart.map((item, idx) => (
                   <div
@@ -125,7 +132,6 @@ export default function Cart() {
                     className="p-5 bg-gray-50 rounded-2xl border border-gray-200"
                   >
                     <div className="flex flex-col md:flex-row gap-6">
-                      {/* Image Preview */}
                       <div className="bg-white w-full md:w-32 h-32 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
                         {item.imageUrl ? (
                           <img
@@ -138,12 +144,16 @@ export default function Cart() {
                         )}
                       </div>
 
-                      {/* Controls */}
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-4">
-                          <h4 className="font-bold text-gray-900 text-lg">
-                            {item.fileName}
-                          </h4>
+                          <div>
+                            <h4 className="font-bold text-gray-900 text-lg">
+                              {item.fileName}
+                            </h4>
+                            <p className="text-emerald-600 font-bold">
+                              ${item.price.toFixed(2)} / unit
+                            </p>
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeFromCart(idx)}
@@ -154,7 +164,6 @@ export default function Cart() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {/* Material Dropdown */}
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Layers size={12} /> Material
@@ -174,7 +183,6 @@ export default function Cart() {
                             </select>
                           </div>
 
-                          {/* Color Dropdown */}
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Palette size={12} /> Color
@@ -196,7 +204,6 @@ export default function Cart() {
                             </select>
                           </div>
 
-                          {/* Quantity Input */}
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Hash size={12} /> Quantity
@@ -224,13 +231,45 @@ export default function Cart() {
             </div>
           </div>
 
-          {/* Shipping Info Sidebar */}
+          {/* Right Side: Order Summary & Shipping */}
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+              {/* Price Breakdown */}
+              <div className="mb-8 space-y-3">
+                <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-sm">
+                  Order Summary
+                </h3>
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-gray-900">
+                    ${subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span className="flex items-center gap-2">
+                    <Truck size={16} /> Delivery
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    ${DELIVERY_PRICE.toFixed(2)}
+                  </span>
+                </div>
+                <div className="pt-4 border-t border-gray-100 flex justify-between">
+                  <span className="font-black text-gray-900 text-lg">
+                    Total
+                  </span>
+                  <span className="font-black text-emerald-600 text-lg">
+                    ${total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <hr className="mb-8 border-gray-100" />
+
               <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
                 <MapPin className="text-emerald-600" size={20} />
                 Shipping Info
               </h3>
+
               <div className="space-y-4">
                 <input
                   required
@@ -298,8 +337,12 @@ export default function Cart() {
                 ) : (
                   <CheckCircle size={20} />
                 )}
-                Place Order Request
+                Checkout Now
               </button>
+
+              <p className="text-[10px] text-gray-400 text-center mt-4 uppercase font-bold tracking-widest">
+                Secure 256-bit SSL Encryption
+              </p>
             </div>
           </div>
         </form>

@@ -7,4 +7,5 @@ public class Product
     public string Category { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public string FileUrl { get; set; } = string.Empty;
+    public double Price { get; set; }
 }

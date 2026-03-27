@@ -49,7 +49,8 @@ export interface Product {
   name: string;
   category: string;
   imageUrl: string;
-  basePrice: number;
+  fileUrl: string;
+  price: number;
 }
 
 export interface Order {
@@ -74,7 +75,7 @@ export interface OrderItem {
   id?: string;
   orderId?: string;
   imageUrl: string;
-  fileUrl: string;
+  fileUrl?: string;
   fileName: string;
   notes?: string;
   material: string;
