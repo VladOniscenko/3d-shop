@@ -661,7 +661,6 @@ export default function AdminOrderDetail() {
       <article className="admin-panel mb-5 p-4">
         <h3 className="font-bold mb-2 text-[#1b2b25]">Communication</h3>
         <div className="grid gap-3">
-
           <div>
             <label className="block text-xs uppercase text-[#6c817a]">
               Email Type
