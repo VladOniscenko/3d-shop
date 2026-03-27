@@ -294,13 +294,14 @@ export default function CheckoutPage() {
                             <input
                               type="number"
                               min="1"
+                              max="100"
                               className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
                               value={item.count}
                               onChange={(e) =>
                                 handleUpdate(
                                   item.id,
                                   "count",
-                                  parseInt(e.target.value) || 1,
+                                  Math.min(100, parseInt(e.target.value) || 1),
                                 )
                               }
                             />

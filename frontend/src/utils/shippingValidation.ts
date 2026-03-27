@@ -7,7 +7,8 @@ export type ShippingInfo = {
 };
 
 export function normalizeShippingInfo(input: ShippingInfo): ShippingInfo {
-  const normalizeWhitespace = (value: string) => value.trim().replace(/\s+/g, " ");
+  const normalizeWhitespace = (value: string) =>
+    value.trim().replace(/\s+/g, " ");
   const phoneDigits = input.phoneNumber.replace(/\D/g, "");
   const phoneNumber = input.phoneNumber.trim().startsWith("+")
     ? `+${phoneDigits}`
@@ -22,7 +23,9 @@ export function normalizeShippingInfo(input: ShippingInfo): ShippingInfo {
   };
 }
 
-export function validateShippingInfo(input: ShippingInfo): Record<string, string> {
+export function validateShippingInfo(
+  input: ShippingInfo,
+): Record<string, string> {
   const errors: Record<string, string> = {};
   const normalized = normalizeShippingInfo(input);
 
@@ -34,7 +37,10 @@ export function validateShippingInfo(input: ShippingInfo): Record<string, string
 
   if (!normalized.fullName) {
     errors.fullName = "Full name is required";
-  } else if (normalized.fullName.length < 2 || normalized.fullName.length > 100) {
+  } else if (
+    normalized.fullName.length < 2 ||
+    normalized.fullName.length > 100
+  ) {
     errors.fullName = "Full name must be 2-100 characters";
   } else if (!nameRegex.test(normalized.fullName)) {
     errors.fullName = "Full name contains unsupported characters";
@@ -44,13 +50,19 @@ export function validateShippingInfo(input: ShippingInfo): Record<string, string
     errors.phoneNumber = "Phone number is required";
   } else if (!phoneRegex.test(input.phoneNumber.trim())) {
     errors.phoneNumber = "Phone number format is invalid";
-  } else if (normalized.phoneNumber.replace(/\D/g, "").length < 7 || normalized.phoneNumber.replace(/\D/g, "").length > 15) {
+  } else if (
+    normalized.phoneNumber.replace(/\D/g, "").length < 7 ||
+    normalized.phoneNumber.replace(/\D/g, "").length > 15
+  ) {
     errors.phoneNumber = "Phone number must contain 7-15 digits";
   }
 
   if (!normalized.addressLine1) {
     errors.addressLine1 = "Address is required";
-  } else if (normalized.addressLine1.length < 5 || normalized.addressLine1.length > 120) {
+  } else if (
+    normalized.addressLine1.length < 5 ||
+    normalized.addressLine1.length > 120
+  ) {
     errors.addressLine1 = "Address must be 5-120 characters";
   } else if (!addressRegex.test(normalized.addressLine1)) {
     errors.addressLine1 = "Address contains unsupported characters";
@@ -66,7 +78,10 @@ export function validateShippingInfo(input: ShippingInfo): Record<string, string
 
   if (!normalized.postalCode) {
     errors.postalCode = "Postal code is required";
-  } else if (normalized.postalCode.length < 3 || normalized.postalCode.length > 12) {
+  } else if (
+    normalized.postalCode.length < 3 ||
+    normalized.postalCode.length > 12
+  ) {
     errors.postalCode = "Postal code must be 3-12 characters";
   } else if (!postalRegex.test(normalized.postalCode)) {
     errors.postalCode = "Postal code format is invalid";

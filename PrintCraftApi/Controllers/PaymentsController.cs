@@ -8,6 +8,7 @@ using Mollie.Api.Models.Payment;
 using Mollie.Api.Models.Payment.Request;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
+using PrintCraftApi.Validation;
 
 namespace PrintCraftApi.Controllers;
 
@@ -45,6 +46,22 @@ public class PaymentsController : ControllerBase
         if (cart == null || cart.Items.Count == 0)
             return BadRequest(new { message = "Cart is empty" });
 
+        var shippingValidation = ShippingInfoValidator.Validate(
+            req.FullName,
+            req.PhoneNumber,
+            req.AddressLine1,
+            req.City,
+            req.PostalCode);
+
+        if (!shippingValidation.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Please correct shipping info and try again.",
+                errors = shippingValidation.Errors
+            });
+        }
+
         // Validate prices from database products
         decimal subtotal = 0m;
         decimal deliveryPrice = 6.95m;
@@ -52,6 +69,9 @@ public class PaymentsController : ControllerBase
 
         foreach (var cartItem in cart.Items)
         {
+            if (cartItem.Count <= 0 || cartItem.Count > 100)
+                return BadRequest(new { message = "Invalid cart item quantity." });
+
             // Get product to validate price
             var product = await _db.Products.FindAsync(cartItem.ProductId);
             if (product == null)
@@ -77,13 +97,15 @@ public class PaymentsController : ControllerBase
         var newOrder = new Order
         {
             UserId = userId,
-            FullName = req.FullName,
-            AddressLine1 = req.AddressLine1,
-            City = req.City,
-            PostalCode = req.PostalCode,
-            PhoneNumber = req.PhoneNumber,
+            FullName = shippingValidation.FullName,
+            AddressLine1 = shippingValidation.AddressLine1,
+            City = shippingValidation.City,
+            PostalCode = shippingValidation.PostalCode,
+            PhoneNumber = shippingValidation.PhoneNumber,
             DeliveryPrice = deliveryPrice,
             Status = "pending_payment",
+            OrderType = "online",
+            IsPaid = false,
             Items = orderItems
         };
 

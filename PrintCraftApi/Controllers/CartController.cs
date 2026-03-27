@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,10 @@ namespace PrintCraftApi.Controllers;
 public class CartController : ControllerBase
 {
     private readonly PrintCraftDb _db;
+    private const int MaxDistinctCartItems = 50;
+    private const int MaxItemCount = 100;
+    private const int MaxVariantLength = 40;
+    private static readonly Regex VariantRegex = new(@"^[A-Za-z0-9\s\-_.]+$", RegexOptions.Compiled);
 
     public CartController(PrintCraftDb db)
     {
@@ -77,6 +82,23 @@ public class CartController : ControllerBase
         };
     }
 
+    private static string NormalizeVariant(string? value, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return fallback;
+        return Regex.Replace(value.Trim(), @"\s+", " ");
+    }
+
+    private static string? ValidateVariant(string value, string fieldName)
+    {
+        if (value.Length > MaxVariantLength)
+            return $"{fieldName} cannot exceed {MaxVariantLength} characters.";
+
+        if (!VariantRegex.IsMatch(value))
+            return $"{fieldName} contains unsupported characters.";
+
+        return null;
+    }
+
     private static object ToCartResponse(Cart cart)
     {
         return new
@@ -104,15 +126,33 @@ public class CartController : ControllerBase
     public async Task<IActionResult> AddItem([FromBody] AddCartItemRequest request)
     {
         if (request.ProductId == Guid.Empty) return BadRequest(new { message = "ProductId is required" });
-        if (request.Count <= 0) return BadRequest(new { message = "Count must be greater than 0" });
+        if (request.Count <= 0 || request.Count > MaxItemCount)
+            return BadRequest(new { message = $"Count must be between 1 and {MaxItemCount}." });
 
         var product = await _db.Products.FindAsync(request.ProductId);
         if (product == null) return NotFound(new { message = "Product not found" });
 
-        var material = request.Material ?? "PLA";
-        var color = request.Color ?? "Black";
+        var material = NormalizeVariant(request.Material, "PLA");
+        var color = NormalizeVariant(request.Color, "Black");
+
+        var materialError = ValidateVariant(material, "Material");
+        if (materialError != null) return BadRequest(new { message = materialError });
+
+        var colorError = ValidateVariant(color, "Color");
+        if (colorError != null) return BadRequest(new { message = colorError });
 
         var cart = await GetOrCreateUserCart();
+
+        if (cart.Items.Count >= MaxDistinctCartItems)
+        {
+            var hasExistingVariant = cart.Items.Any(i =>
+                i.ProductId == request.ProductId &&
+                i.Material == material &&
+                i.Color == color);
+
+            if (!hasExistingVariant)
+                return BadRequest(new { message = $"Cart can contain at most {MaxDistinctCartItems} distinct items." });
+        }
 
         var existingItem = await _db.CartItems.FirstOrDefaultAsync(i =>
             i.CartId == cart.Id &&
@@ -122,7 +162,11 @@ public class CartController : ControllerBase
 
         if (existingItem != null)
         {
-            existingItem.Count += request.Count;
+            var newCount = existingItem.Count + request.Count;
+            if (newCount > MaxItemCount)
+                return BadRequest(new { message = $"Maximum quantity per item is {MaxItemCount}." });
+
+            existingItem.Count = newCount;
         }
         else
         {
@@ -197,12 +241,26 @@ public class CartController : ControllerBase
 
         if (request.Count.HasValue)
         {
-            if (request.Count <= 0) return BadRequest(new { message = "Count must be greater than 0" });
+            if (request.Count <= 0 || request.Count > MaxItemCount)
+                return BadRequest(new { message = $"Count must be between 1 and {MaxItemCount}." });
             item.Count = request.Count.Value;
         }
 
-        if (!string.IsNullOrEmpty(request.Material)) item.Material = request.Material;
-        if (!string.IsNullOrEmpty(request.Color)) item.Color = request.Color;
+        if (!string.IsNullOrWhiteSpace(request.Material))
+        {
+            var material = NormalizeVariant(request.Material, item.Material);
+            var error = ValidateVariant(material, "Material");
+            if (error != null) return BadRequest(new { message = error });
+            item.Material = material;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Color))
+        {
+            var color = NormalizeVariant(request.Color, item.Color);
+            var error = ValidateVariant(color, "Color");
+            if (error != null) return BadRequest(new { message = error });
+            item.Color = color;
+        }
 
         cart.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();

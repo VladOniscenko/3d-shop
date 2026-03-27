@@ -40,12 +40,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] Product product)
     {
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (role != "admin")
-            return Forbid();
+        if (string.IsNullOrWhiteSpace(product.Name) || string.IsNullOrWhiteSpace(product.Category))
+            return BadRequest(new { message = "Name and category are required." });
+
+        if (product.Price < 0)
+            return BadRequest(new { message = "Price cannot be negative." });
 
         _db.Products.Add(product);
         await _db.SaveChangesAsync();
@@ -53,12 +55,14 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] Product update)
     {
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (role != "admin")
-            return Forbid();
+        if (string.IsNullOrWhiteSpace(update.Name) || string.IsNullOrWhiteSpace(update.Category))
+            return BadRequest(new { message = "Name and category are required." });
+
+        if (update.Price < 0)
+            return BadRequest(new { message = "Price cannot be negative." });
 
         var existing = await _db.Products.FindAsync(id);
         if (existing == null) return NotFound();
@@ -74,13 +78,9 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (role != "admin")
-            return Forbid();
-
         var existing = await _db.Products.FindAsync(id);
         if (existing == null) return NotFound();
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
+using PrintCraftApi.Validation;
 
 namespace PrintCraftApi.Controllers;
 
@@ -19,6 +20,12 @@ public class OrdersController : ControllerBase
     {
         _db = db;
         _env = env;
+    }
+
+    private static bool IsPendingStatus(string? status)
+    {
+        return !string.IsNullOrWhiteSpace(status)
+            && status.StartsWith("pending", StringComparison.OrdinalIgnoreCase);
     }
 
     [HttpGet]
@@ -59,10 +66,50 @@ public class OrdersController : ControllerBase
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
+        var shippingValidation = ShippingInfoValidator.Validate(
+            order.FullName,
+            order.PhoneNumber,
+            order.AddressLine1,
+            order.City,
+            order.PostalCode);
+
+        if (!shippingValidation.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Please correct shipping info and try again.",
+                errors = shippingValidation.Errors
+            });
+        }
+
+        if (order.Items == null || order.Items.Count == 0)
+        {
+            return BadRequest(new { message = "At least one model is required for a quote." });
+        }
+
+        if (order.Items.Any(i => string.IsNullOrWhiteSpace(i.FileUrl) || i.Count <= 0))
+        {
+            return BadRequest(new { message = "Each quote item must include a valid file and quantity." });
+        }
+
+        if (order.Items.Any(i => i.Count > 100))
+        {
+            return BadRequest(new { message = "Item quantity cannot exceed 100 per model." });
+        }
+
         order.Id = Guid.NewGuid();
         order.UserId = Guid.Parse(userIdStr);
         order.CreatedAt = DateTime.UtcNow;
         order.Status = "pending_quote";
+        order.OrderType = "quote";
+        order.IsPaid = false;
+        order.QuotedPrice = null;
+        order.QuoteMessage = null;
+        order.FullName = shippingValidation.FullName;
+        order.PhoneNumber = shippingValidation.PhoneNumber;
+        order.AddressLine1 = shippingValidation.AddressLine1;
+        order.City = shippingValidation.City;
+        order.PostalCode = shippingValidation.PostalCode;
 
         if (order.Items != null)
         {
@@ -95,8 +142,8 @@ public class OrdersController : ControllerBase
         if (order == null)
             return NotFound(new { message = "Order not found." });
 
-        if (order.Status != "pending_quote")
-            return BadRequest(new { message = "This project is already being processed and cannot be cancelled." });
+        if (!IsPendingStatus(order.Status))
+            return BadRequest(new { message = "Only pending orders can be deleted." });
 
         foreach (var item in order.Items)
         {
@@ -104,8 +151,20 @@ public class OrdersController : ControllerBase
             {
                 try
                 {
-                    var fileName = Path.GetFileName(item.FileUrl);
-                    var filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
+                    var normalizedPath = item.FileUrl.Replace('\\', '/');
+                    var uploadsIndex = normalizedPath.IndexOf("/uploads/", StringComparison.OrdinalIgnoreCase);
+
+                    string filePath;
+                    if (uploadsIndex >= 0)
+                    {
+                        var relativeUploadPath = normalizedPath[(uploadsIndex + 1)..]; // "uploads/<file>"
+                        filePath = Path.Combine(_env.WebRootPath, relativeUploadPath.Replace('/', Path.DirectorySeparatorChar));
+                    }
+                    else
+                    {
+                        var fileName = Path.GetFileName(normalizedPath);
+                        filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
+                    }
 
                     if (System.IO.File.Exists(filePath))
                     {
@@ -119,9 +178,9 @@ public class OrdersController : ControllerBase
             }
         }
 
-        order.Status = "cancelled";
+        _db.Orders.Remove(order);
         await _db.SaveChangesAsync();
 
-        return Ok(new { message = "Project cancelled and files removed.", orderId = id });
+        return Ok(new { message = "Project removed and files deleted.", orderId = id });
     }
 }

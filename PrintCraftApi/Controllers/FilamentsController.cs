@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,12 +25,14 @@ public class FilamentsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] Filament filament)
     {
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (role != "admin")
-            return Forbid();
+        if (string.IsNullOrWhiteSpace(filament.Name) || string.IsNullOrWhiteSpace(filament.Material) || string.IsNullOrWhiteSpace(filament.Color))
+            return BadRequest(new { message = "Name, material and color are required." });
+
+        if (filament.PricePerGram < 0 || filament.StockQuantity < 0)
+            return BadRequest(new { message = "Price and stock cannot be negative." });
 
         _db.Filaments.Add(filament);
         await _db.SaveChangesAsync();

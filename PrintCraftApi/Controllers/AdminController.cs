@@ -13,6 +13,12 @@ namespace PrintCraftApi.Controllers;
 [Authorize(Roles = "admin")]
 public class AdminController : ControllerBase
 {
+    private static bool IsPendingStatus(string? status)
+    {
+        return !string.IsNullOrWhiteSpace(status)
+            && status.StartsWith("pending", StringComparison.OrdinalIgnoreCase);
+    }
+
     [HttpPut("orders/{id:guid}/paid")]
     public async Task<IActionResult> MarkPaid([FromRoute] Guid id)
     {
@@ -214,12 +220,29 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        if (!IsPendingStatus(order.Status))
+            return BadRequest(new { message = "Only pending orders can be deleted." });
+
         // Delete associated files
         foreach (var item in order.Items)
         {
             if (!string.IsNullOrEmpty(item.FileUrl))
             {
-                var filePath = Path.Combine("wwwroot", item.FileUrl.TrimStart('/'));
+                var normalizedPath = item.FileUrl.Replace('\\', '/');
+                var uploadsIndex = normalizedPath.IndexOf("/uploads/", StringComparison.OrdinalIgnoreCase);
+
+                string filePath;
+                if (uploadsIndex >= 0)
+                {
+                    var relativeUploadPath = normalizedPath[(uploadsIndex + 1)..]; // "uploads/<file>"
+                    filePath = Path.Combine("wwwroot", relativeUploadPath.Replace('/', Path.DirectorySeparatorChar));
+                }
+                else
+                {
+                    var fileName = Path.GetFileName(normalizedPath);
+                    filePath = Path.Combine("wwwroot", "uploads", fileName);
+                }
+
                 if (System.IO.File.Exists(filePath))
                 {
                     System.IO.File.Delete(filePath);

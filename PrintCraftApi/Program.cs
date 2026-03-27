@@ -41,7 +41,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // ... Keep your SecretKey and JWT Setup here ...
-var secretKey = "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
+var secretKey = builder.Configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
 var key = Encoding.ASCII.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -24,12 +24,31 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User user)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest req)
     {
-        if (await _db.Users.AnyAsync(u => u.Email == user.Email))
+        var name = req.Name?.Trim();
+        var email = req.Email?.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 80)
+            return BadRequest(new { message = "Name must be between 2 and 80 characters." });
+
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            return BadRequest(new { message = "A valid email is required." });
+
+        if (string.IsNullOrWhiteSpace(req.Password) || req.Password.Length < 8)
+            return BadRequest(new { message = "Password must be at least 8 characters." });
+
+        if (await _db.Users.AnyAsync(u => u.Email == email))
             return BadRequest("Email already exists.");
 
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+        var user = new User
+        {
+            Name = name,
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            Role = "customer"
+        };
+
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
         return Ok(new { message = "User registered!" });
@@ -38,7 +57,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
+        var normalizedEmail = req.Email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized();
 
@@ -73,8 +93,11 @@ public class AuthController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var user = await _db.Users.FindAsync(Guid.Parse(userId));
-        return user != null ? Ok(user) : NotFound();
+        return user != null
+            ? Ok(new { user.Id, user.Name, user.Email, user.Role })
+            : NotFound();
     }
 }
 
+public record RegisterRequest(string Name, string Email, string Password);
 public record LoginRequest(string Email, string Password);
