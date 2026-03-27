@@ -724,7 +724,9 @@ export default function AdminOrderDetail() {
                       {new Date(entry.changedAt).toLocaleString()}
                     </td>
                     <td className="py-2 pr-3">{entry.previousStatus || "-"}</td>
-                    <td className="py-2 pr-3 font-semibold">{entry.newStatus}</td>
+                    <td className="py-2 pr-3 font-semibold">
+                      {entry.newStatus}
+                    </td>
                     <td className="py-2 pr-3">{entry.changedBy || "-"}</td>
                     <td className="py-2">{entry.note || "-"}</td>
                   </tr>
