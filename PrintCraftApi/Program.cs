@@ -2,15 +2,15 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models; // 1. Add this for Swagger security settings
+using Microsoft.OpenApi.Models;
 using PrintCraftApi.Data;
-using PrintCraftApi.Routes;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES ---
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite("Data Source=printcraft.db"));
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 
 // 2. Updated SwaggerGen to handle JWT Lock icons
 builder.Services.AddSwaggerGen(options =>
@@ -77,10 +77,6 @@ app.UseAuthorization();
 app.UseStaticFiles();
 
 // --- ROUTES ---
-app.MapAuthRoutes(secretKey);
-app.MapFilamentRoutes();
-app.MapProductRoutes();
-app.MapOrderRoutes();
-app.MapUploadRoutes();
+app.MapControllers();
 
 app.Run();

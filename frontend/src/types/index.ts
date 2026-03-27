@@ -1,11 +1,12 @@
 export interface Filament {
   id: string;
-  name: string;
+  name: string; // e.g., PLA, PETG
   material: string;
   color: string;
   pricePerGram: number;
-  stockQuantity: number;
-  description: string;
+  stockQuantity?: number;
+  inStock?: boolean;
+  description?: string;
 }
 
 export interface StepItem {
@@ -34,14 +35,6 @@ export interface User {
   name: string;
   email: string;
   role: "customer" | "admin";
-}
-
-export interface Filament {
-  id: string;
-  name: string; // e.g., PLA, PETG
-  color: string;
-  pricePerGram: number;
-  inStock: boolean;
 }
 
 export interface Product {
@@ -74,7 +67,7 @@ export interface Order {
 export interface OrderItem {
   id?: string;
   orderId?: string;
-  productId: string; // Add this line
+  productId?: string;
   imageUrl: string;
   fileUrl?: string;
   fileName: string;
@@ -85,9 +78,42 @@ export interface OrderItem {
   count: number;
 }
 
+export interface CartItem {
+  id: string;
+  productId: string;
+  productName: string;
+  imageUrl: string;
+  material: string;
+  color: string;
+  count: number;
+  price: number;
+}
+
+export interface Cart {
+  id: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  items: CartItem[];
+}
+
 export interface CartContextType {
-  cart: OrderItem[];
-  addToCart: (item: OrderItem) => void;
-  removeFromCart: (index: number) => void;
-  clearCart: () => void;
+  cart: CartItem[];
+  loading: boolean;
+  error: string | null;
+  addToCart: (
+    productId: string,
+    count: number,
+    material: string,
+    color: string,
+  ) => Promise<void>;
+  removeFromCart: (itemId: string) => Promise<void>;
+  updateCartItem: (
+    itemId: string,
+    count?: number,
+    material?: string,
+    color?: string,
+  ) => Promise<void>;
+  clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import {
   Shapes,
@@ -78,25 +78,16 @@ export default function Gallery() {
     fetchGallery();
   }, [activeFilter]);
 
-  const handleAddToCart = (product: Product) => {
-    const fullImageUrl = product.imageUrl
-      ? "http://localhost:5243" + product.imageUrl
-      : "";
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await addToCart(product.id, 1, "PLA", "Black");
 
-    addToCart({
-      productId: product.id, // FIX: Added the missing productId here
-      fileName: product.name,
-      fileUrl: product.imageUrl || "",
-      imageUrl: fullImageUrl,
-      material: "PLA",
-      color: "Black",
-      count: 1,
-      price: product.price || 0,
-      notes: `Gallery Item: ${product.name}`,
-    });
-
-    setAddedItemId(product.id);
-    setTimeout(() => setAddedItemId(null), 2000);
+      setAddedItemId(product.id);
+      setTimeout(() => setAddedItemId(null), 2000);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+      alert("Failed to add to cart. Please try again.");
+    }
   };
 
   return (
