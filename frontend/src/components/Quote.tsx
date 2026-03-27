@@ -65,6 +65,7 @@ export default function Quote() {
   const availableMaterials = Array.from(
     new Set(filaments.map((f) => f.material)),
   );
+  const availableColors = Array.from(new Set(filaments.map((f) => f.color)));
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,9 +78,8 @@ export default function Quote() {
     try {
       const res = await api.post("/upload", formData);
 
-      const defaultMat = availableMaterials[0] || "PLA";
-      const defaultColor =
-        filaments.find((f) => f.material === defaultMat)?.color || "Black";
+      const defaultMat = availableMaterials[0] || "Custom";
+      const defaultColor = availableColors[0] || "Custom";
 
       const newItem: OrderItem = {
         fileUrl: res.data.url,
@@ -210,50 +210,30 @@ export default function Quote() {
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Layers size={12} /> {t("quote.material")}
                           </label>
-                          <select
+                          <input
+                            list="quote-material-suggestions"
                             className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                             value={item.material}
-                            onChange={(e) => {
-                              const newMat = e.target.value;
-                              const firstColor =
-                                filaments.find((f) => f.material === newMat)
-                                  ?.color || "";
-                              const newItems = [...items];
-                              newItems[idx] = {
-                                ...item,
-                                material: newMat,
-                                color: firstColor,
-                              };
-                              setItems(newItems);
-                            }}
-                          >
-                            {availableMaterials.map((m) => (
-                              <option key={m} value={m}>
-                                {m}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(e) =>
+                              updateItem(idx, "material", e.target.value)
+                            }
+                            placeholder="PLA, PETG, ABS, Nylon..."
+                          />
                         </div>
 
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Palette size={12} /> {t("quote.color")}
                           </label>
-                          <select
+                          <input
+                            list="quote-color-suggestions"
                             className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                             value={item.color}
                             onChange={(e) =>
                               updateItem(idx, "color", e.target.value)
                             }
-                          >
-                            {filaments
-                              .filter((f) => f.material === item.material)
-                              .map((f) => (
-                                <option key={f.id} value={f.color}>
-                                  {f.color} ({f.name})
-                                </option>
-                              ))}
-                          </select>
+                            placeholder="Black, White, Red, Transparent..."
+                          />
                         </div>
 
                         <div className="space-y-1">
@@ -295,6 +275,16 @@ export default function Quote() {
                 </div>
               )}
             </div>
+            <datalist id="quote-material-suggestions">
+              {availableMaterials.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+            <datalist id="quote-color-suggestions">
+              {availableColors.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-6">

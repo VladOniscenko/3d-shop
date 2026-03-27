@@ -117,6 +117,15 @@ public class OrdersController : ControllerBase
             {
                 item.Id = Guid.NewGuid();
                 item.OrderId = order.Id;
+                item.Material = string.IsNullOrWhiteSpace(item.Material)
+                    ? "Custom"
+                    : item.Material.Trim();
+                item.Color = string.IsNullOrWhiteSpace(item.Color)
+                    ? "Custom"
+                    : item.Color.Trim();
+                item.Notes = string.IsNullOrWhiteSpace(item.Notes)
+                    ? null
+                    : item.Notes.Trim();
                 item.Price = 0;
             }
         }
