@@ -40,7 +40,9 @@ export default function AdminOrderDetail() {
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
-  const [communications, setCommunications] = useState<OrderCommunication[]>([]);
+  const [communications, setCommunications] = useState<OrderCommunication[]>(
+    [],
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -691,7 +693,8 @@ export default function AdminOrderDetail() {
 
           {emailType === "quote_confirmation" && (
             <p className="text-sm text-[#5b706a]">
-              Price and message are generated automatically from order item prices and delivery.
+              Price and message are generated automatically from order item
+              prices and delivery.
             </p>
           )}
 
@@ -732,7 +735,10 @@ export default function AdminOrderDetail() {
               </thead>
               <tbody>
                 {communications.map((entry) => (
-                  <tr key={entry.id} className="border-b border-[#eef4f1] text-[#304843]">
+                  <tr
+                    key={entry.id}
+                    className="border-b border-[#eef4f1] text-[#304843]"
+                  >
                     <td className="py-2 pr-3 whitespace-nowrap">
                       {new Date(entry.sentAt).toLocaleString()}
                     </td>

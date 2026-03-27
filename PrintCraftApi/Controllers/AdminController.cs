@@ -383,6 +383,24 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPut("orders/{id:guid}/notes")]
+    public async Task<IActionResult> UpdateNotes([FromRoute] Guid id, [FromBody] NotesRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        order.InternalNotes = string.IsNullOrWhiteSpace(payload.InternalNotes)
+            ? null
+            : payload.InternalNotes.Trim();
+        order.CustomerNotes = string.IsNullOrWhiteSpace(payload.CustomerNotes)
+            ? null
+            : payload.CustomerNotes.Trim();
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
     [HttpPost("orders/{id:guid}/email")]
     public async Task<IActionResult> SendOrderEmail([FromRoute] Guid id, [FromBody] SendOrderEmailRequest payload)
     {
