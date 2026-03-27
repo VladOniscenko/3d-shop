@@ -186,10 +186,7 @@ export default function AdminFilaments() {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <AdminBreadcrumb
           title="Filament Management"
-          items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Filaments" },
-          ]}
+          items={[{ label: "Admin", to: "/admin" }, { label: "Filaments" }]}
         />
 
         <form

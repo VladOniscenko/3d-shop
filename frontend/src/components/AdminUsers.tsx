@@ -79,11 +79,10 @@ export default function AdminUsers() {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <AdminBreadcrumb
           title="User Management"
-          items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Users" },
-          ]}
-          rightSlot={<p className="text-sm text-gray-600">Total: {totalCount}</p>}
+          items={[{ label: "Admin", to: "/admin" }, { label: "Users" }]}
+          rightSlot={
+            <p className="text-sm text-gray-600">Total: {totalCount}</p>
+          }
         />
 
         <div className="mb-4 flex flex-wrap gap-2">

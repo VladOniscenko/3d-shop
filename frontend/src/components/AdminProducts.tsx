@@ -83,10 +83,7 @@ export default function AdminProducts() {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <AdminBreadcrumb
           title="Product Catalog Admin"
-          items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Products" },
-          ]}
+          items={[{ label: "Admin", to: "/admin" }, { label: "Products" }]}
         />
 
         <form

@@ -60,10 +60,7 @@ export default function AdminOrders() {
       <main className="max-w-7xl mx-auto px-6 py-10">
         <AdminBreadcrumb
           title="Order Management"
-          items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Orders" },
-          ]}
+          items={[{ label: "Admin", to: "/admin" }, { label: "Orders" }]}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
