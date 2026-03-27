@@ -34,6 +34,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -64,6 +65,26 @@ export default function OrderDetail() {
       console.error(err);
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleConfirmAndPay = async () => {
+    if (!id) return;
+
+    setIsPaying(true);
+    try {
+      const res = await api.post(`/payments/orders/${id}/create`);
+      if (res.data?.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl;
+        return;
+      }
+
+      throw new Error("No checkout URL received from server");
+    } catch (err) {
+      console.error("Quoted payment checkout error", err);
+      notifyError("Could not start payment. Please try again.");
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -104,14 +125,27 @@ export default function OrderDetail() {
         return t("orderStatus.pendingQuote");
       case "printing":
         return t("orderStatus.printing");
+      case "quoted":
+        return "Quoted";
+      case "pending_payment":
+        return "Pending Payment";
       case "completed":
         return t("orderStatus.completed");
+      case "paid":
+        return "Paid";
       case "shipped":
         return t("orderStatus.shipped");
+      case "sent":
+        return "Sent";
+      case "delivered":
+        return "Delivered";
       default:
         return order.status;
     }
   })();
+
+  const displayTotal =
+    order.quotedPrice && order.quotedPrice > 0 ? order.quotedPrice : totalPrice;
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -142,6 +176,21 @@ export default function OrderDetail() {
                 <XCircle size={18} />
               )}
               {t("orderDetail.deleteQuote")}
+            </button>
+          )}
+
+          {order.status === "quoted" && (
+            <button
+              onClick={handleConfirmAndPay}
+              disabled={isPaying}
+              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 border border-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50"
+            >
+              {isPaying ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <CheckCircle2 size={18} />
+              )}
+              Confirm + Pay
             </button>
           )}
         </div>
@@ -277,8 +326,8 @@ export default function OrderDetail() {
                       {t("orderDetail.total")}
                     </span>
                     <span className="text-emerald-400">
-                      {totalPrice > 0
-                        ? `€${totalPrice.toFixed(2)}`
+                      {displayTotal > 0
+                        ? `€${displayTotal.toFixed(2)}`
                         : t("orderDetail.pendingQuote")}
                     </span>
                   </div>

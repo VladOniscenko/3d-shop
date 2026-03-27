@@ -52,12 +52,14 @@ export interface Order {
   status:
     | "pending_quote"
     | "quoted"
+    | "pending_payment"
     | "printing"
     | "completed"
     | "shipped"
     | "sent"
     | "delivered"
     | "paid"
+    | "failed"
     | "cancelled";
   orderType: "quote" | "online";
 

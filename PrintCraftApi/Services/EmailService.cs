@@ -27,6 +27,7 @@ public interface IEmailService
     Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId);
     Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage);
     Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl);
+    Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount);
 }
 
 public sealed class MailtrapEmailService : IEmailService
@@ -122,6 +123,24 @@ public sealed class MailtrapEmailService : IEmailService
             Tracking link: {safeTrackingUrl}
 
             Thanks for choosing PrintCraft.
+
+            - PrintCraft
+            """;
+
+        return SendTextEmailAsync(toEmail, subject, body);
+    }
+
+    public Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount)
+    {
+        var subject = "Payment received for your order";
+        var body = $"""
+            Hi {WebUtility.HtmlEncode(toName)},
+
+            We received your payment for your order.
+            Reference: {orderId}
+            Paid amount: EUR {amount:F2}
+
+            Your order is now confirmed and will move into production.
 
             - PrintCraft
             """;

@@ -9,6 +9,7 @@ using Mollie.Api.Models.Payment;
 using Mollie.Api.Models.Payment.Request;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
+using PrintCraftApi.Services;
 using PrintCraftApi.Validation;
 
 namespace PrintCraftApi.Controllers;
@@ -20,13 +21,77 @@ public class PaymentsController : ControllerBase
     private readonly PrintCraftDb _db;
     private readonly IConfiguration _configuration;
     private readonly PaymentClient _paymentClient;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<PaymentsController> _logger;
 
-    public PaymentsController(PrintCraftDb db, IConfiguration configuration)
+    public PaymentsController(
+        PrintCraftDb db,
+        IConfiguration configuration,
+        IEmailService emailService,
+        ILogger<PaymentsController> logger)
     {
         _db = db;
         _configuration = configuration;
+        _emailService = emailService;
+        _logger = logger;
         var mollieKey = configuration["MollieKey"] ?? "";
         _paymentClient = new PaymentClient(mollieKey);
+    }
+
+    [HttpPost("orders/{orderId:guid}/create")]
+    [Authorize]
+    [EnableRateLimiting("CheckoutLimit")]
+    public async Task<IActionResult> CreateQuotedOrderCheckout([FromRoute] Guid orderId)
+    {
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr))
+            return Unauthorized(new { message = "User not authenticated" });
+
+        var userId = Guid.Parse(userIdStr);
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+
+        if (order == null)
+            return NotFound(new { message = "Order not found" });
+
+        if (!string.Equals(order.Status, "quoted", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Only quoted orders can be paid." });
+
+        if (order.IsPaid)
+            return BadRequest(new { message = "Order is already paid." });
+
+        if (!order.QuotedPrice.HasValue || order.QuotedPrice.Value <= 0)
+            return BadRequest(new { message = "Quoted price is missing for this order." });
+
+        var frontendBaseUrl = (_configuration["FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
+        var backendBaseUrl = (_configuration["BackendBaseUrl"]
+            ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/');
+
+        var paymentRequest = new PaymentRequest
+        {
+            Amount = new Amount(Currency.EUR, order.QuotedPrice.Value.ToString("F2")),
+            Description = $"Quoted order #{order.Id.ToString()[..8]}",
+            RedirectUrl = $"{frontendBaseUrl}/orders/{order.Id}?payment=return",
+            WebhookUrl = $"{backendBaseUrl}/api/payments/webhook",
+            Metadata = order.Id.ToString()
+        };
+
+        var paymentResponse = await _paymentClient.CreatePaymentAsync(paymentRequest);
+        var quotedCheckoutUrl = paymentResponse.Links?.Checkout?.Href;
+        if (string.IsNullOrWhiteSpace(quotedCheckoutUrl))
+        {
+            return BadRequest(new { message = "Mollie did not return a checkout URL." });
+        }
+
+        order.Status = "pending_payment";
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            checkoutUrl = quotedCheckoutUrl,
+            orderId = order.Id
+        });
     }
 
     [HttpPost("create")]
@@ -118,12 +183,17 @@ public class PaymentsController : ControllerBase
         {
             Amount = new Amount(Currency.EUR, finalTotal.ToString("F2")),
             Description = $"Order #{newOrder.Id.ToString().Substring(0, 8)}",
-            RedirectUrl = $"http://localhost:5173/order-status?orderId={newOrder.Id}",
-            WebhookUrl = "https://your-api-domain.com/api/payments/webhook",
+            RedirectUrl = $"{(_configuration["FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/')}/orders/{newOrder.Id}?payment=return",
+            WebhookUrl = $"{(_configuration["BackendBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/')}/api/payments/webhook",
             Metadata = newOrder.Id.ToString()
         };
 
         var paymentResponse = await _paymentClient.CreatePaymentAsync(paymentRequest);
+        var checkoutUrl = paymentResponse.Links?.Checkout?.Href;
+        if (string.IsNullOrWhiteSpace(checkoutUrl))
+        {
+            return BadRequest(new { message = "Mollie did not return a checkout URL." });
+        }
 
         // Clear the cart after successful payment link creation
         _db.CartItems.RemoveRange(cart.Items);
@@ -131,12 +201,13 @@ public class PaymentsController : ControllerBase
 
         return Ok(new
         {
-            checkoutUrl = paymentResponse.Links.Checkout.Href,
+            checkoutUrl,
             orderId = newOrder.Id
         });
     }
 
     [HttpPost("webhook")]
+    [AllowAnonymous]
     public async Task<IActionResult> Webhook()
     {
         try
@@ -152,16 +223,35 @@ public class PaymentsController : ControllerBase
             string? metadata = payment.Metadata?.ToString();
             if (Guid.TryParse(metadata, out Guid orderId))
             {
-                var order = await _db.Orders.FindAsync(orderId);
+                var order = await _db.Orders
+                    .Include(o => o.Items)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
                 if (order != null)
                 {
                     if (payment.Status == PaymentStatus.Paid)
                     {
+                        var wasAlreadyPaid = order.IsPaid;
                         order.Status = "paid";
+                        order.IsPaid = true;
+                        order.UpdatedAt = DateTime.UtcNow;
+
+                        if (!wasAlreadyPaid)
+                        {
+                            var user = await _db.Users.FindAsync(order.UserId);
+                            if (user != null)
+                            {
+                                var paidAmount = order.QuotedPrice
+                                    ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+                                await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
+                            }
+                        }
                     }
                     else if (payment.Status == PaymentStatus.Canceled || payment.Status == PaymentStatus.Expired)
                     {
-                        order.Status = "failed";
+                        order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
+                            ? "quoted"
+                            : "failed";
+                        order.UpdatedAt = DateTime.UtcNow;
                     }
 
                     await _db.SaveChangesAsync();
@@ -170,8 +260,9 @@ public class PaymentsController : ControllerBase
 
             return Ok();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Mollie webhook processing failed.");
             return Ok();
         }
     }

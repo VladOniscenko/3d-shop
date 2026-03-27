@@ -41,10 +41,16 @@ export default function Orders() {
     switch (status.toLowerCase()) {
       case "pending_quote":
         return "bg-amber-50 text-amber-700 border-amber-100";
+      case "quoted":
+        return "bg-sky-50 text-sky-700 border-sky-100";
+      case "pending_payment":
+        return "bg-orange-50 text-orange-700 border-orange-100";
       case "printing":
         return "bg-blue-50 text-blue-700 border-blue-100";
       case "completed":
         return "bg-emerald-50 text-emerald-700 border-emerald-100";
+      case "paid":
+        return "bg-teal-50 text-teal-700 border-teal-100";
       case "shipped":
         return "bg-purple-50 text-purple-700 border-purple-100";
       default:
@@ -56,10 +62,16 @@ export default function Orders() {
     switch (status.toLowerCase()) {
       case "pending_quote":
         return t("orderStatus.pendingQuote");
+      case "quoted":
+        return "Quoted";
+      case "pending_payment":
+        return "Pending Payment";
       case "printing":
         return t("orderStatus.printing");
       case "completed":
         return t("orderStatus.completed");
+      case "paid":
+        return "Paid";
       case "shipped":
         return t("orderStatus.shipped");
       default:
