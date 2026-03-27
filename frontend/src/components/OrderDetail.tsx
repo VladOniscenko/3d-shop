@@ -82,7 +82,7 @@ export default function OrderDetail() {
       throw new Error("No checkout URL received from server");
     } catch (err) {
       console.error("Quoted payment checkout error", err);
-      notifyError("Could not start payment. Please try again.");
+      notifyError(t("orderDetail.paymentStartFailed"));
     } finally {
       setIsPaying(false);
     }
@@ -126,19 +126,19 @@ export default function OrderDetail() {
       case "printing":
         return t("orderStatus.printing");
       case "quoted":
-        return "Quoted";
+        return t("orderStatus.quoted");
       case "pending_payment":
-        return "Pending Payment";
+        return t("orderStatus.pendingPayment");
       case "completed":
         return t("orderStatus.completed");
       case "paid":
-        return "Paid";
+        return t("orderStatus.paid");
       case "shipped":
         return t("orderStatus.shipped");
       case "sent":
-        return "Sent";
+        return t("orderStatus.sent");
       case "delivered":
-        return "Delivered";
+        return t("orderStatus.delivered");
       default:
         return order.status;
     }
@@ -146,6 +146,31 @@ export default function OrderDetail() {
 
   const displayTotal =
     order.quotedPrice && order.quotedPrice > 0 ? order.quotedPrice : totalPrice;
+
+  const statusStep = (() => {
+    switch (order.status.toLowerCase()) {
+      case "pending_quote":
+        return 1;
+      case "quoted":
+      case "pending_payment":
+        return 2;
+      case "paid":
+        return 3;
+      case "printing":
+        return 4;
+      case "completed":
+        return 5;
+      case "sent":
+      case "delivered":
+        return 6;
+      default:
+        return 1;
+    }
+  })();
+
+  const reachedDate = new Date(
+    order.updatedAt || order.createdAt,
+  ).toLocaleDateString();
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -190,7 +215,7 @@ export default function OrderDetail() {
               ) : (
                 <CheckCircle2 size={18} />
               )}
-              Confirm + Pay
+              {t("orderDetail.confirmPay")}
             </button>
           )}
         </div>
@@ -257,20 +282,38 @@ export default function OrderDetail() {
                 <TimelineItem
                   icon={<FileText size={16} />}
                   title={t("orderDetail.quoteRequested")}
-                  date={new Date(order.createdAt).toLocaleDateString()}
-                  active={true}
+                  date={statusStep >= 1 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 1}
+                />
+                <TimelineItem
+                  icon={<Clock size={16} />}
+                  title={t("orderStatus.quoted")}
+                  date={statusStep >= 2 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 2}
+                />
+                <TimelineItem
+                  icon={<CheckCircle2 size={16} />}
+                  title={t("orderStatus.paid")}
+                  date={statusStep >= 3 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 3}
                 />
                 <TimelineItem
                   icon={<Clock size={16} />}
                   title={t("orderDetail.printing")}
-                  date={t("orderDetail.pending")}
-                  active={order.status === "printing"}
+                  date={statusStep >= 4 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 4}
                 />
                 <TimelineItem
                   icon={<CheckCircle2 size={16} />}
                   title={t("orderDetail.completed")}
-                  date={t("orderDetail.pending")}
-                  active={order.status === "completed"}
+                  date={statusStep >= 5 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 5}
+                />
+                <TimelineItem
+                  icon={<Truck size={16} />}
+                  title={t("orderStatus.sent")}
+                  date={statusStep >= 6 ? reachedDate : t("orderDetail.pending")}
+                  active={statusStep >= 6}
                 />
               </div>
             </div>

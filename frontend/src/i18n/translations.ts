@@ -231,9 +231,15 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Order statuses
     "orderStatus.pendingQuote": "Pending Quote",
+    "orderStatus.quoted": "Quoted",
+    "orderStatus.pendingPayment": "Pending Payment",
     "orderStatus.printing": "Printing",
     "orderStatus.completed": "Completed",
     "orderStatus.shipped": "Shipped",
+    "orderStatus.sent": "Sent",
+    "orderStatus.delivered": "Delivered",
+    "orderStatus.paid": "Paid",
+    "orderStatus.failed": "Failed",
 
     // Orders
     "orders.title": "My Projects",
@@ -268,6 +274,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Total",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Reference ID",
+    "orderDetail.confirmPay": "Confirm + Pay",
+    "orderDetail.paymentStartFailed":
+      "Could not start payment. Please try again.",
 
     // Legal pages
     "legal.updated": "Last updated: 27 March 2026",
@@ -588,9 +597,15 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Order statuses
     "orderStatus.pendingQuote": "Offerte in behandeling",
+    "orderStatus.quoted": "Geoffreerd",
+    "orderStatus.pendingPayment": "In afwachting van betaling",
     "orderStatus.printing": "In productie",
     "orderStatus.completed": "Afgerond",
     "orderStatus.shipped": "Verzonden",
+    "orderStatus.sent": "Verstuurd",
+    "orderStatus.delivered": "Afgeleverd",
+    "orderStatus.paid": "Betaald",
+    "orderStatus.failed": "Mislukt",
 
     // Orders
     "orders.title": "Mijn Projecten",
@@ -624,6 +639,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Totaal",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Referentie-ID",
+    "orderDetail.confirmPay": "Bevestig + Betaal",
+    "orderDetail.paymentStartFailed":
+      "Betaling starten is niet gelukt. Probeer opnieuw.",
 
     // Legal pages
     "legal.updated": "Laatst bijgewerkt: 27 maart 2026",

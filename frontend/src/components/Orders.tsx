@@ -63,17 +63,23 @@ export default function Orders() {
       case "pending_quote":
         return t("orderStatus.pendingQuote");
       case "quoted":
-        return "Quoted";
+        return t("orderStatus.quoted");
       case "pending_payment":
-        return "Pending Payment";
+        return t("orderStatus.pendingPayment");
       case "printing":
         return t("orderStatus.printing");
       case "completed":
         return t("orderStatus.completed");
       case "paid":
-        return "Paid";
+        return t("orderStatus.paid");
       case "shipped":
         return t("orderStatus.shipped");
+      case "sent":
+        return t("orderStatus.sent");
+      case "delivered":
+        return t("orderStatus.delivered");
+      case "failed":
+        return t("orderStatus.failed");
       default:
         return status;
     }
