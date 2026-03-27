@@ -10,12 +10,31 @@ import FAQ from "./components/FAQ";
 import Orders from "./components/Orders";
 import OrderDetail from "./components/OrderDetail";
 import Cart from "./components/Cart";
+import AdminDashboard from "./components/AdminDashboard";
+import AdminOrders from "./components/AdminOrders";
+import AdminOrderDetail from "./components/AdminOrderDetail";
+import AdminUsers from "./components/AdminUsers";
+import AdminProducts from "./components/AdminProducts";
 
 import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
   return token ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+  if (!token || !user) return <Navigate to="/login" replace />;
+
+  try {
+    const parsed = JSON.parse(user);
+    if (parsed.role === "admin") return <>{children}</>;
+  } catch {
+    /* fall through */
+  }
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -62,6 +81,47 @@ export default function App() {
             <ProtectedRoute>
               <Cart />
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrders />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/orders/:id"
+          element={
+            <AdminRoute>
+              <AdminOrderDetail />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <AdminProducts />
+            </AdminRoute>
           }
         />
       </Routes>

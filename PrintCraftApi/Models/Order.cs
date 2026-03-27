@@ -16,8 +16,15 @@ public class Order
     [Required] public string PhoneNumber { get; set; } = string.Empty;
 
     public string Status { get; set; } = "pending_quote";
-    public decimal DeliveryPrice { get; set; } = 0;
+    public string OrderType { get; set; } = "quote"; // "quote" or "online"
+    public decimal DeliveryPrice { get; set; } = 6.95m;
+    public decimal? QuotedPrice { get; set; }
+    public string? QuoteMessage { get; set; }
+    public string? InternalNotes { get; set; }
+    public string? CustomerNotes { get; set; }
+    public bool IsPaid { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // The list of items in this order
     public List<OrderItem> Items { get; set; } = new();
