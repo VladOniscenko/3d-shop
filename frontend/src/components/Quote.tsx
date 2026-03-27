@@ -22,6 +22,7 @@ import {
   validateShippingInfo,
 } from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function Quote() {
   const { t } = useI18n();
@@ -90,7 +91,7 @@ export default function Quote() {
       };
       setItems([...items, newItem]);
     } catch (err) {
-      alert(t("gallery.addFailed"));
+      alert(t("quote.uploadFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -113,7 +114,7 @@ export default function Quote() {
     const errors = validateShippingInfo(address);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0) {
-      return alert(t("quote.shipping"));
+      return alert(t("quote.invalidShipping"));
     }
 
     setIsSubmitting(true);
@@ -127,9 +128,7 @@ export default function Quote() {
         setValidationErrors(apiErrors);
       }
 
-      const message =
-        err?.response?.data?.message ||
-        "Failed to submit quote. Check your connection.";
+      const message = err?.response?.data?.message || t("quote.submitFailed");
       alert(message);
     } finally {
       setIsSubmitting(false);
@@ -203,7 +202,7 @@ export default function Quote() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Layers size={12} /> Material
+                            <Layers size={12} /> {t("quote.material")}
                           </label>
                           <select
                             className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
@@ -232,7 +231,7 @@ export default function Quote() {
 
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Palette size={12} /> Color
+                            <Palette size={12} /> {t("quote.color")}
                           </label>
                           <select
                             className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
@@ -253,7 +252,7 @@ export default function Quote() {
 
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Hash size={12} /> Quantity
+                            <Hash size={12} /> {t("quote.quantity")}
                           </label>
                           <input
                             type="number"
@@ -277,7 +276,7 @@ export default function Quote() {
                           size={16}
                         />
                         <textarea
-                          placeholder="Instructions (Infill, layer height, etc.)"
+                          placeholder={t("quote.notesPlaceholder")}
                           className="w-full p-3 pl-10 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
                           value={item.notes}
                           onChange={(e) =>
@@ -301,7 +300,7 @@ export default function Quote() {
               <div className="space-y-4">
                 <input
                   required
-                  placeholder="Full Name"
+                  placeholder={t("quote.fullName")}
                   className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
                     validationErrors.fullName
                       ? "border-red-300 focus:ring-red-400"
@@ -326,7 +325,7 @@ export default function Quote() {
                   <input
                     required
                     type="tel"
-                    placeholder="Phone Number"
+                    placeholder={t("quote.phone")}
                     className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 ${
                       validationErrors.phoneNumber
                         ? "border-red-300 focus:ring-red-400"
@@ -346,7 +345,7 @@ export default function Quote() {
 
                 <input
                   required
-                  placeholder="Street Address"
+                  placeholder={t("quote.street")}
                   className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
                     validationErrors.addressLine1
                       ? "border-red-300 focus:ring-red-400"
@@ -366,7 +365,7 @@ export default function Quote() {
                   <div>
                     <input
                       required
-                      placeholder="City"
+                      placeholder={t("quote.city")}
                       className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
                         validationErrors.city
                           ? "border-red-300 focus:ring-red-400"
@@ -386,7 +385,7 @@ export default function Quote() {
                   <div>
                     <input
                       required
-                      placeholder="Postal Code"
+                      placeholder={t("quote.postalCode")}
                       className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
                         validationErrors.postalCode
                           ? "border-red-300 focus:ring-red-400"
@@ -425,6 +424,7 @@ export default function Quote() {
           </div>
         </form>
       </main>
+      <Footer />
     </div>
   );
 }

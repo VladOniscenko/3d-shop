@@ -16,6 +16,10 @@ import AdminOrderDetail from "./components/AdminOrderDetail";
 import AdminUsers from "./components/AdminUsers";
 import AdminProducts from "./components/AdminProducts";
 import SeoManager from "./components/SeoManager";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import TermsOfService from "./components/TermsOfService";
+import RefundPolicy from "./components/RefundPolicy";
+import ShippingPolicy from "./components/ShippingPolicy";
 
 import { Navigate } from "react-router-dom";
 
@@ -51,6 +55,10 @@ export default function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/refunds" element={<RefundPolicy />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
 
         {/* Private Routes - Only logged-in users can see these */}
         <Route

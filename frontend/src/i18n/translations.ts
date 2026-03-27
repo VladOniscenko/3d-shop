@@ -29,8 +29,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Professional 3D printing services for prototypes, parts, and custom projects across the Netherlands.",
     "footer.contact": "Contact",
     "footer.location": "Location",
+    "footer.locationValue": "Rotterdam, Netherlands",
     "footer.hours": "Opening Hours",
     "footer.hoursValue": "Mon - Fri, 09:00 - 18:00",
+    "footer.privacy": "Privacy Policy",
+    "footer.terms": "Terms of Service",
+    "footer.refunds": "Refund Policy",
+    "footer.shippingPolicy": "Shipping Policy",
     "footer.copyright": "© 2026 PrintCraft Collective. All rights reserved.",
 
     // Home
@@ -186,6 +191,18 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.shipping": "Shipping Info",
     "quote.submit": "Submit Quote Request",
     "quote.secure": "Safe & Secure 3D Printing",
+    "quote.uploadFailed": "Upload failed. Please try again.",
+    "quote.invalidShipping": "Please fix shipping info before submitting.",
+    "quote.submitFailed": "Failed to submit quote. Check your connection.",
+    "quote.material": "Material",
+    "quote.color": "Color",
+    "quote.quantity": "Quantity",
+    "quote.notesPlaceholder": "Instructions (Infill, layer height, etc.)",
+    "quote.fullName": "Full Name",
+    "quote.phone": "Phone Number",
+    "quote.street": "Street Address",
+    "quote.city": "City",
+    "quote.postalCode": "Postal Code",
 
     // Cart
     "cart.loading": "Loading cart...",
@@ -207,8 +224,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.shipping": "Shipping",
     "cart.processing": "Processing...",
     "cart.payMollie": "Pay with Mollie",
+    "cart.checkoutFailed":
+      "Something went wrong. Please check your address and try again.",
     "cart.conflict":
       "Your cart was updated elsewhere. Please refresh your cart and try again.",
+
+    // Order statuses
+    "orderStatus.pendingQuote": "Pending Quote",
+    "orderStatus.printing": "Printing",
+    "orderStatus.completed": "Completed",
+    "orderStatus.shipped": "Shipped",
 
     // Orders
     "orders.title": "My Projects",
@@ -243,6 +268,64 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Total",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Reference ID",
+
+    // Legal pages
+    "legal.updated": "Last updated: 27 March 2026",
+    "legal.contact.title": "Legal Contact",
+    "legal.contact.body":
+      "For legal or privacy questions, email info@printcraft.nl. We aim to respond within 5 business days.",
+    "legal.privacy.title": "Privacy Policy",
+    "legal.privacy.section1Title": "What we collect",
+    "legal.privacy.section1Body":
+      "We collect data needed to operate our service: account details, contact information, shipping address, payment status, and uploaded model files.",
+    "legal.privacy.section2Title": "How we use your data",
+    "legal.privacy.section2Body":
+      "We use your data for quote calculation, production planning, shipping, customer support, fraud prevention, and operational communication. We do not sell personal data.",
+    "legal.privacy.section3Title": "Data retention",
+    "legal.privacy.section3Body":
+      "Order and invoice records are stored as required for accounting and legal obligations. Non-essential data can be removed on verified request.",
+    "legal.privacy.section4Title": "Your rights",
+    "legal.privacy.section4Body":
+      "You can request access, correction, deletion, or export of personal data, subject to legal retention requirements.",
+    "legal.terms.title": "Terms of Service",
+    "legal.terms.section1Title": "Service scope",
+    "legal.terms.section1Body":
+      "By submitting files, you confirm that you own or are authorized to use them and that they do not violate laws or third-party rights.",
+    "legal.terms.section2Title": "Quotes and orders",
+    "legal.terms.section2Body":
+      "Quotes are estimates based on material, complexity, and production time. Production starts only after explicit approval and confirmed payment.",
+    "legal.terms.section3Title": "Limitation of liability",
+    "legal.terms.section3Body":
+      "Customers are responsible for functional suitability and safety of uploaded designs. Our liability is limited to the value of the specific order where legally allowed.",
+    "legal.terms.section4Title": "Governing law",
+    "legal.terms.section4Body":
+      "These terms are governed by Dutch law. Disputes are handled by the competent court in the Netherlands unless mandatory consumer law states otherwise.",
+    "legal.refunds.title": "Refund Policy",
+    "legal.refunds.section1Title": "Damaged or defective items",
+    "legal.refunds.section1Body":
+      "If an item arrives damaged or has major production defects, contact us within 3 days with photos. We will assess and offer a reprint or refund where appropriate.",
+    "legal.refunds.section2Title": "Custom-made products",
+    "legal.refunds.section2Body":
+      "Because items are custom-made from your files, approved designs are generally non-refundable unless there is a clear manufacturing error.",
+    "legal.refunds.section3Title": "Cancellation",
+    "legal.refunds.section3Body":
+      "Quotes can be canceled before production starts. Once production has started, cancellation is usually no longer possible.",
+    "legal.refunds.section4Title": "Exclusions",
+    "legal.refunds.section4Body":
+      "Color variation, minor surface artifacts, or dimensional tolerances within normal 3D-print limits are not treated as defects.",
+    "legal.shipping.title": "Shipping Policy",
+    "legal.shipping.section1Title": "Processing time",
+    "legal.shipping.section1Body":
+      "Most orders are produced and prepared for shipment within 2 to 5 business days, depending on queue, complexity, and material availability.",
+    "legal.shipping.section2Title": "Delivery area",
+    "legal.shipping.section2Body":
+      "We deliver across the Netherlands. Shipping fees are shown during checkout.",
+    "legal.shipping.section3Title": "Tracking",
+    "legal.shipping.section3Body":
+      "When available, tracking details are shared after dispatch so you can follow delivery progress.",
+    "legal.shipping.section4Title": "Delays and risk",
+    "legal.shipping.section4Body":
+      "Carrier delays may occur outside our control. Risk transfers at delivery unless mandatory consumer law provides otherwise.",
 
     // SEO
     "seo.default.title": "3D Print Service Netherlands | PrintCraft",
@@ -295,8 +378,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Professionele 3D-printservice voor prototypes, onderdelen en maatwerkprojecten in heel Nederland.",
     "footer.contact": "Contact",
     "footer.location": "Locatie",
+    "footer.locationValue": "Rotterdam, Nederland",
     "footer.hours": "Openingstijden",
     "footer.hoursValue": "Ma - Vr, 09:00 - 18:00",
+    "footer.privacy": "Privacybeleid",
+    "footer.terms": "Algemene Voorwaarden",
+    "footer.refunds": "Retour- en Terugbetaalbeleid",
+    "footer.shippingPolicy": "Verzendbeleid",
     "footer.copyright":
       "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
 
@@ -458,6 +546,20 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.shipping": "Verzendgegevens",
     "quote.submit": "Offerte Aanvraag Versturen",
     "quote.secure": "Veilig & Betrouwbaar 3D Printen",
+    "quote.uploadFailed": "Upload mislukt. Probeer opnieuw.",
+    "quote.invalidShipping":
+      "Controleer je verzendgegevens voordat je verzendt.",
+    "quote.submitFailed":
+      "Offerte verzenden mislukt. Controleer je verbinding.",
+    "quote.material": "Materiaal",
+    "quote.color": "Kleur",
+    "quote.quantity": "Aantal",
+    "quote.notesPlaceholder": "Instructies (Infill, laaghoogte, etc.)",
+    "quote.fullName": "Volledige naam",
+    "quote.phone": "Telefoonnummer",
+    "quote.street": "Straat en huisnummer",
+    "quote.city": "Plaats",
+    "quote.postalCode": "Postcode",
 
     // Cart
     "cart.loading": "Winkelwagen laden...",
@@ -479,8 +581,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.shipping": "Verzending",
     "cart.processing": "Verwerken...",
     "cart.payMollie": "Betaal met Mollie",
+    "cart.checkoutFailed":
+      "Er ging iets mis. Controleer je adres en probeer opnieuw.",
     "cart.conflict":
       "Je winkelwagen is elders bijgewerkt. Vernieuw je winkelwagen en probeer opnieuw.",
+
+    // Order statuses
+    "orderStatus.pendingQuote": "Offerte in behandeling",
+    "orderStatus.printing": "In productie",
+    "orderStatus.completed": "Afgerond",
+    "orderStatus.shipped": "Verzonden",
 
     // Orders
     "orders.title": "Mijn Projecten",
@@ -514,6 +624,64 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Totaal",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Referentie-ID",
+
+    // Legal pages
+    "legal.updated": "Laatst bijgewerkt: 27 maart 2026",
+    "legal.contact.title": "Juridisch Contact",
+    "legal.contact.body":
+      "Voor juridische of privacyvragen kun je mailen naar info@printcraft.nl. We reageren doorgaans binnen 5 werkdagen.",
+    "legal.privacy.title": "Privacybeleid",
+    "legal.privacy.section1Title": "Welke gegevens we verzamelen",
+    "legal.privacy.section1Body":
+      "We verzamelen gegevens die nodig zijn voor onze dienstverlening: accountgegevens, contactgegevens, verzendadres, betaalstatus en geuploade modelbestanden.",
+    "legal.privacy.section2Title": "Hoe we je gegevens gebruiken",
+    "legal.privacy.section2Body":
+      "Je gegevens gebruiken we voor offerteberekening, productieplanning, verzending, klantenservice, fraudepreventie en operationele communicatie. We verkopen geen persoonsgegevens.",
+    "legal.privacy.section3Title": "Bewaartermijn",
+    "legal.privacy.section3Body":
+      "Bestel- en factuurgegevens bewaren we zolang wettelijk vereist voor administratie en boekhouding. Niet-essentiële gegevens verwijderen we op een geverifieerd verzoek.",
+    "legal.privacy.section4Title": "Jouw rechten",
+    "legal.privacy.section4Body":
+      "Je kunt inzage, correctie, verwijdering of export van persoonsgegevens aanvragen, voor zover dit past binnen wettelijke bewaarplichten.",
+    "legal.terms.title": "Algemene Voorwaarden",
+    "legal.terms.section1Title": "Reikwijdte van de dienst",
+    "legal.terms.section1Body":
+      "Door bestanden aan te leveren bevestig je dat je eigenaar bent van die bestanden of bevoegd bent om ze te gebruiken, en dat ze geen wet of rechten van derden schenden.",
+    "legal.terms.section2Title": "Offertes en bestellingen",
+    "legal.terms.section2Body":
+      "Offertes zijn schattingen op basis van materiaal, complexiteit en productietijd. Productie start uitsluitend na expliciet akkoord en bevestigde betaling.",
+    "legal.terms.section3Title": "Beperking van aansprakelijkheid",
+    "legal.terms.section3Body":
+      "Klanten blijven verantwoordelijk voor de functionele geschiktheid en veiligheid van aangeleverde ontwerpen. Onze aansprakelijkheid is, waar wettelijk toegestaan, beperkt tot de waarde van de betreffende bestelling.",
+    "legal.terms.section4Title": "Toepasselijk recht",
+    "legal.terms.section4Body":
+      "Op deze voorwaarden is Nederlands recht van toepassing. Geschillen worden voorgelegd aan de bevoegde rechter in Nederland, tenzij dwingend consumentenrecht anders bepaalt.",
+    "legal.refunds.title": "Retour- en Terugbetaalbeleid",
+    "legal.refunds.section1Title": "Beschadigde of defecte items",
+    "legal.refunds.section1Body":
+      "Als een item beschadigd aankomt of ernstige productiefouten bevat, neem dan binnen 3 dagen contact op met foto's. We beoordelen het en bieden waar passend een herprint of terugbetaling.",
+    "legal.refunds.section2Title": "Maatwerkproducten",
+    "legal.refunds.section2Body":
+      "Omdat items op maat worden gemaakt op basis van jouw bestanden, zijn goedgekeurde ontwerpen in principe niet restitueerbaar, behalve bij aantoonbare productiefouten.",
+    "legal.refunds.section3Title": "Annulering",
+    "legal.refunds.section3Body":
+      "Een offerte kun je annuleren voordat productie start. Zodra productie is begonnen, is annuleren doorgaans niet meer mogelijk.",
+    "legal.refunds.section4Title": "Uitsluitingen",
+    "legal.refunds.section4Body":
+      "Kleurafwijkingen, kleine oppervlaktelijnen en maatverschillen binnen normale 3D-print toleranties gelden niet als defect.",
+    "legal.shipping.title": "Verzendbeleid",
+    "legal.shipping.section1Title": "Verwerkingstijd",
+    "legal.shipping.section1Body":
+      "De meeste bestellingen worden binnen 2 tot 5 werkdagen geproduceerd en verzendklaar gemaakt, afhankelijk van drukte, complexiteit en materiaalbeschikbaarheid.",
+    "legal.shipping.section2Title": "Leveringsgebied",
+    "legal.shipping.section2Body":
+      "We leveren door heel Nederland. Verzendkosten worden tijdens checkout getoond.",
+    "legal.shipping.section3Title": "Track & trace",
+    "legal.shipping.section3Body":
+      "Wanneer beschikbaar delen we na verzending track & trace-gegevens zodat je de levering kunt volgen.",
+    "legal.shipping.section4Title": "Vertraging en risico",
+    "legal.shipping.section4Body":
+      "Vertraging door vervoerders kan buiten onze invloed liggen. Het risico gaat over bij levering, tenzij dwingend consumentenrecht anders bepaalt.",
 
     // SEO
     "seo.default.title": "3D Print Service Nederland | PrintCraft",

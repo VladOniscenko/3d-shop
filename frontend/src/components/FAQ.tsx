@@ -4,9 +4,11 @@ import Navbar from "./Navbar";
 import { ChevronDown, ChevronUp, MessageCircleQuestion } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { Link } from "react-router-dom";
 
 export default function FAQ() {
   const { t } = useI18n();
+  const supportPath = localStorage.getItem("token") ? "/quote" : "/signup";
   const faqData = [
     { question: t("faq.q1"), answer: t("faq.a1") },
     { question: t("faq.q2"), answer: t("faq.a2") },
@@ -92,15 +94,15 @@ export default function FAQ() {
         </div>
 
         {/* Contact Support Box */}
-        {/* <div className="mt-12 text-center">
+        <div className="mt-12 text-center">
           <p className="text-gray-500 mb-4">{t("faq.contactText")}</p>
           <Link
-            to="/quote"
+            to={supportPath}
             className="text-[#133827] font-bold hover:underline"
           >
             {t("faq.contactCta")}
           </Link>
-        </div> */}
+        </div>
       </main>
 
       <Footer />

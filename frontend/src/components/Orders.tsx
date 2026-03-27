@@ -15,6 +15,7 @@ import type { Order } from "../types";
 import api from "../services/api";
 import { Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function Orders() {
   const { t } = useI18n();
@@ -48,6 +49,21 @@ export default function Orders() {
         return "bg-purple-50 text-purple-700 border-purple-100";
       default:
         return "bg-gray-50 text-gray-600 border-gray-100";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending_quote":
+        return t("orderStatus.pendingQuote");
+      case "printing":
+        return t("orderStatus.printing");
+      case "completed":
+        return t("orderStatus.completed");
+      case "shipped":
+        return t("orderStatus.shipped");
+      default:
+        return status;
     }
   };
 
@@ -114,7 +130,7 @@ export default function Orders() {
                         <span
                           className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getStatusStyle(order.status)}`}
                         >
-                          {order.status.replace("_", " ")}
+                          {getStatusLabel(order.status)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-400">
@@ -154,6 +170,7 @@ export default function Orders() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

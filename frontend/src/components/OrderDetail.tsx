@@ -23,6 +23,7 @@ import Navbar from "./Navbar";
 import api from "../services/api";
 import type { Order } from "../types";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function OrderDetail() {
   const { t } = useI18n();
@@ -95,6 +96,21 @@ export default function OrderDetail() {
     : order.items.reduce((sum, item) => sum + item.price, 0) +
       (order.deliveryPrice ?? 0);
 
+  const statusLabel = (() => {
+    switch (order.status.toLowerCase()) {
+      case "pending_quote":
+        return t("orderStatus.pendingQuote");
+      case "printing":
+        return t("orderStatus.printing");
+      case "completed":
+        return t("orderStatus.completed");
+      case "shipped":
+        return t("orderStatus.shipped");
+      default:
+        return order.status;
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
@@ -153,7 +169,7 @@ export default function OrderDetail() {
                           {/* ITEM PRICE IF SET */}
                           {item.price > 0 && (
                             <span className="font-bold text-emerald-700">
-                              ${item.price.toFixed(2)}
+                              €{item.price.toFixed(2)}
                             </span>
                           )}
                         </div>
@@ -271,7 +287,7 @@ export default function OrderDetail() {
                     {t("orderDetail.status")}
                   </p>
                   <p className="text-xl font-bold text-emerald-400 uppercase tracking-tight">
-                    {order.status.replace("_", " ")}
+                    {statusLabel}
                   </p>
                 </div>
               </div>
@@ -289,6 +305,7 @@ export default function OrderDetail() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

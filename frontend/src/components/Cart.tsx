@@ -23,6 +23,7 @@ import {
   validateShippingInfo,
 } from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function CheckoutPage() {
   const { t } = useI18n();
@@ -123,7 +124,7 @@ export default function CheckoutPage() {
     }
 
     if (!validateForm()) {
-      alert(t("quote.shipping"));
+      alert(t("quote.invalidShipping"));
       return;
     }
 
@@ -140,7 +141,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error("Checkout Error:", err);
-      alert(t("gallery.addFailed"));
+      alert(t("cart.checkoutFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -373,7 +374,7 @@ export default function CheckoutPage() {
                 <div>
                   <input
                     type="text"
-                    placeholder="Full Name"
+                    placeholder={t("quote.fullName")}
                     className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
                       validationErrors.fullName
                         ? "border-red-300 focus:ring-red-400"
@@ -399,7 +400,7 @@ export default function CheckoutPage() {
                     />
                     <input
                       type="tel"
-                      placeholder="Phone Number"
+                      placeholder={t("quote.phone")}
                       className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
                         validationErrors.phoneNumber
                           ? "border-red-300 focus:ring-red-400"
@@ -421,7 +422,7 @@ export default function CheckoutPage() {
                 <div>
                   <input
                     type="text"
-                    placeholder="Street Address"
+                    placeholder={t("quote.street")}
                     className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
                       validationErrors.addressLine1
                         ? "border-red-300 focus:ring-red-400"
@@ -443,7 +444,7 @@ export default function CheckoutPage() {
                   <div>
                     <input
                       type="text"
-                      placeholder="City"
+                      placeholder={t("quote.city")}
                       className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
                         validationErrors.city
                           ? "border-red-300 focus:ring-red-400"
@@ -463,7 +464,7 @@ export default function CheckoutPage() {
                   <div>
                     <input
                       type="text"
-                      placeholder="Postal Code"
+                      placeholder={t("quote.postalCode")}
                       className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
                         validationErrors.postalCode
                           ? "border-red-300 focus:ring-red-400"
@@ -508,6 +509,7 @@ export default function CheckoutPage() {
           </div>
         </form>
       </main>
+      <Footer />
     </div>
   );
 }

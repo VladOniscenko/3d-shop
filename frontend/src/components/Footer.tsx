@@ -1,5 +1,6 @@
 import { Mail, Phone, MapPin, Clock3 } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const { t } = useI18n();
@@ -26,12 +27,12 @@ export default function Footer() {
           >
             <Mail size={16} /> info@printcraft.nl
           </a>
-          {/* <a
+          <a
             href="tel:+31101234567"
             className="flex items-center gap-2 hover:text-emerald-700"
           >
             <Phone size={16} /> +31 10 123 4567
-          </a> */}
+          </a>
         </div>
 
         <div className="text-sm text-gray-600 space-y-2">
@@ -39,7 +40,7 @@ export default function Footer() {
             {t("footer.location")}
           </p>
           <p className="flex items-center gap-2">
-            <MapPin size={16} /> Rotterdam, Nederland
+            <MapPin size={16} /> {t("footer.locationValue")}
           </p>
         </div>
 
@@ -50,6 +51,23 @@ export default function Footer() {
           <p className="flex items-center gap-2">
             <Clock3 size={16} /> {t("footer.hoursValue")}
           </p>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
+          <Link to="/privacy" className="hover:text-emerald-700">
+            {t("footer.privacy")}
+          </Link>
+          <Link to="/terms" className="hover:text-emerald-700">
+            {t("footer.terms")}
+          </Link>
+          <Link to="/refunds" className="hover:text-emerald-700">
+            {t("footer.refunds")}
+          </Link>
+          <Link to="/shipping-policy" className="hover:text-emerald-700">
+            {t("footer.shippingPolicy")}
+          </Link>
         </div>
       </div>
 
