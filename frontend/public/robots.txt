@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Update domain below if your production domain is different.
+Sitemap: https://printcraft.nl/sitemap.xml

@@ -15,6 +15,7 @@ import AdminOrders from "./components/AdminOrders";
 import AdminOrderDetail from "./components/AdminOrderDetail";
 import AdminUsers from "./components/AdminUsers";
 import AdminProducts from "./components/AdminProducts";
+import SeoManager from "./components/SeoManager";
 
 import { Navigate } from "react-router-dom";
 
@@ -40,6 +41,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <SeoManager />
       <Routes>
         {/* Public Routes - Anyone can see these */}
         <Route path="/" element={<Home />} />

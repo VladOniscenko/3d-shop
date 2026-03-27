@@ -7,14 +7,14 @@ export default function Hero() {
       {/* Left Content */}
       <div className="lg:w-1/2 text-white z-10 space-y-8">
         <div className="space-y-4 max-w-xl">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
             Custom 3D Prints,
             <br />
             Made to Order
-          </h2>
+          </h1>
           <p className="text-emerald-50/80 text-lg leading-relaxed max-w-md">
             Bring your ideas to life with precision prints from our Bambu Lab
-            P2S. Upload your model.
+            P2S. We serve customers across the Netherlands.
           </p>
         </div>
 
