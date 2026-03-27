@@ -3,6 +3,7 @@ import { useState } from "react";
 import Navbar from "./Navbar";
 import { ChevronDown, ChevronUp, MessageCircleQuestion } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function FAQ() {
   const { t } = useI18n();
@@ -102,10 +103,7 @@ export default function FAQ() {
         </div> */}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-6 text-center text-gray-500 text-sm mt-auto">
-        <p>© 2026 PrintCraft Collective. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../types";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 const getCategoryDesign = (category: string) => {
   switch (category) {
@@ -264,11 +265,7 @@ export default function Gallery() {
         </div>
       )}
 
-      <footer className="bg-white border-t border-gray-50 py-12 text-center">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-          © 2026 PrintCraft Collective • Built for Creators
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

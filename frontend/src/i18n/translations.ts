@@ -23,6 +23,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "nav.newPrint": "New Print",
     "nav.logOut": "Log Out",
 
+    // Footer
+    "footer.companyName": "PrintCraft Collective",
+    "footer.tagline":
+      "Professional 3D printing services for prototypes, parts, and custom projects across the Netherlands.",
+    "footer.contact": "Contact",
+    "footer.location": "Location",
+    "footer.hours": "Opening Hours",
+    "footer.hoursValue": "Mon - Fri, 09:00 - 18:00",
+    "footer.copyright": "© 2026 PrintCraft Collective. All rights reserved.",
+
     // Home
     "home.footer": "© 2026 PrintCraft Collective. All rights reserved.",
 
@@ -278,6 +288,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "nav.getStarted": "Start Nu",
     "nav.newPrint": "Nieuwe Print",
     "nav.logOut": "Uitloggen",
+
+    // Footer
+    "footer.companyName": "PrintCraft Collective",
+    "footer.tagline":
+      "Professionele 3D-printservice voor prototypes, onderdelen en maatwerkprojecten in heel Nederland.",
+    "footer.contact": "Contact",
+    "footer.location": "Locatie",
+    "footer.hours": "Openingstijden",
+    "footer.hoursValue": "Ma - Vr, 09:00 - 18:00",
+    "footer.copyright": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
 
     // Home
     "home.footer": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",

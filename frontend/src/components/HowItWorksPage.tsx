@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function HowItWorksPage() {
   const { t } = useI18n();
@@ -102,10 +103,7 @@ export default function HowItWorksPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-6 text-center text-gray-500 text-sm">
-        <p>© 2026 PrintCraft Collective. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

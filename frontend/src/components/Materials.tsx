@@ -4,6 +4,7 @@ import Navbar from "./Navbar";
 import type { Filament } from "../types"; // Use the new interface name
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
+import Footer from "./Footer";
 
 export default function Materials() {
   const { t } = useI18n();
@@ -128,9 +129,7 @@ export default function Materials() {
         </div>
       </main>
 
-      <footer className="py-12 text-center text-gray-400 text-xs">
-        <p>{t("materials.footer")}</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
