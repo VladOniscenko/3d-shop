@@ -16,6 +16,15 @@ interface OrderCommunication {
   sentAt: string;
 }
 
+interface OrderStatusHistoryEntry {
+  id: string;
+  previousStatus?: string | null;
+  newStatus: string;
+  changedAt: string;
+  changedBy?: string | null;
+  note?: string | null;
+}
+
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams<{ id: string }>();
@@ -41,6 +50,9 @@ export default function AdminOrderDetail() {
   const [trackingUrl, setTrackingUrl] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
   const [communications, setCommunications] = useState<OrderCommunication[]>(
+    [],
+  );
+  const [statusHistory, setStatusHistory] = useState<OrderStatusHistoryEntry[]>(
     [],
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -75,12 +87,14 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const [res, commsRes] = await Promise.all([
+        const [res, commsRes, statusRes] = await Promise.all([
           api.get(`/admin/orders/${id}`),
           api.get(`/admin/orders/${id}/communications`),
+          api.get(`/admin/orders/${id}/status-history`),
         ]);
         applyOrderData(res.data);
         setCommunications(commsRes.data || []);
+        setStatusHistory(statusRes.data || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -106,14 +120,16 @@ export default function AdminOrderDetail() {
 
   const refresh = async () => {
     if (!id) return;
-    const [res, commsRes] = await Promise.all([
+    const [res, commsRes, statusRes] = await Promise.all([
       api.get(`/admin/orders/${id}`),
       api.get(`/admin/orders/${id}/communications`),
+      api.get(`/admin/orders/${id}/status-history`),
     ]);
     setOrder(res.data);
     setTrackingCode(res.data.trackingCode || "");
     setTrackingUrl(res.data.trackingUrl || "");
     setCommunications(commsRes.data || []);
+    setStatusHistory(statusRes.data || []);
   };
 
   const saveTracking = async () => {
@@ -136,54 +152,6 @@ export default function AdminOrderDetail() {
       notifyError("Could not save tracking details.");
     } finally {
       setSavingTracking(false);
-    }
-  };
-
-  const confirmOrder = async () => {
-    if (!id) return;
-    try {
-      await api.put(`/admin/orders/${id}/confirm`, {});
-      await refresh();
-      notifySuccess("Order confirmed for printing.");
-    } catch (err) {
-      console.error(err);
-      notifyError("Could not confirm order.");
-    }
-  };
-
-  const markSent = async () => {
-    if (!id) return;
-    try {
-      await api.put(`/admin/orders/${id}/sent`, {});
-      await refresh();
-      notifySuccess("Order marked as sent.");
-    } catch (err) {
-      console.error(err);
-      notifyError("Could not mark as sent.");
-    }
-  };
-
-  const markDelivered = async () => {
-    if (!id) return;
-    try {
-      await api.put(`/admin/orders/${id}/delivered`, {});
-      await refresh();
-      notifySuccess("Order marked as delivered.");
-    } catch (err) {
-      console.error(err);
-      notifyError("Could not mark as delivered.");
-    }
-  };
-
-  const markPaid = async () => {
-    if (!id) return;
-    try {
-      await api.put(`/admin/orders/${id}/paid`, {});
-      await refresh();
-      notifySuccess("Order marked as paid.");
-    } catch (err) {
-      console.error(err);
-      notifyError("Could not mark as paid.");
     }
   };
 
@@ -569,30 +537,6 @@ export default function AdminOrderDetail() {
               </button>
             </div>
             <button
-              onClick={confirmOrder}
-              className="admin-btn admin-btn-secondary"
-            >
-              Confirm and Start Printing
-            </button>
-            <button
-              onClick={markSent}
-              className="admin-btn admin-btn-secondary"
-            >
-              Mark as Sent
-            </button>
-            <button
-              onClick={markDelivered}
-              className="admin-btn admin-btn-secondary"
-            >
-              Mark as Delivered
-            </button>
-            <button
-              onClick={markPaid}
-              className="admin-btn admin-btn-secondary"
-            >
-              Mark as Paid
-            </button>
-            <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               className="admin-btn admin-btn-danger"
@@ -746,6 +690,43 @@ export default function AdminOrderDetail() {
                     <td className="py-2 pr-3">{entry.channel}</td>
                     <td className="py-2 pr-3">{entry.recipientEmail}</td>
                     <td className="py-2">{entry.subject}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
+
+      <article className="admin-panel mb-5 p-4">
+        <h3 className="font-bold mb-2 text-[#1b2b25]">Status History</h3>
+        {statusHistory.length === 0 ? (
+          <p className="admin-note">No status changes recorded yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
+                  <th className="py-2 pr-3">Changed At</th>
+                  <th className="py-2 pr-3">From</th>
+                  <th className="py-2 pr-3">To</th>
+                  <th className="py-2 pr-3">By</th>
+                  <th className="py-2">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statusHistory.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    className="border-b border-[#eef4f1] text-[#304843]"
+                  >
+                    <td className="py-2 pr-3 whitespace-nowrap">
+                      {new Date(entry.changedAt).toLocaleString()}
+                    </td>
+                    <td className="py-2 pr-3">{entry.previousStatus || "-"}</td>
+                    <td className="py-2 pr-3 font-semibold">{entry.newStatus}</td>
+                    <td className="py-2 pr-3">{entry.changedBy || "-"}</td>
+                    <td className="py-2">{entry.note || "-"}</td>
                   </tr>
                 ))}
               </tbody>

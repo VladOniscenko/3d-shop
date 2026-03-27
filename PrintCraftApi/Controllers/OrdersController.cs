@@ -141,6 +141,7 @@ public class OrdersController : ControllerBase
 
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, null, order.Status, "customer", "Quote requested");
 
         try
         {
@@ -213,5 +214,23 @@ public class OrdersController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok(new { message = "Project removed and files deleted.", orderId = id });
+    }
+
+    private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)
+    {
+        if (string.IsNullOrWhiteSpace(newStatus)) return;
+        if (string.Equals(previousStatus, newStatus, StringComparison.OrdinalIgnoreCase)) return;
+
+        _db.OrderStatusHistory.Add(new OrderStatusHistory
+        {
+            OrderId = orderId,
+            PreviousStatus = previousStatus,
+            NewStatus = newStatus,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = changedBy,
+            Note = note,
+        });
+
+        await _db.SaveChangesAsync();
     }
 }

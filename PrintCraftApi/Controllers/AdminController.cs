@@ -28,11 +28,13 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        var previousStatus = order.Status;
         order.Status = "paid";
         order.IsPaid = true;
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Marked as paid");
 
         return Ok(order);
     }
@@ -145,6 +147,20 @@ public class AdminController : ControllerBase
         return Ok(entries);
     }
 
+    [HttpGet("orders/{id:guid}/status-history")]
+    public async Task<IActionResult> GetOrderStatusHistory([FromRoute] Guid id)
+    {
+        var exists = await _db.Orders.AnyAsync(o => o.Id == id);
+        if (!exists) return NotFound(new { message = "Order not found" });
+
+        var entries = await _db.OrderStatusHistory
+            .Where(s => s.OrderId == id)
+            .OrderByDescending(s => s.ChangedAt)
+            .ToListAsync();
+
+        return Ok(entries);
+    }
+
     [HttpPut("orders/{id:guid}")]
     public async Task<IActionResult> UpdateOrder([FromRoute] Guid id, [FromBody] Order updated)
     {
@@ -152,6 +168,7 @@ public class AdminController : ControllerBase
         if (order == null)
             return NotFound(new { message = "Order not found" });
 
+        var previousStatus = order.Status;
         order.FullName = updated.FullName;
         order.AddressLine1 = updated.AddressLine1;
         order.AddressLine2 = updated.AddressLine2;
@@ -174,6 +191,7 @@ public class AdminController : ControllerBase
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Order updated");
 
         return Ok(order);
     }
@@ -184,12 +202,14 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        var previousStatus = order.Status;
         order.QuotedPrice = payload.Price;
         order.QuoteMessage = payload.Message;
         order.Status = "quoted";
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Quote prepared");
 
         return Ok(order);
     }
@@ -203,10 +223,12 @@ public class AdminController : ControllerBase
         if (order.Status == "cancelled" || order.Status == "completed")
             return BadRequest(new { message = "Cannot confirm this order." });
 
+        var previousStatus = order.Status;
         order.Status = "printing";
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Started printing");
 
         return Ok(order);
     }
@@ -217,10 +239,12 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        var previousStatus = order.Status;
         order.Status = "sent";
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Order sent");
 
         return Ok(order);
     }
@@ -231,10 +255,12 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        var previousStatus = order.Status;
         order.Status = "delivered";
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Order delivered");
 
         return Ok(order);
     }
@@ -437,7 +463,9 @@ public class AdminController : ControllerBase
                 if (!string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(order.Status, "cancelled", StringComparison.OrdinalIgnoreCase))
                 {
+                    var previousStatus = order.Status;
                     order.Status = "quoted";
+                    await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Quote confirmation email sent");
                 }
                 order.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
@@ -501,6 +529,24 @@ public class AdminController : ControllerBase
             Subject = subject,
             RecipientEmail = recipientEmail,
             SentAt = DateTime.UtcNow,
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)
+    {
+        if (string.IsNullOrWhiteSpace(newStatus)) return;
+        if (string.Equals(previousStatus, newStatus, StringComparison.OrdinalIgnoreCase)) return;
+
+        _db.OrderStatusHistory.Add(new OrderStatusHistory
+        {
+            OrderId = orderId,
+            PreviousStatus = previousStatus,
+            NewStatus = newStatus,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = changedBy,
+            Note = note,
         });
 
         await _db.SaveChangesAsync();

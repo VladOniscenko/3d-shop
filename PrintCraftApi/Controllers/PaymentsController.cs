@@ -83,9 +83,11 @@ public class PaymentsController : ControllerBase
             return BadRequest(new { message = "Mollie did not return a checkout URL." });
         }
 
+        var previousStatus = order.Status;
         order.Status = "pending_payment";
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "customer", "Payment checkout created");
 
         return Ok(new
         {
@@ -178,6 +180,7 @@ public class PaymentsController : ControllerBase
 
         _db.Orders.Add(newOrder);
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(newOrder.Id, null, newOrder.Status, "system", "Online checkout order created");
 
         var paymentRequest = new PaymentRequest()
         {
@@ -231,6 +234,7 @@ public class PaymentsController : ControllerBase
                     if (payment.Status == PaymentStatus.Paid)
                     {
                         var wasAlreadyPaid = order.IsPaid;
+                        var previousStatus = order.Status;
                         order.Status = "paid";
                         order.IsPaid = true;
                         order.UpdatedAt = DateTime.UtcNow;
@@ -245,13 +249,17 @@ public class PaymentsController : ControllerBase
                                 await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
                             }
                         }
+
+                        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Payment marked as paid");
                     }
                     else if (payment.Status == PaymentStatus.Canceled || payment.Status == PaymentStatus.Expired)
                     {
+                        var previousStatus = order.Status;
                         order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
                             ? "quoted"
                             : "failed";
                         order.UpdatedAt = DateTime.UtcNow;
+                        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Payment cancelled or expired");
                     }
 
                     await _db.SaveChangesAsync();
@@ -265,6 +273,24 @@ public class PaymentsController : ControllerBase
             _logger.LogError(ex, "Mollie webhook processing failed.");
             return Ok();
         }
+    }
+
+    private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)
+    {
+        if (string.IsNullOrWhiteSpace(newStatus)) return;
+        if (string.Equals(previousStatus, newStatus, StringComparison.OrdinalIgnoreCase)) return;
+
+        _db.OrderStatusHistory.Add(new OrderStatusHistory
+        {
+            OrderId = orderId,
+            PreviousStatus = previousStatus,
+            NewStatus = newStatus,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = changedBy,
+            Note = note,
+        });
+
+        await _db.SaveChangesAsync();
     }
 }
 
