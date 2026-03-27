@@ -89,7 +89,7 @@ export default function Orders() {
     <div className="site-shell">
       <Navbar />
 
-      <main className="site-main max-w-5xl px-4 sm:px-6 py-12">
+      <main className="site-main max-w-7xl px-4 sm:px-6 py-12">
         <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="site-heading text-3xl font-bold tracking-tight">
