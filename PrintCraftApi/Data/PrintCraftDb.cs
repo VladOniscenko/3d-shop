@@ -12,6 +12,7 @@ public class PrintCraftDb : DbContext
     public DbSet<Filament> Filaments => Set<Filament>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderCommunication> OrderCommunications => Set<OrderCommunication>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
@@ -23,5 +24,14 @@ public class PrintCraftDb : DbContext
         modelBuilder.Entity<Cart>()
             .HasIndex(c => c.UserId)
             .IsUnique();
+
+        modelBuilder.Entity<OrderCommunication>()
+            .HasIndex(c => new { c.OrderId, c.SentAt });
+
+        modelBuilder.Entity<OrderCommunication>()
+            .HasOne<Order>()
+            .WithMany(o => o.Communications)
+            .HasForeignKey(c => c.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

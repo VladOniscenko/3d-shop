@@ -7,6 +7,15 @@ import type { Order } from "../types";
 import { useNotify } from "../context/NotifyContext";
 import { resolveAssetUrl } from "../utils/assetUrl";
 
+interface OrderCommunication {
+  id: string;
+  channel: string;
+  communicationType: string;
+  subject: string;
+  recipientEmail: string;
+  sentAt: string;
+}
+
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams<{ id: string }>();
@@ -28,11 +37,10 @@ export default function AdminOrderDetail() {
   const [savingDelivery, setSavingDelivery] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailType, setEmailType] = useState("quote_requested");
-  const [emailPrice, setEmailPrice] = useState(0);
-  const [emailMessage, setEmailMessage] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
+  const [communications, setCommunications] = useState<OrderCommunication[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -57,8 +65,6 @@ export default function AdminOrderDetail() {
       setItemPrices(prices);
       setDeliveryPrice(data.deliveryPrice || 0);
       setSelectedStatus(data.status || "pending");
-      setEmailPrice(data.quotedPrice || 0);
-      setEmailMessage(data.quoteMessage || "");
       setTrackingCode(data.trackingCode || "");
       setTrackingUrl(data.trackingUrl || "");
       setInternalNotes(data.internalNotes || "");
@@ -67,8 +73,12 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const res = await api.get(`/admin/orders/${id}`);
+        const [res, commsRes] = await Promise.all([
+          api.get(`/admin/orders/${id}`),
+          api.get(`/admin/orders/${id}/communications`),
+        ]);
         applyOrderData(res.data);
+        setCommunications(commsRes.data || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -94,10 +104,14 @@ export default function AdminOrderDetail() {
 
   const refresh = async () => {
     if (!id) return;
-    const res = await api.get(`/admin/orders/${id}`);
+    const [res, commsRes] = await Promise.all([
+      api.get(`/admin/orders/${id}`),
+      api.get(`/admin/orders/${id}/communications`),
+    ]);
     setOrder(res.data);
     setTrackingCode(res.data.trackingCode || "");
     setTrackingUrl(res.data.trackingUrl || "");
+    setCommunications(commsRes.data || []);
   };
 
   const saveTracking = async () => {
@@ -253,11 +267,6 @@ export default function AdminOrderDetail() {
   const sendCustomerEmail = async () => {
     if (!id) return;
 
-    if (emailType === "quote_confirmation" && emailPrice < 0) {
-      notifyError("Quote price cannot be negative.");
-      return;
-    }
-
     if (emailType === "order_sent_tracking" && !trackingCode.trim()) {
       notifyError("Tracking code is required for sent email.");
       return;
@@ -267,8 +276,8 @@ export default function AdminOrderDetail() {
     try {
       await api.post(`/admin/orders/${id}/email`, {
         type: emailType,
-        price: emailType === "quote_confirmation" ? emailPrice : null,
-        message: emailType === "quote_confirmation" ? emailMessage : null,
+        price: null,
+        message: null,
         trackingCode:
           emailType === "order_sent_tracking" ? trackingCode.trim() : null,
         trackingUrl:
@@ -681,32 +690,9 @@ export default function AdminOrderDetail() {
           </div>
 
           {emailType === "quote_confirmation" && (
-            <>
-              <div>
-                <label className="block text-xs uppercase text-[#6c817a]">
-                  Quote Price
-                </label>
-                <input
-                  type="number"
-                  value={emailPrice}
-                  onChange={(e) =>
-                    setEmailPrice(parseFloat(e.target.value) || 0)
-                  }
-                  className="admin-field"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase text-[#6c817a]">
-                  Quote Message
-                </label>
-                <textarea
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  rows={3}
-                  className="admin-textarea"
-                />
-              </div>
-            </>
+            <p className="text-sm text-[#5b706a]">
+              Price and message are generated automatically from order item prices and delivery.
+            </p>
           )}
 
           {emailType === "order_sent_tracking" && (
@@ -726,6 +712,40 @@ export default function AdminOrderDetail() {
             {sendingEmail ? "Sending..." : "Send Email"}
           </button>
         </div>
+      </article>
+
+      <article className="admin-panel mb-5 p-4">
+        <h3 className="font-bold mb-2 text-[#1b2b25]">Communication History</h3>
+        {communications.length === 0 ? (
+          <p className="admin-note">No communication has been sent yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
+                  <th className="py-2 pr-3">Sent At</th>
+                  <th className="py-2 pr-3">Type</th>
+                  <th className="py-2 pr-3">Channel</th>
+                  <th className="py-2 pr-3">Recipient</th>
+                  <th className="py-2">Subject</th>
+                </tr>
+              </thead>
+              <tbody>
+                {communications.map((entry) => (
+                  <tr key={entry.id} className="border-b border-[#eef4f1] text-[#304843]">
+                    <td className="py-2 pr-3 whitespace-nowrap">
+                      {new Date(entry.sentAt).toLocaleString()}
+                    </td>
+                    <td className="py-2 pr-3">{entry.communicationType}</td>
+                    <td className="py-2 pr-3">{entry.channel}</td>
+                    <td className="py-2 pr-3">{entry.recipientEmail}</td>
+                    <td className="py-2">{entry.subject}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </article>
 
       <article className="admin-panel mb-5 p-4">

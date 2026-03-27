@@ -30,4 +30,5 @@ public class Order
 
     // The list of items in this order
     public List<OrderItem> Items { get; set; } = new();
+    public List<OrderCommunication> Communications { get; set; } = new();
 }

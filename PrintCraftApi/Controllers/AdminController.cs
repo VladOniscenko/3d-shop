@@ -14,6 +14,8 @@ namespace PrintCraftApi.Controllers;
 [Authorize(Roles = "admin")]
 public class AdminController : ControllerBase
 {
+    private const string DefaultQuoteConfirmationMessage = "Thank you for your quote request. We reviewed your files and determined the production cost based on materials, print time, and finishing. You can now confirm and pay for your quote in your personal portal.";
+
     private static bool IsPendingStatus(string? status)
     {
         return !string.IsNullOrWhiteSpace(status)
@@ -127,6 +129,20 @@ public class AdminController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
 
         return order == null ? NotFound(new { message = "Order not found" }) : Ok(order);
+    }
+
+    [HttpGet("orders/{id:guid}/communications")]
+    public async Task<IActionResult> GetOrderCommunications([FromRoute] Guid id)
+    {
+        var exists = await _db.Orders.AnyAsync(o => o.Id == id);
+        if (!exists) return NotFound(new { message = "Order not found" });
+
+        var entries = await _db.OrderCommunications
+            .Where(c => c.OrderId == id)
+            .OrderByDescending(c => c.SentAt)
+            .ToListAsync();
+
+        return Ok(entries);
     }
 
     [HttpPut("orders/{id:guid}")]
@@ -370,7 +386,9 @@ public class AdminController : ControllerBase
     [HttpPost("orders/{id:guid}/email")]
     public async Task<IActionResult> SendOrderEmail([FromRoute] Guid id, [FromBody] SendOrderEmailRequest payload)
     {
-        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
         var user = await _db.Users.FindAsync(order.UserId);
@@ -384,19 +402,35 @@ public class AdminController : ControllerBase
         {
             case "quote_requested":
                 await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
+                await LogOrderCommunicationAsync(order.Id, "quote_requested", "Quote request received", user.Email);
                 return Ok(new { message = "Quote requested email sent." });
 
             case "quote_confirmation":
-                var quotePrice = payload.Price ?? order.QuotedPrice;
-                if (quotePrice == null)
-                    return BadRequest(new { message = "Quote price is required." });
+                var quotePrice = order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+                if (quotePrice <= 0)
+                    return BadRequest(new { message = "Quote total must be greater than zero. Set item and delivery prices first." });
+
+                var quoteMessage = string.IsNullOrWhiteSpace(payload.Message)
+                    ? DefaultQuoteConfirmationMessage
+                    : payload.Message.Trim();
+
+                order.QuotedPrice = quotePrice;
+                order.QuoteMessage = quoteMessage;
+                if (!string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(order.Status, "cancelled", StringComparison.OrdinalIgnoreCase))
+                {
+                    order.Status = "quoted";
+                }
+                order.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
 
                 await _emailService.SendQuoteConfirmationEmailAsync(
                     user.Email,
                     user.Name,
                     order.Id,
-                    quotePrice.Value,
-                    payload.Message ?? order.QuoteMessage);
+                    quotePrice,
+                    quoteMessage);
+                await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", user.Email);
                 return Ok(new { message = "Quote confirmation email sent." });
 
             case "order_sent_tracking":
@@ -424,6 +458,7 @@ public class AdminController : ControllerBase
                     order.Id,
                     trackingCode,
                     trackingUrl);
+                await LogOrderCommunicationAsync(order.Id, "order_sent_tracking", "Your order has been sent", user.Email);
                 return Ok(new { message = "Order sent email sent." });
 
             default:
@@ -437,4 +472,19 @@ public class AdminController : ControllerBase
     public record DeliveryPriceRequest(decimal DeliveryPrice);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
+
+    private async Task LogOrderCommunicationAsync(Guid orderId, string type, string subject, string recipientEmail)
+    {
+        _db.OrderCommunications.Add(new OrderCommunication
+        {
+            OrderId = orderId,
+            Channel = "email",
+            CommunicationType = type,
+            Subject = subject,
+            RecipientEmail = recipientEmail,
+            SentAt = DateTime.UtcNow,
+        });
+
+        await _db.SaveChangesAsync();
+    }
 }
