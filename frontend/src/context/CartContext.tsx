@@ -1,58 +1,142 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { OrderItem } from "../types";
-
-interface CartContextType {
-  cart: OrderItem[];
-  addToCart: (item: OrderItem) => void;
-  removeFromCart: (index: number) => void;
-  updateCartItem: (index: number, updatedItem: OrderItem) => void; // New function
-  clearCart: () => void;
-}
+import api from "../services/api";
+import type { CartItem, CartContextType } from "../types";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  // Load existing cart from local storage on startup
-  const [cart, setCart] = useState<OrderItem[]>(() => {
-    const saved = localStorage.getItem("print_cart");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Automatically save to local storage whenever the cart changes
+  // Load cart from API on mount
   useEffect(() => {
-    localStorage.setItem("print_cart", JSON.stringify(cart));
-  }, [cart]);
+    const loadCart = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setCart([]);
+          return;
+        }
+        const res = await api.get("/cart");
+        setCart(res.data.items || []);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to load cart:", err);
+        setError("Failed to load cart");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const addToCart = (item: OrderItem) => {
-    setCart((prev) => [...prev, item]);
+    loadCart();
+  }, []);
+
+  const refreshCart = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/cart");
+      setCart(res.data.items || []);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to refresh cart:", err);
+      setError("Failed to refresh cart");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeFromCart = (index: number) => {
-    setCart((prev) => prev.filter((_, i) => i !== index));
+  const addToCart = async (
+    productId: string,
+    count: number,
+    material: string,
+    color: string,
+  ) => {
+    try {
+      setLoading(true);
+      await api.post("/cart/items", {
+        productId,
+        count,
+        material,
+        color,
+      });
+      await refreshCart();
+      setError(null);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+      setError("Failed to add item to cart");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Logic to update a specific item (Quantity, Material, or Color)
-  const updateCartItem = (index: number, updatedItem: OrderItem) => {
-    setCart((prev) => {
-      const newCart = [...prev];
-      newCart[index] = updatedItem;
-      return newCart;
-    });
+  const removeFromCart = async (itemId: string) => {
+    try {
+      setLoading(true);
+      await api.delete(`/cart/items/${itemId}`);
+      await refreshCart();
+      setError(null);
+    } catch (err) {
+      console.error("Failed to remove from cart:", err);
+      setError("Failed to remove item from cart");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    localStorage.removeItem("print_cart");
+  const updateCartItem = async (
+    itemId: string,
+    count?: number,
+    material?: string,
+    color?: string,
+  ) => {
+    try {
+      setLoading(true);
+      await api.put(`/cart/items/${itemId}`, {
+        count,
+        material,
+        color,
+      });
+      await refreshCart();
+      setError(null);
+    } catch (err) {
+      console.error("Failed to update cart item:", err);
+      setError("Failed to update cart item");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      setLoading(true);
+      await api.delete("/cart");
+      setCart([]);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to clear cart:", err);
+      setError("Failed to clear cart");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <CartContext.Provider
       value={{
         cart,
+        loading,
+        error,
         addToCart,
         removeFromCart,
         updateCartItem,
         clearCart,
+        refreshCart,
       }}
     >
       {children}

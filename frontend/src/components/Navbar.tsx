@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShoppingCart, Menu, X, LogOut, User } from "lucide-react";
+import { ShoppingCart, Menu, X, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 

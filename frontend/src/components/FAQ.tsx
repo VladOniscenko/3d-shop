@@ -1,5 +1,5 @@
 // src/components/FAQ.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import Navbar from "./Navbar";
 import { ChevronDown, ChevronUp, MessageCircleQuestion } from "lucide-react";
 import { Link } from "react-router-dom";
