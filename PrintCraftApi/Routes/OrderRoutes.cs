@@ -71,5 +71,34 @@ public static class OrderRoutes
 
             return Results.Created($"/api/orders/{order.Id}", order);
         });
+
+        // 4. Cancel Order (Only if pending_quote)
+        group.MapPut("/{id:guid}/cancel", async ([FromRoute] Guid id, ClaimsPrincipal user, [FromServices] PrintCraftDb db) =>
+        {
+            var userIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+
+            var userId = Guid.Parse(userIdStr);
+
+            // Find the order and verify ownership
+            var order = await db.Orders
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+            if (order is null)
+                return Results.NotFound("Order not found.");
+
+            // Safety Check: Only cancel if it's still in the "pending_quote" stage
+            if (order.Status != "pending_quote")
+            {
+                return Results.BadRequest("This project is already being processed and cannot be cancelled.");
+            }
+
+            // Update status or you could use db.Orders.Remove(order) to delete it entirely
+            order.Status = "cancelled";
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "Project cancelled successfully.", orderId = id });
+        });
     }
 }
