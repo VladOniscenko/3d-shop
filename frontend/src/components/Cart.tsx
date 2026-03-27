@@ -4,7 +4,6 @@ import {
   Trash2,
   MapPin,
   Phone as PhoneIcon,
-  CheckCircle,
   Loader2,
   Layers,
   Palette,
@@ -13,6 +12,7 @@ import {
   ShoppingCart,
   Image as ImageIcon,
   Truck,
+  CreditCard,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -33,10 +33,7 @@ export default function Cart() {
     postalCode: "",
   });
 
-  // Constants
   const DELIVERY_PRICE = 6.95;
-
-  // Calculations
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.count, 0);
   const total = subtotal + DELIVERY_PRICE;
 
@@ -70,12 +67,37 @@ export default function Cart() {
 
     setIsSubmitting(true);
     try {
-      const payload = { ...address, items: cart, totalPrice: total };
-      await api.post("/orders/quote", payload);
+      // Map the cart to match the C# CartItemDto
+      const payload = {
+        fullName: address.fullName,
+        phoneNumber: address.phoneNumber,
+        addressLine1: address.addressLine1,
+        city: address.city,
+        postalCode: address.postalCode,
+        totalAmount: total.toFixed(2), // String format for Mollie
+        items: cart.map((item) => ({
+          productId: item.productId, // This now works with the interface update
+          count: item.count,
+          material: item.material,
+          color: item.color,
+        })),
+      };
+
+      // 1. Create Order & Get Mollie URL from Backend
+      const res = await api.post("/payments/create", payload);
+
+      // 2. Clear Cart locally
       clearCart();
-      navigate("/orders");
+
+      // 3. Redirect to Mollie Secure Checkout
+      if (res.data.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received from server");
+      }
     } catch (err) {
-      alert("Checkout failed. Please check your connection.");
+      console.error("Checkout Error:", err);
+      alert("Something went wrong. Please check your address and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -112,18 +134,18 @@ export default function Cart() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
           <ShoppingCart className="text-emerald-600" size={32} />
-          Your Selection
+          Finalize Order
         </h2>
 
         <form
           onSubmit={handleCheckout}
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
-          {/* Left Side: Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Review Items */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                Gallery Items
+                Review Items
               </h3>
               <div className="space-y-6">
                 {cart.map((item, idx) => (
@@ -143,7 +165,6 @@ export default function Cart() {
                           <ImageIcon className="text-gray-300" size={32} />
                         )}
                       </div>
-
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -151,25 +172,24 @@ export default function Cart() {
                               {item.fileName}
                             </h4>
                             <p className="text-emerald-600 font-bold">
-                              ${item.price.toFixed(2)} / unit
+                              €{item.price.toFixed(2)} / unit
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => removeFromCart(idx)}
-                            className="text-red-400 hover:text-red-600 p-1"
+                            className="text-red-400 hover:text-red-600"
                           >
                             <Trash2 size={20} />
                           </button>
                         </div>
-
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Layers size={12} /> Material
                             </label>
                             <select
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
                               value={item.material}
                               onChange={(e) =>
                                 handleUpdate(idx, "material", e.target.value)
@@ -182,13 +202,12 @@ export default function Cart() {
                               ))}
                             </select>
                           </div>
-
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Palette size={12} /> Color
                             </label>
                             <select
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
                               value={item.color}
                               onChange={(e) =>
                                 handleUpdate(idx, "color", e.target.value)
@@ -203,7 +222,6 @@ export default function Cart() {
                                 ))}
                             </select>
                           </div>
-
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                               <Hash size={12} /> Quantity
@@ -211,7 +229,7 @@ export default function Cart() {
                             <input
                               type="number"
                               min="1"
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
                               value={item.count}
                               onChange={(e) =>
                                 handleUpdate(
@@ -229,28 +247,47 @@ export default function Cart() {
                 ))}
               </div>
             </div>
+
+            {/* Payment Method */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
+                Payment Method
+              </h3>
+              <div className="p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-emerald-500 text-white">
+                  <CreditCard size={24} />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">
+                    Online Payment (Mollie)
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    iDEAL, Credit Card, Bancontact, etc.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Right Side: Order Summary & Shipping */}
+          {/* Checkout Info */}
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-              {/* Price Breakdown */}
               <div className="mb-8 space-y-3">
                 <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-sm">
-                  Order Summary
+                  Summary
                 </h3>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 text-sm">
                   <span>Subtotal</span>
                   <span className="font-medium text-gray-900">
-                    ${subtotal.toFixed(2)}
+                    €{subtotal.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 text-sm">
                   <span className="flex items-center gap-2">
                     <Truck size={16} /> Delivery
                   </span>
                   <span className="font-medium text-gray-900">
-                    ${DELIVERY_PRICE.toFixed(2)}
+                    €{DELIVERY_PRICE.toFixed(2)}
                   </span>
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex justify-between">
@@ -258,7 +295,7 @@ export default function Cart() {
                     Total
                   </span>
                   <span className="font-black text-emerald-600 text-lg">
-                    ${total.toFixed(2)}
+                    €{total.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -266,15 +303,13 @@ export default function Cart() {
               <hr className="mb-8 border-gray-100" />
 
               <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
-                <MapPin className="text-emerald-600" size={20} />
-                Shipping Info
+                <MapPin className="text-emerald-600" size={20} /> Shipping
               </h3>
-
               <div className="space-y-4">
                 <input
                   required
                   placeholder="Full Name"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   value={address.fullName}
                   onChange={(e) =>
                     setAddress({ ...address, fullName: e.target.value })
@@ -288,8 +323,8 @@ export default function Cart() {
                   <input
                     required
                     type="tel"
-                    placeholder="Phone Number"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                    placeholder="Phone"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                     value={address.phoneNumber}
                     onChange={(e) =>
                       setAddress({ ...address, phoneNumber: e.target.value })
@@ -298,8 +333,8 @@ export default function Cart() {
                 </div>
                 <input
                   required
-                  placeholder="Street Address"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                  placeholder="Street"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   value={address.addressLine1}
                   onChange={(e) =>
                     setAddress({ ...address, addressLine1: e.target.value })
@@ -330,14 +365,16 @@ export default function Cart() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-2xl hover:bg-[#1c4d37] transition-all flex items-center justify-center gap-2"
+                className={`w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 ${
+                  isSubmitting ? "opacity-50" : "hover:bg-[#1c4d37]"
+                }`}
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <CheckCircle size={20} />
+                  <ArrowRight size={20} />
                 )}
-                Checkout Now
+                Pay with Mollie
               </button>
 
               <p className="text-[10px] text-gray-400 text-center mt-4 uppercase font-bold tracking-widest">

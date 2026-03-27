@@ -84,13 +84,13 @@ export default function Gallery() {
       : "";
 
     addToCart({
+      productId: product.id, // FIX: Added the missing productId here
       fileName: product.name,
       fileUrl: product.imageUrl || "",
       imageUrl: fullImageUrl,
       material: "PLA",
       color: "Black",
       count: 1,
-      // Passing the actual price from the product data
       price: product.price || 0,
       notes: `Gallery Item: ${product.name}`,
     });
@@ -202,9 +202,8 @@ export default function Gallery() {
                         <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase truncate">
                           {item.name}
                         </h3>
-                        {/* Displaying the Price */}
                         <span className="text-emerald-700 font-black text-lg ml-2">
-                          ${item.price?.toFixed(2) || "0.00"}
+                          €{item.price?.toFixed(2) || "0.00"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-emerald-600">

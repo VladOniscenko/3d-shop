@@ -5,7 +5,7 @@ namespace PrintCraftApi.Models;
 public class Order
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     // Shipping Address
     [Required] public string FullName { get; set; } = string.Empty;
