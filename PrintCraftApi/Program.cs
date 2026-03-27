@@ -8,12 +8,16 @@ using Microsoft.OpenApi.Models;
 using PrintCraftApi.Data;
 using PrintCraftApi.Services;
 
+LoadDotEnv(
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env")));
+
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES ---
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite("Data Source=printcraft.db"));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
-builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -150,3 +154,29 @@ app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();
+
+static void LoadDotEnv(params string[] candidatePaths)
+{
+    foreach (var path in candidatePaths)
+    {
+        if (!File.Exists(path)) continue;
+
+        foreach (var rawLine in File.ReadAllLines(path))
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+
+            var idx = line.IndexOf('=');
+            if (idx <= 0) continue;
+
+            var key = line[..idx].Trim();
+            var value = line[(idx + 1)..].Trim().Trim('"');
+            if (string.IsNullOrWhiteSpace(key)) continue;
+
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+            {
+                Environment.SetEnvironmentVariable(key, value);
+            }
+        }
+    }
+}

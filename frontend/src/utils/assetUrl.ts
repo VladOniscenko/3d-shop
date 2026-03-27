@@ -1,4 +1,5 @@
-const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN as string | undefined) || "";
+const API_ORIGIN =
+  (import.meta.env.VITE_API_ORIGIN as string | undefined) || "";
 
 function normalizeAssetPath(raw: string): string {
   const normalized = raw.trim().replace(/\\/g, "/");

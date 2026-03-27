@@ -1,5 +1,8 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mail;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 
 namespace PrintCraftApi.Services;
@@ -13,6 +16,9 @@ public sealed class EmailOptions
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public bool EnableSsl { get; set; } = true;
+    public string ApiBaseUrl { get; set; } = "https://send.api.mailtrap.io/api/send";
+    public string ApiToken { get; set; } = string.Empty;
+    public string Category { get; set; } = "PrintCraft";
 }
 
 public interface IEmailService
@@ -23,13 +29,18 @@ public interface IEmailService
     Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl);
 }
 
-public sealed class SmtpEmailService : IEmailService
+public sealed class MailtrapEmailService : IEmailService
 {
     private readonly EmailOptions _options;
-    private readonly ILogger<SmtpEmailService> _logger;
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<MailtrapEmailService> _logger;
 
-    public SmtpEmailService(IOptions<EmailOptions> options, ILogger<SmtpEmailService> logger)
+    public MailtrapEmailService(
+        HttpClient httpClient,
+        IOptions<EmailOptions> options,
+        ILogger<MailtrapEmailService> logger)
     {
+        _httpClient = httpClient;
         _options = options.Value;
         _logger = logger;
     }
@@ -120,9 +131,77 @@ public sealed class SmtpEmailService : IEmailService
 
     private async Task SendTextEmailAsync(string toEmail, string subject, string body)
     {
-        if (string.IsNullOrWhiteSpace(_options.SmtpHost))
+        if (!string.IsNullOrWhiteSpace(_options.SmtpHost))
         {
-            throw new InvalidOperationException("Email service is not configured. Missing Email:SmtpHost.");
+            await SendViaSmtpAsync(toEmail, subject, body);
+            return;
+        }
+
+        await SendViaApiAsync(toEmail, subject, body);
+    }
+
+    private async Task SendViaApiAsync(string toEmail, string subject, string body)
+    {
+        var apiToken = string.IsNullOrWhiteSpace(_options.ApiToken)
+            ? Environment.GetEnvironmentVariable("MAILTRAP_API_TOKEN")
+            : _options.ApiToken;
+
+        if (string.IsNullOrWhiteSpace(apiToken))
+        {
+            throw new InvalidOperationException("Email service is not configured. Missing Mailtrap API token.");
+        }
+
+        var payload = new
+        {
+            from = new
+            {
+                email = _options.SenderEmail,
+                name = _options.SenderName,
+            },
+            to = new[]
+            {
+                new { email = toEmail }
+            },
+            subject,
+            text = body,
+            category = _options.Category,
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, _options.ApiBaseUrl)
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
+
+        using var response = await _httpClient.SendAsync(request);
+        var responseBody = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError(
+                "Mailtrap send failed. Status: {StatusCode}. Body: {Body}",
+                (int)response.StatusCode,
+                responseBody);
+            throw new InvalidOperationException("Failed to send email via Mailtrap.");
+        }
+
+        _logger.LogInformation("Email sent via Mailtrap API. Subject: {Subject}, To: {To}", subject, toEmail);
+    }
+
+    private async Task SendViaSmtpAsync(string toEmail, string subject, string body)
+    {
+        var smtpUser = string.IsNullOrWhiteSpace(_options.Username)
+            ? Environment.GetEnvironmentVariable("Email__Username")
+            : _options.Username;
+        var smtpPassword = string.IsNullOrWhiteSpace(_options.Password)
+            ? Environment.GetEnvironmentVariable("Email__Password")
+            : _options.Password;
+
+        if (string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPassword))
+        {
+            throw new InvalidOperationException("SMTP email is not configured. Missing Email:Username or Email:Password.");
         }
 
         using var message = new MailMessage
@@ -139,10 +218,10 @@ public sealed class SmtpEmailService : IEmailService
             EnableSsl = _options.EnableSsl,
             DeliveryMethod = SmtpDeliveryMethod.Network,
             UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(_options.Username, _options.Password),
+            Credentials = new NetworkCredential(smtpUser, smtpPassword),
         };
 
         await client.SendMailAsync(message);
-        _logger.LogInformation("Email sent. Subject: {Subject}, To: {To}", subject, toEmail);
+        _logger.LogInformation("Email sent via SMTP. Subject: {Subject}, To: {To}", subject, toEmail);
     }
 }
