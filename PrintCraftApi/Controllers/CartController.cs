@@ -144,32 +144,32 @@ public class CartController : ControllerBase
         var cart = await GetOrCreateUserCart();
 
         if (cart.Items.Count >= MaxDistinctCartItems)
-        {
-            var hasExistingVariant = cart.Items.Any(i =>
-                i.ProductId == request.ProductId &&
-                i.Material == material &&
-                i.Color == color);
+            return BadRequest(new { message = $"Cart can contain at most {MaxDistinctCartItems} items." });
 
-            if (!hasExistingVariant)
-                return BadRequest(new { message = $"Cart can contain at most {MaxDistinctCartItems} distinct items." });
+        _db.CartItems.Add(new CartItem
+        {
+            CartId = cart.Id,
+            ProductId = product.Id,
+            ProductName = product.Name,
+            ImageUrl = product.ImageUrl,
+            Material = material,
+            Color = color,
+            Count = request.Count,
+            Price = (decimal)product.Price
+        });
+
+        cart.UpdatedAt = DateTime.UtcNow;
+
+        try
+        {
+            await _db.SaveChangesAsync();
         }
-
-        var existingItem = await _db.CartItems.FirstOrDefaultAsync(i =>
-            i.CartId == cart.Id &&
-            i.ProductId == request.ProductId &&
-            i.Material == material &&
-            i.Color == color);
-
-        if (existingItem != null)
+        catch (DbUpdateException)
         {
-            var newCount = existingItem.Count + request.Count;
-            if (newCount > MaxItemCount)
-                return BadRequest(new { message = $"Maximum quantity per item is {MaxItemCount}." });
+            // Rare race around cart creation/loading; retry adding once on a clean tracker.
+            _db.ChangeTracker.Clear();
 
-            existingItem.Count = newCount;
-        }
-        else
-        {
+            cart = await GetOrCreateUserCart();
             _db.CartItems.Add(new CartItem
             {
                 CartId = cart.Id,
@@ -181,44 +181,6 @@ public class CartController : ControllerBase
                 Count = request.Count,
                 Price = (decimal)product.Price
             });
-        }
-
-        cart.UpdatedAt = DateTime.UtcNow;
-
-        try
-        {
-            await _db.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Rare race: if two requests add the same SKU variant at once, reload and merge once.
-            _db.ChangeTracker.Clear();
-
-            cart = await GetOrCreateUserCart();
-            existingItem = await _db.CartItems.FirstOrDefaultAsync(i =>
-                i.CartId == cart.Id &&
-                i.ProductId == request.ProductId &&
-                i.Material == material &&
-                i.Color == color);
-
-            if (existingItem != null)
-            {
-                existingItem.Count += request.Count;
-            }
-            else
-            {
-                _db.CartItems.Add(new CartItem
-                {
-                    CartId = cart.Id,
-                    ProductId = product.Id,
-                    ProductName = product.Name,
-                    ImageUrl = product.ImageUrl,
-                    Material = material,
-                    Color = color,
-                    Count = request.Count,
-                    Price = (decimal)product.Price
-                });
-            }
 
             cart.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
