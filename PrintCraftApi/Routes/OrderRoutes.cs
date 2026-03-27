@@ -73,32 +73,59 @@ public static class OrderRoutes
         });
 
         // 4. Cancel Order (Only if pending_quote)
-        group.MapPut("/{id:guid}/cancel", async ([FromRoute] Guid id, ClaimsPrincipal user, [FromServices] PrintCraftDb db) =>
+        group.MapPut("/{id:guid}/cancel", async (
+            [FromRoute] Guid id,
+            ClaimsPrincipal user,
+            [FromServices] PrintCraftDb db,
+            [FromServices] IWebHostEnvironment env) => // We need 'env' to find the folder path
         {
             var userIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
 
             var userId = Guid.Parse(userIdStr);
 
-            // Find the order and verify ownership
+            // 1. Include the Items so we can see the FileUrls
             var order = await db.Orders
+                .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
 
             if (order is null)
                 return Results.NotFound("Order not found.");
 
-            // Safety Check: Only cancel if it's still in the "pending_quote" stage
             if (order.Status != "pending_quote")
             {
                 return Results.BadRequest("This project is already being processed and cannot be cancelled.");
             }
 
-            // Update status or you could use db.Orders.Remove(order) to delete it entirely
-            order.Status = "cancelled";
+            // 2. Loop through items and delete physical files
+            foreach (var item in order.Items)
+            {
+                if (!string.IsNullOrEmpty(item.FileUrl))
+                {
+                    try
+                    {
+                        // Convert URL (e.g., /uploads/file.stl) to local path (C:\project\wwwroot\uploads\file.stl)
+                        var fileName = Path.GetFileName(item.FileUrl);
+                        var filePath = Path.Combine(env.WebRootPath, "uploads", fileName);
 
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // We log the error but keep going so the database still updates
+                        Console.WriteLine($"failed to delete file: {ex.Message}");
+                    }
+                }
+            }
+
+            // 3. Update the database
+            order.Status = "cancelled";
             await db.SaveChangesAsync();
 
-            return Results.Ok(new { message = "Project cancelled successfully.", orderId = id });
+            return Results.Ok(new { message = "Project cancelled and files removed.", orderId = id });
         });
     }
 }
