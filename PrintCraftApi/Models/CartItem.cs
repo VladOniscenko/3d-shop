@@ -23,4 +23,7 @@ public class CartItem
 
     // Navigation property
     public Cart Cart { get; set; } = null!;
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 }

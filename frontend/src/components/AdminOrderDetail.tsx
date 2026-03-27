@@ -6,6 +6,7 @@ import type { Order } from "../types";
 
 export default function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [quotePrice, setQuotePrice] = useState(0);
@@ -20,8 +21,10 @@ export default function AdminOrderDetail() {
   const [postalCode, setPostalCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [itemPrices, setItemPrices] = useState<{ [key: string]: number }>({});
-
-  const navigate = useNavigate();
+  const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Status dropdown state
+  const [selectedStatus, setSelectedStatus] = useState("pending");
 
   useEffect(() => {
     if (!id) return;
@@ -40,6 +43,8 @@ export default function AdminOrderDetail() {
           if (item.id) prices[item.id] = item.price || 0;
         });
         setItemPrices(prices);
+        setDeliveryPrice(res.data.deliveryPrice || 0);
+        setSelectedStatus(res.data.status || "pending");
       } catch (err) {
         console.error(err);
       } finally {
@@ -48,6 +53,20 @@ export default function AdminOrderDetail() {
     };
     getOrder();
   }, [id]);
+  const updateOrderStatus = async () => {
+    if (!id) return;
+    try {
+      await api.put(`/admin/orders/${id}`, {
+        ...order,
+        status: selectedStatus,
+      });
+      await refresh();
+      alert("Order status updated.");
+    } catch (err) {
+      console.error(err);
+      alert("Could not update order status.");
+    }
+  };
 
   const refresh = async () => {
     if (!id) return;
@@ -129,6 +148,46 @@ export default function AdminOrderDetail() {
     }
   };
 
+  const updateDeliveryPrice = async (price: number) => {
+    if (!id) return;
+    try {
+      await api.patch(`/admin/orders/${id}/delivery-price`, {
+        deliveryPrice: price,
+      });
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Could not update delivery price.");
+    }
+  };
+
+  const deleteOrder = async () => {
+    if (!id) return;
+    try {
+      await api.delete(`/admin/orders/${id}`);
+      alert("Order deleted.");
+      navigate("/admin/orders");
+    } catch (err) {
+      console.error(err);
+      alert("Could not delete order.");
+    }
+  };
+
+  const saveNotes = async () => {
+    if (!id) return;
+    try {
+      await api.put(`/admin/orders/${id}/notes`, {
+        internalNotes,
+        customerNotes,
+      });
+      await refresh();
+      alert("Notes saved.");
+    } catch (err) {
+      console.error(err);
+      alert("Could not save notes.");
+    }
+  };
+
   const saveCustomerInfo = async () => {
     if (!id) return;
     try {
@@ -146,21 +205,6 @@ export default function AdminOrderDetail() {
     } catch (err) {
       console.error(err);
       alert("Could not update customer info.");
-    }
-  };
-
-  const saveNotes = async () => {
-    if (!id) return;
-    try {
-      await api.put(`/admin/orders/${id}/notes`, {
-        internalNotes,
-        customerNotes,
-      });
-      await refresh();
-      alert("Notes saved.");
-    } catch (err) {
-      console.error(err);
-      alert("Could not save notes.");
     }
   };
 
@@ -204,10 +248,16 @@ export default function AdminOrderDetail() {
   }
 
   const totalPrice =
-    (order.items.reduce(
-      (sum, item) => sum + item.price * (item.count ?? 1),
-      0,
-    ) || 0) + (order.deliveryPrice ?? 0);
+    (order.items.reduce((sum, item) => {
+      const key = item.id ?? "";
+      return (
+        sum +
+        (key && itemPrices[key] !== undefined
+          ? itemPrices[key]
+          : item.price || 0) *
+          (item.count ?? 1)
+      );
+    }, 0) || 0) + deliveryPrice;
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -320,24 +370,20 @@ export default function AdminOrderDetail() {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-800">Price: €</span>
-                      {order.orderType === "quote" ? (
-                        <input
-                          type="number"
-                          value={item.id ? itemPrices[item.id] || 0 : 0}
-                          onChange={(e) => {
-                            if (!item.id) return;
-                            const newPrice = parseFloat(e.target.value);
-                            setItemPrices({
-                              ...itemPrices,
-                              [item.id]: newPrice,
-                            });
-                            updateItemPrice(item.id, newPrice);
-                          }}
-                          className="border rounded px-1 py-0.5 w-20"
-                        />
-                      ) : (
-                        <span>{item.price?.toFixed(2)}</span>
-                      )}
+                      <input
+                        type="number"
+                        value={item.id ? itemPrices[item.id] || 0 : 0}
+                        onChange={(e) => {
+                          if (!item.id) return;
+                          const newPrice = parseFloat(e.target.value);
+                          setItemPrices({
+                            ...itemPrices,
+                            [item.id]: newPrice,
+                          });
+                          updateItemPrice(item.id, newPrice);
+                        }}
+                        className="border rounded px-1 py-0.5 w-20"
+                      />
                     </div>
                     {item.fileUrl && (
                       <a
@@ -353,7 +399,20 @@ export default function AdminOrderDetail() {
                 ))}
               </ul>
             )}
-            <div className="mt-3 text-right">
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <span className="text-gray-800">Delivery: €</span>
+              <input
+                type="number"
+                value={deliveryPrice}
+                onChange={(e) => {
+                  const newPrice = parseFloat(e.target.value);
+                  setDeliveryPrice(newPrice);
+                  updateDeliveryPrice(newPrice);
+                }}
+                className="border rounded px-1 py-0.5 w-20"
+              />
+            </div>
+            <div className="mt-1 text-right">
               <span className="font-bold">
                 Total (including delivery): €{totalPrice.toFixed(2)}
               </span>
@@ -399,6 +458,30 @@ export default function AdminOrderDetail() {
           <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
             <h3 className="font-bold mb-2">Order Actions</h3>
             <div className="grid gap-2">
+              {/* Status update dropdown */}
+              <div className="flex items-center gap-2 mb-2">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="pending_quote">Pending Quote</option>
+                  <option value="quoted">Quoted</option>
+                  <option value="printing">Printing</option>
+                  <option value="sent">Sent</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="paid">Paid</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="pending">Pending</option>
+                </select>
+                <button
+                  type="button"
+                  className="px-3 py-2 rounded-lg bg-blue-500 text-white"
+                  onClick={updateOrderStatus}
+                >
+                  Update Status
+                </button>
+              </div>
               <button
                 onClick={confirmOrder}
                 className="px-3 py-2 rounded-lg bg-indigo-600 text-white"
@@ -423,6 +506,43 @@ export default function AdminOrderDetail() {
               >
                 Mark as Paid
               </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-3 py-2 rounded-lg bg-red-600 text-white"
+              >
+                Delete Order
+              </button>
+              {/* Custom Delete Confirmation Modal */}
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                    <p className="mb-4 font-semibold">
+                      Are you sure you want to delete this order? This will also
+                      delete all associated files.
+                    </p>
+                    <div className="flex gap-4 justify-end">
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-gray-300 rounded"
+                        onClick={() => setShowDeleteConfirm(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-red-600 text-white rounded"
+                        onClick={async () => {
+                          setShowDeleteConfirm(false);
+                          await deleteOrder();
+                        }}
+                      >
+                        Yes, Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </article>
         </div>

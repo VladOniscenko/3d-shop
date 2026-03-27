@@ -12,7 +12,11 @@ export default function Materials() {
     const fetchMaterials = async () => {
       try {
         const response = await api.get("/filaments");
-        setFilaments(response.data);
+        if (Array.isArray(response.data)) {
+          setFilaments(response.data);
+        } else {
+          setFilaments([]);
+        }
       } catch (error) {
         console.error("API Error:", error);
       } finally {

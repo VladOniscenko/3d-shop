@@ -62,7 +62,11 @@ export default function RecentPrints() {
       try {
         // Fetching top 4 recent items from your products API
         const res = await api.get("/products?limit=4");
-        setPrints(res.data);
+        if (Array.isArray(res.data)) {
+          setPrints(res.data);
+        } else {
+          setPrints([]);
+        }
       } catch (err) {
         console.error("Could not fetch recent prints", err);
       } finally {

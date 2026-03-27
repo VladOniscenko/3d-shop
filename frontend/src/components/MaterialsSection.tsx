@@ -12,8 +12,11 @@ export default function MaterialsSection() {
     const fetchPreview = async () => {
       try {
         const response = await api.get("/filaments");
-        // We only show the first 6 for the homepage preview
-        setFilaments(response.data.slice(0, 6));
+        if (Array.isArray(response.data)) {
+          setFilaments(response.data.slice(0, 6));
+        } else {
+          setFilaments([]);
+        }
       } catch (error) {
         console.error("Could not load filament preview:", error);
       } finally {

@@ -38,7 +38,11 @@ export default function Quote() {
     const fetchFilaments = async () => {
       try {
         const res = await api.get("/filaments");
-        setFilaments(res.data);
+        if (Array.isArray(res.data)) {
+          setFilaments(res.data);
+        } else {
+          setFilaments([]);
+        }
       } catch (err) {
         console.error("Failed to fetch filaments", err);
       }

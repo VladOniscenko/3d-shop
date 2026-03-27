@@ -19,13 +19,22 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import type { Filament } from "../types";
 
-export default function Cart() {
   const {
     cart,
     removeFromCart,
     updateCartItem,
     loading: cartLoading,
+    error,
   } = useCart();
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    if (error && error.includes("Your cart was updated elsewhere")) {
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -206,6 +215,11 @@ export default function Cart() {
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
+      {showError && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg font-semibold animate-fade-in">
+          Your cart was updated elsewhere. Please refresh your cart and try again.
+        </div>
+      )}
       <main className="max-w-7xl mx-auto px-6 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
           <ShoppingCart className="text-emerald-600" size={32} />

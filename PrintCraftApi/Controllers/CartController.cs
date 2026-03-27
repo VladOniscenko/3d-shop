@@ -68,32 +68,39 @@ public class CartController : ControllerBase
         // Check if item already exists in cart
         var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
 
-        if (existingItem != null)
+        try
         {
-            // Update count instead of adding duplicate
-            existingItem.Count += request.Count;
-            existingItem.Material = request.Material ?? existingItem.Material;
-            existingItem.Color = request.Color ?? existingItem.Color;
-        }
-        else
-        {
-            // Create new cart item with validated price
-            var cartItem = new CartItem
+            if (existingItem != null)
             {
-                CartId = cart.Id,
-                ProductId = product.Id,
-                ProductName = product.Name,
-                ImageUrl = product.ImageUrl,
-                Material = request.Material ?? "PLA",
-                Color = request.Color ?? "Black",
-                Count = request.Count,
-                Price = (decimal)product.Price // Validate from database
-            };
-            cart.Items.Add(cartItem);
-        }
+                // Update count instead of adding duplicate
+                existingItem.Count += request.Count;
+                existingItem.Material = request.Material ?? existingItem.Material;
+                existingItem.Color = request.Color ?? existingItem.Color;
+            }
+            else
+            {
+                // Create new cart item with validated price
+                var cartItem = new CartItem
+                {
+                    CartId = cart.Id,
+                    ProductId = product.Id,
+                    ProductName = product.Name,
+                    ImageUrl = product.ImageUrl,
+                    Material = request.Material ?? "PLA",
+                    Color = request.Color ?? "Black",
+                    Count = request.Count,
+                    Price = (decimal)product.Price // Validate from database
+                };
+                cart.Items.Add(cartItem);
+            }
 
-        cart.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+            cart.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "Your cart was updated elsewhere. Please refresh your cart and try again." });
+        }
 
         return Ok(new { message = "Item added to cart", cart });
     }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
+using System.IO;
 
 namespace PrintCraftApi.Controllers;
 
@@ -12,6 +13,20 @@ namespace PrintCraftApi.Controllers;
 [Authorize(Roles = "admin")]
 public class AdminController : ControllerBase
 {
+    [HttpPut("orders/{id:guid}/paid")]
+    public async Task<IActionResult> MarkPaid([FromRoute] Guid id)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        order.Status = "paid";
+        order.IsPaid = true;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(order);
+    }
     private readonly PrintCraftDb _db;
 
     public AdminController(PrintCraftDb db)
@@ -193,22 +208,29 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
-    [HttpPut("orders/{id:guid}/notes")]
-    public async Task<IActionResult> AddNotes([FromRoute] Guid id, [FromBody] NotesRequest payload)
+    [HttpDelete("orders/{id:guid}")]
+    public async Task<IActionResult> DeleteOrder([FromRoute] Guid id)
     {
-        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
-        if (!string.IsNullOrWhiteSpace(payload.InternalNotes))
-            order.InternalNotes = string.IsNullOrWhiteSpace(order.InternalNotes) ? payload.InternalNotes : order.InternalNotes + "\n" + payload.InternalNotes;
+        // Delete associated files
+        foreach (var item in order.Items)
+        {
+            if (!string.IsNullOrEmpty(item.FileUrl))
+            {
+                var filePath = Path.Combine("wwwroot", item.FileUrl.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
 
-        if (!string.IsNullOrWhiteSpace(payload.CustomerNotes))
-            order.CustomerNotes = string.IsNullOrWhiteSpace(order.CustomerNotes) ? payload.CustomerNotes : order.CustomerNotes + "\n" + payload.CustomerNotes;
-
-        order.UpdatedAt = DateTime.UtcNow;
+        _db.Orders.Remove(order);
         await _db.SaveChangesAsync();
 
-        return Ok(order);
+        return NoContent();
     }
 
     [HttpGet("users")]
@@ -265,7 +287,38 @@ public class AdminController : ControllerBase
 
         return NoContent();
     }
-}
 
-public record QuoteRequest(decimal Price, string Message);
-public record NotesRequest(string? InternalNotes, string? CustomerNotes);
+    [HttpPut("orders/{id:guid}/items/{itemId:guid}")]
+    public async Task<IActionResult> UpdateOrderItem([FromRoute] Guid id, [FromRoute] Guid itemId, [FromBody] UpdateItemRequest payload)
+    {
+        var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        var item = order.Items.FirstOrDefault(i => i.Id == itemId);
+        if (item == null) return NotFound(new { message = "Item not found" });
+
+        item.Price = payload.Price;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(order);
+    }
+
+    [HttpPatch("orders/{id:guid}/delivery-price")] // PATCH for partial update
+    public async Task<IActionResult> UpdateDeliveryPrice([FromRoute] Guid id, [FromBody] DeliveryPriceRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        order.DeliveryPrice = payload.DeliveryPrice;
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
+    public record QuoteRequest(decimal Price, string Message);
+    public record NotesRequest(string? InternalNotes, string? CustomerNotes);
+    public record UpdateItemRequest(double Price);
+    public record DeliveryPriceRequest(decimal DeliveryPrice);
+}
