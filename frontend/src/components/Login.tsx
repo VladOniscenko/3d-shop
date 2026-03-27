@@ -128,12 +128,12 @@ export default function Login() {
                   {t("login.remember")}
                 </label>
               </div>
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="text-sm font-medium text-emerald-700 hover:text-emerald-600"
               >
                 {t("login.forgot")}
-              </a>
+              </Link>
             </div>
 
             <button

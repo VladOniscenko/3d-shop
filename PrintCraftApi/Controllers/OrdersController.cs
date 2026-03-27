@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using PrintCraftApi.Validation;
+using PrintCraftApi.Services;
 
 namespace PrintCraftApi.Controllers;
 
@@ -15,11 +16,19 @@ public class OrdersController : ControllerBase
 {
     private readonly PrintCraftDb _db;
     private readonly IWebHostEnvironment _env;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<OrdersController> _logger;
 
-    public OrdersController(PrintCraftDb db, IWebHostEnvironment env)
+    public OrdersController(
+        PrintCraftDb db,
+        IWebHostEnvironment env,
+        IEmailService emailService,
+        ILogger<OrdersController> logger)
     {
         _db = db;
         _env = env;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     private static bool IsPendingStatus(string? status)
@@ -132,6 +141,19 @@ public class OrdersController : ControllerBase
 
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
+
+        try
+        {
+            var user = await _db.Users.FindAsync(order.UserId);
+            if (user != null)
+            {
+                await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed sending quote-requested email for order {OrderId}", order.Id);
+        }
 
         return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
     }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using System.IO;
+using PrintCraftApi.Services;
 
 namespace PrintCraftApi.Controllers;
 
@@ -34,10 +35,12 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
     private readonly PrintCraftDb _db;
+    private readonly IEmailService _emailService;
 
-    public AdminController(PrintCraftDb db)
+    public AdminController(PrintCraftDb db, IEmailService emailService)
     {
         _db = db;
+        _emailService = emailService;
     }
 
     [HttpGet("summary")]
@@ -340,8 +343,58 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPost("orders/{id:guid}/email")]
+    public async Task<IActionResult> SendOrderEmail([FromRoute] Guid id, [FromBody] SendOrderEmailRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        var user = await _db.Users.FindAsync(order.UserId);
+        if (user == null) return NotFound(new { message = "Customer not found for order" });
+
+        var type = payload.Type?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(type))
+            return BadRequest(new { message = "Email type is required." });
+
+        switch (type)
+        {
+            case "quote_requested":
+                await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
+                return Ok(new { message = "Quote requested email sent." });
+
+            case "quote_confirmation":
+                var quotePrice = payload.Price ?? order.QuotedPrice;
+                if (quotePrice == null)
+                    return BadRequest(new { message = "Quote price is required." });
+
+                await _emailService.SendQuoteConfirmationEmailAsync(
+                    user.Email,
+                    user.Name,
+                    order.Id,
+                    quotePrice.Value,
+                    payload.Message ?? order.QuoteMessage);
+                return Ok(new { message = "Quote confirmation email sent." });
+
+            case "order_sent_tracking":
+                if (string.IsNullOrWhiteSpace(payload.TrackingCode))
+                    return BadRequest(new { message = "Tracking code is required." });
+
+                await _emailService.SendOrderSentTrackingEmailAsync(
+                    user.Email,
+                    user.Name,
+                    order.Id,
+                    payload.TrackingCode.Trim(),
+                    payload.TrackingUrl);
+                return Ok(new { message = "Order sent email sent." });
+
+            default:
+                return BadRequest(new { message = "Unsupported email type." });
+        }
+    }
+
     public record QuoteRequest(decimal Price, string Message);
     public record NotesRequest(string? InternalNotes, string? CustomerNotes);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
+    public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
 }

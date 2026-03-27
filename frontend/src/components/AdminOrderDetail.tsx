@@ -28,6 +28,12 @@ export default function AdminOrderDetail() {
   const [deliveryPrice, setDeliveryPrice] = useState(0);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
   const [savingDelivery, setSavingDelivery] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailType, setEmailType] = useState("quote_requested");
+  const [emailPrice, setEmailPrice] = useState(0);
+  const [emailMessage, setEmailMessage] = useState("");
+  const [trackingCode, setTrackingCode] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -51,6 +57,8 @@ export default function AdminOrderDetail() {
         setItemPrices(prices);
         setDeliveryPrice(res.data.deliveryPrice || 0);
         setSelectedStatus(res.data.status || "pending");
+        setEmailPrice(res.data.quotedPrice || 0);
+        setEmailMessage(res.data.quoteMessage || "");
       } catch (err) {
         console.error(err);
       } finally {
@@ -219,6 +227,41 @@ export default function AdminOrderDetail() {
     } catch (err) {
       console.error(err);
       notifyError("Could not update customer info.");
+    }
+  };
+
+  const sendCustomerEmail = async () => {
+    if (!id) return;
+
+    if (emailType === "quote_confirmation" && emailPrice < 0) {
+      notifyError("Quote price cannot be negative.");
+      return;
+    }
+
+    if (emailType === "order_sent_tracking" && !trackingCode.trim()) {
+      notifyError("Tracking code is required for sent email.");
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      await api.post(`/admin/orders/${id}/email`, {
+        type: emailType,
+        price: emailType === "quote_confirmation" ? emailPrice : null,
+        message: emailType === "quote_confirmation" ? emailMessage : null,
+        trackingCode:
+          emailType === "order_sent_tracking" ? trackingCode.trim() : null,
+        trackingUrl:
+          emailType === "order_sent_tracking" ? trackingUrl.trim() : null,
+      });
+      notifySuccess("Email sent to customer.");
+    } catch (err: any) {
+      console.error(err);
+      notifyError(
+        err?.response?.data?.message || "Could not send customer email.",
+      );
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -589,6 +632,93 @@ export default function AdminOrderDetail() {
           </div>
         </article>
       </div>
+
+      <article className="admin-panel mb-5 p-4">
+        <h3 className="font-bold mb-2 text-[#1b2b25]">Customer Email</h3>
+        <div className="grid gap-3">
+          <div>
+            <label className="block text-xs uppercase text-[#6c817a]">
+              Email Type
+            </label>
+            <select
+              value={emailType}
+              onChange={(e) => setEmailType(e.target.value)}
+              className="admin-select"
+            >
+              <option value="quote_requested">Quote Requested</option>
+              <option value="quote_confirmation">
+                Quote Confirmation + Price
+              </option>
+              <option value="order_sent_tracking">
+                Order Sent + Track and Trace
+              </option>
+            </select>
+          </div>
+
+          {emailType === "quote_confirmation" && (
+            <>
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Quote Price
+                </label>
+                <input
+                  type="number"
+                  value={emailPrice}
+                  onChange={(e) => setEmailPrice(parseFloat(e.target.value) || 0)}
+                  className="admin-field"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Quote Message
+                </label>
+                <textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  rows={3}
+                  className="admin-textarea"
+                />
+              </div>
+            </>
+          )}
+
+          {emailType === "order_sent_tracking" && (
+            <>
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Tracking Code
+                </label>
+                <input
+                  value={trackingCode}
+                  onChange={(e) => setTrackingCode(e.target.value)}
+                  className="admin-field"
+                  placeholder="e.g. 3SPQ123456789"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Tracking URL (optional)
+                </label>
+                <input
+                  value={trackingUrl}
+                  onChange={(e) => setTrackingUrl(e.target.value)}
+                  className="admin-field"
+                  placeholder="https://carrier.example/track/..."
+                />
+              </div>
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={sendCustomerEmail}
+            disabled={sendingEmail}
+            className="admin-btn admin-btn-primary w-fit"
+          >
+            {sendingEmail ? "Sending..." : "Send Email"}
+          </button>
+        </div>
+      </article>
 
       <article className="admin-panel mb-5 p-4">
         <h3 className="font-bold mb-2 text-[#1b2b25]">Notes</h3>

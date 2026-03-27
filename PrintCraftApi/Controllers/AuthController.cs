@@ -8,6 +8,7 @@ using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+using PrintCraftApi.Services;
 
 namespace PrintCraftApi.Controllers;
 
@@ -17,11 +18,19 @@ public class AuthController : ControllerBase
 {
     private readonly PrintCraftDb _db;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(PrintCraftDb db, IConfiguration configuration)
+    public AuthController(
+        PrintCraftDb db,
+        IConfiguration configuration,
+        IEmailService emailService,
+        ILogger<AuthController> logger)
     {
         _db = db;
         _configuration = configuration;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpPost("register")]
@@ -100,7 +109,116 @@ public class AuthController : ControllerBase
             ? Ok(new { user.Id, user.Name, user.Email, user.Role })
             : NotFound();
     }
+
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("AuthBurst")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req)
+    {
+        var email = req.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Ok(new { message = "If the account exists, a reset email has been sent." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user != null)
+        {
+            try
+            {
+                var token = GeneratePasswordResetToken(user);
+                var frontendBaseUrl = _configuration["FrontendBaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
+                var resetLink = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(token)}";
+                await _emailService.SendResetPasswordEmailAsync(user.Email, user.Name, resetLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email for user {UserId}", user.Id);
+            }
+        }
+
+        return Ok(new { message = "If the account exists, a reset email has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    [EnableRateLimiting("AuthBurst")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Token))
+            return BadRequest(new { message = "Reset token is required." });
+
+        if (string.IsNullOrWhiteSpace(req.NewPassword) || req.NewPassword.Length < 8)
+            return BadRequest(new { message = "Password must be at least 8 characters." });
+
+        var userId = ValidatePasswordResetToken(req.Token);
+        if (userId == null)
+            return BadRequest(new { message = "Reset token is invalid or expired." });
+
+        var user = await _db.Users.FindAsync(userId.Value);
+        if (user == null)
+            return BadRequest(new { message = "Reset token is invalid or expired." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Password has been reset." });
+    }
+
+    private string GeneratePasswordResetToken(User user)
+    {
+        var secretKey = _configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
+        var key = Encoding.ASCII.GetBytes(secretKey);
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("purpose", "password_reset"),
+            }),
+            Expires = DateTime.UtcNow.AddMinutes(30),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature),
+        };
+
+        var token = tokenHandler.CreateToken(descriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    private Guid? ValidatePasswordResetToken(string token)
+    {
+        var secretKey = _configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
+        var key = Encoding.ASCII.GetBytes(secretKey);
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.FromMinutes(1),
+            }, out _);
+
+            var purpose = principal.FindFirst("purpose")?.Value;
+            if (!string.Equals(purpose, "password_reset", StringComparison.Ordinal))
+                return null;
+
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 public record RegisterRequest(string Name, string Email, string Password);
 public record LoginRequest(string Email, string Password);
+public record ForgotPasswordRequest(string Email);
+public record ResetPasswordRequest(string Token, string NewPassword);
