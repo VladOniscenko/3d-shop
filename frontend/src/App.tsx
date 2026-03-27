@@ -15,6 +15,7 @@ import AdminOrders from "./components/AdminOrders";
 import AdminOrderDetail from "./components/AdminOrderDetail";
 import AdminUsers from "./components/AdminUsers";
 import AdminProducts from "./components/AdminProducts";
+import AdminFilaments from "./components/AdminFilaments";
 import SeoManager from "./components/SeoManager";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
@@ -131,6 +132,14 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminProducts />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/filaments"
+          element={
+            <AdminRoute>
+              <AdminFilaments />
             </AdminRoute>
           }
         />

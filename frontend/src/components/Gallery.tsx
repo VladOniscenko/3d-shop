@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import type { Product } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { useNotify } from "../context/NotifyContext";
 
 const getCategoryDesign = (category: string) => {
   switch (category) {
@@ -57,6 +58,7 @@ const categories = ["All", "Toys", "Tools", "Decor", "Tech"];
 
 export default function Gallery() {
   const { t } = useI18n();
+  const { notifyError } = useNotify();
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
@@ -90,7 +92,7 @@ export default function Gallery() {
     // Check if user is authenticated
     const token = localStorage.getItem("token");
     if (!token) {
-      alert(t("gallery.loginFirst"));
+      notifyError(t("gallery.loginFirst"));
       navigate("/login");
       return;
     }
@@ -103,7 +105,7 @@ export default function Gallery() {
       setTimeout(() => setAddedItemId(null), 2000);
     } catch (err) {
       console.error("Failed to add to cart:", err);
-      alert(t("gallery.addFailed"));
+      notifyError(t("gallery.addFailed"));
     } finally {
       setPendingAddIds((prev) => {
         const next = new Set(prev);

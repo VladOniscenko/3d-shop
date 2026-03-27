@@ -24,9 +24,11 @@ import api from "../services/api";
 import type { Order } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { useNotify } from "../context/NotifyContext";
 
 export default function OrderDetail() {
   const { t } = useI18n();
+  const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -55,10 +57,10 @@ export default function OrderDetail() {
     setIsCancelling(true);
     try {
       await api.put(`/orders/${id}/cancel`);
-      alert(t("orderDetail.deleteQuote"));
+      notifySuccess(t("orderDetail.deleteQuote"));
       navigate("/orders");
     } catch (err) {
-      alert(t("gallery.addFailed"));
+      notifyError(t("gallery.addFailed"));
       console.error(err);
     } finally {
       setIsCancelling(false);

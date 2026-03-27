@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import api from "../services/api";
 import type { User } from "../types";
+import { useNotify } from "../context/NotifyContext";
 
 export default function AdminUsers() {
+  const { notifyError, notifySuccess } = useNotify();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -61,9 +63,10 @@ export default function AdminUsers() {
       });
       fetchUsers();
       cancelEdit();
+      notifySuccess("User updated.");
     } catch (err) {
       console.error(err);
-      alert("Could not update user.");
+      notifyError("Could not update user.");
     }
   };
 

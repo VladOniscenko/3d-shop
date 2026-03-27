@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import api from "../services/api";
 import type { Product } from "../types";
+import { useNotify } from "../context/NotifyContext";
 
 export default function AdminProducts() {
+  const { notifyError, notifySuccess } = useNotify();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -56,9 +58,10 @@ export default function AdminProducts() {
       setFileFile(null);
       setPrice(0);
       fetchProducts();
+      notifySuccess("Product created.");
     } catch (err) {
       console.error(err);
-      alert("Could not create product. Ensure you are admin.");
+      notifyError("Could not create product. Ensure you are admin.");
     }
   };
 
@@ -67,8 +70,10 @@ export default function AdminProducts() {
     try {
       await api.delete(`/products/${id}`);
       fetchProducts();
+      notifySuccess("Product deleted.");
     } catch (err) {
       console.error(err);
+      notifyError("Could not delete product.");
     }
   };
 

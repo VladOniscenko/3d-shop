@@ -24,9 +24,11 @@ import {
 } from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { useNotify } from "../context/NotifyContext";
 
 export default function CheckoutPage() {
   const { t } = useI18n();
+  const { notifyError } = useNotify();
   const {
     cart,
     removeFromCart,
@@ -119,12 +121,12 @@ export default function CheckoutPage() {
     e.preventDefault();
 
     if (cart.length === 0) {
-      alert(t("cart.empty"));
+      notifyError(t("cart.empty"));
       return;
     }
 
     if (!validateForm()) {
-      alert(t("quote.invalidShipping"));
+      notifyError(t("quote.invalidShipping"));
       return;
     }
 
@@ -141,7 +143,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error("Checkout Error:", err);
-      alert(t("cart.checkoutFailed"));
+      notifyError(t("cart.checkoutFailed"));
     } finally {
       setIsSubmitting(false);
     }

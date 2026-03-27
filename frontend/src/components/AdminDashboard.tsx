@@ -92,6 +92,12 @@ export default function AdminDashboard() {
             >
               Manage Products
             </Link>
+            <Link
+              to="/admin/filaments"
+              className="block text-emerald-700 hover:underline mt-1"
+            >
+              Manage Filaments
+            </Link>
           </div>
         </div>
 

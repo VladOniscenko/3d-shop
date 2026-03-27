@@ -10,6 +10,12 @@ namespace PrintCraftApi.Controllers;
 [Route("api/[controller]")]
 public class FilamentsController : ControllerBase
 {
+    public sealed class UpdateFilamentRequest
+    {
+        public decimal PricePerGram { get; set; }
+        public int StockQuantity { get; set; }
+    }
+
     private readonly PrintCraftDb _db;
 
     public FilamentsController(PrintCraftDb db)
@@ -37,5 +43,36 @@ public class FilamentsController : ControllerBase
         _db.Filaments.Add(filament);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetAll), new { id = filament.Id }, filament);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateFilamentRequest request)
+    {
+        if (request.PricePerGram < 0 || request.StockQuantity < 0)
+            return BadRequest(new { message = "Price and stock cannot be negative." });
+
+        var filament = await _db.Filaments.FirstOrDefaultAsync(f => f.Id == id);
+        if (filament is null)
+            return NotFound(new { message = "Filament not found." });
+
+        filament.PricePerGram = request.PricePerGram;
+        filament.StockQuantity = request.StockQuantity;
+
+        await _db.SaveChangesAsync();
+        return Ok(filament);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var filament = await _db.Filaments.FirstOrDefaultAsync(f => f.Id == id);
+        if (filament is null)
+            return NotFound(new { message = "Filament not found." });
+
+        _db.Filaments.Remove(filament);
+        await _db.SaveChangesAsync();
+        return NoContent();
     }
 }

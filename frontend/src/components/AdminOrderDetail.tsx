@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import api from "../services/api";
 import type { Order } from "../types";
+import { useNotify } from "../context/NotifyContext";
 
 export default function AdminOrderDetail() {
+  const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -61,10 +63,10 @@ export default function AdminOrderDetail() {
         status: selectedStatus,
       });
       await refresh();
-      alert("Order status updated.");
+      notifySuccess("Order status updated.");
     } catch (err) {
       console.error(err);
-      alert("Could not update order status.");
+      notifyError("Could not update order status.");
     }
   };
 
@@ -82,10 +84,10 @@ export default function AdminOrderDetail() {
         message: quoteMessage,
       });
       await refresh();
-      alert("Quote sent to customer.");
+      notifySuccess("Quote sent to customer.");
     } catch (err) {
       console.error(err);
-      alert("Could not send quote.");
+      notifyError("Could not send quote.");
     }
   };
 
@@ -94,10 +96,10 @@ export default function AdminOrderDetail() {
     try {
       await api.put(`/admin/orders/${id}/confirm`, {});
       await refresh();
-      alert("Order confirmed for printing.");
+      notifySuccess("Order confirmed for printing.");
     } catch (err) {
       console.error(err);
-      alert("Could not confirm order.");
+      notifyError("Could not confirm order.");
     }
   };
 
@@ -106,10 +108,10 @@ export default function AdminOrderDetail() {
     try {
       await api.put(`/admin/orders/${id}/sent`, {});
       await refresh();
-      alert("Order marked as sent.");
+      notifySuccess("Order marked as sent.");
     } catch (err) {
       console.error(err);
-      alert("Could not mark as sent.");
+      notifyError("Could not mark as sent.");
     }
   };
 
@@ -118,10 +120,10 @@ export default function AdminOrderDetail() {
     try {
       await api.put(`/admin/orders/${id}/delivered`, {});
       await refresh();
-      alert("Order marked as delivered.");
+      notifySuccess("Order marked as delivered.");
     } catch (err) {
       console.error(err);
-      alert("Could not mark as delivered.");
+      notifyError("Could not mark as delivered.");
     }
   };
 
@@ -130,10 +132,10 @@ export default function AdminOrderDetail() {
     try {
       await api.put(`/admin/orders/${id}/paid`, {});
       await refresh();
-      alert("Order marked as paid.");
+      notifySuccess("Order marked as paid.");
     } catch (err) {
       console.error(err);
-      alert("Could not mark as paid.");
+      notifyError("Could not mark as paid.");
     }
   };
 
@@ -144,7 +146,7 @@ export default function AdminOrderDetail() {
       await refresh();
     } catch (err) {
       console.error(err);
-      alert("Could not update item price.");
+      notifyError("Could not update item price.");
     }
   };
 
@@ -157,7 +159,7 @@ export default function AdminOrderDetail() {
       await refresh();
     } catch (err) {
       console.error(err);
-      alert("Could not update delivery price.");
+      notifyError("Could not update delivery price.");
     }
   };
 
@@ -165,11 +167,11 @@ export default function AdminOrderDetail() {
     if (!id) return;
     try {
       await api.delete(`/admin/orders/${id}`);
-      alert("Order deleted.");
+      notifySuccess("Order deleted.");
       navigate("/admin/orders");
     } catch (err) {
       console.error(err);
-      alert("Could not delete order.");
+      notifyError("Could not delete order.");
     }
   };
 
@@ -181,10 +183,10 @@ export default function AdminOrderDetail() {
         customerNotes,
       });
       await refresh();
-      alert("Notes saved.");
+      notifySuccess("Notes saved.");
     } catch (err) {
       console.error(err);
-      alert("Could not save notes.");
+      notifyError("Could not save notes.");
     }
   };
 
@@ -201,10 +203,10 @@ export default function AdminOrderDetail() {
       });
       await refresh();
       setEditingCustomer(false);
-      alert("Customer info updated.");
+      notifySuccess("Customer info updated.");
     } catch (err) {
       console.error(err);
-      alert("Could not update customer info.");
+      notifyError("Could not update customer info.");
     }
   };
 

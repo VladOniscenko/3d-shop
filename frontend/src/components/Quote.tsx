@@ -23,9 +23,11 @@ import {
 } from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { useNotify } from "../context/NotifyContext";
 
 export default function Quote() {
   const { t } = useI18n();
+  const { notifyError } = useNotify();
   const navigate = useNavigate();
 
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -91,7 +93,7 @@ export default function Quote() {
       };
       setItems([...items, newItem]);
     } catch (err) {
-      alert(t("quote.uploadFailed"));
+      notifyError(t("quote.uploadFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -109,12 +111,16 @@ export default function Quote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return alert(t("quote.noFiles"));
+    if (items.length === 0) {
+      notifyError(t("quote.noFiles"));
+      return;
+    }
 
     const errors = validateShippingInfo(address);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0) {
-      return alert(t("quote.invalidShipping"));
+      notifyError(t("quote.invalidShipping"));
+      return;
     }
 
     setIsSubmitting(true);
@@ -129,7 +135,7 @@ export default function Quote() {
       }
 
       const message = err?.response?.data?.message || t("quote.submitFailed");
-      alert(message);
+      notifyError(message);
     } finally {
       setIsSubmitting(false);
     }
