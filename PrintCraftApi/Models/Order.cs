@@ -20,6 +20,8 @@ public class Order
     public decimal DeliveryPrice { get; set; } = 6.95m;
     public decimal? QuotedPrice { get; set; }
     public string? QuoteMessage { get; set; }
+    public string? TrackingCode { get; set; }
+    public string? TrackingUrl { get; set; }
     public string? InternalNotes { get; set; }
     public string? CustomerNotes { get; set; }
     public bool IsPaid { get; set; }

@@ -146,6 +146,12 @@ public class AdminController : ControllerBase
         order.DeliveryPrice = updated.DeliveryPrice;
         order.QuotedPrice = updated.QuotedPrice;
         order.QuoteMessage = updated.QuoteMessage;
+        order.TrackingCode = string.IsNullOrWhiteSpace(updated.TrackingCode)
+            ? null
+            : updated.TrackingCode.Trim();
+        order.TrackingUrl = string.IsNullOrWhiteSpace(updated.TrackingUrl)
+            ? null
+            : updated.TrackingUrl.Trim();
         order.InternalNotes = updated.InternalNotes;
         order.CustomerNotes = updated.CustomerNotes;
         order.IsPaid = updated.IsPaid;
@@ -343,6 +349,24 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPatch("orders/{id:guid}/tracking")]
+    public async Task<IActionResult> UpdateTracking([FromRoute] Guid id, [FromBody] TrackingRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        order.TrackingCode = string.IsNullOrWhiteSpace(payload.TrackingCode)
+            ? null
+            : payload.TrackingCode.Trim();
+        order.TrackingUrl = string.IsNullOrWhiteSpace(payload.TrackingUrl)
+            ? null
+            : payload.TrackingUrl.Trim();
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
     [HttpPost("orders/{id:guid}/email")]
     public async Task<IActionResult> SendOrderEmail([FromRoute] Guid id, [FromBody] SendOrderEmailRequest payload)
     {
@@ -376,15 +400,30 @@ public class AdminController : ControllerBase
                 return Ok(new { message = "Quote confirmation email sent." });
 
             case "order_sent_tracking":
-                if (string.IsNullOrWhiteSpace(payload.TrackingCode))
+                var trackingCode = string.IsNullOrWhiteSpace(payload.TrackingCode)
+                    ? order.TrackingCode
+                    : payload.TrackingCode.Trim();
+                var trackingUrl = string.IsNullOrWhiteSpace(payload.TrackingUrl)
+                    ? order.TrackingUrl
+                    : payload.TrackingUrl.Trim();
+
+                if (string.IsNullOrWhiteSpace(trackingCode))
                     return BadRequest(new { message = "Tracking code is required." });
+
+                if (!string.IsNullOrWhiteSpace(payload.TrackingCode) || !string.IsNullOrWhiteSpace(payload.TrackingUrl))
+                {
+                    order.TrackingCode = trackingCode;
+                    order.TrackingUrl = trackingUrl;
+                    order.UpdatedAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+                }
 
                 await _emailService.SendOrderSentTrackingEmailAsync(
                     user.Email,
                     user.Name,
                     order.Id,
-                    payload.TrackingCode.Trim(),
-                    payload.TrackingUrl);
+                    trackingCode,
+                    trackingUrl);
                 return Ok(new { message = "Order sent email sent." });
 
             default:
@@ -396,5 +435,6 @@ public class AdminController : ControllerBase
     public record NotesRequest(string? InternalNotes, string? CustomerNotes);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
+    public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
 }

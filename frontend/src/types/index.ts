@@ -72,6 +72,8 @@ export interface Order {
   deliveryPrice?: number;
   quotedPrice?: number;
   quoteMessage?: string;
+  trackingCode?: string;
+  trackingUrl?: string;
   internalNotes?: string;
   customerNotes?: string;
   isPaid?: boolean;

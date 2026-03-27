@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
-import { Lock, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Lock,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -54,8 +60,12 @@ export default function ResetPassword() {
       <Navbar />
       <main className="site-main max-w-xl px-4 sm:px-6 py-12 flex-grow">
         <section className="site-card p-7 sm:p-9">
-          <h1 className="site-heading text-3xl font-bold mb-2">Reset password</h1>
-          <p className="site-subheading mb-6">Create a new password for your account.</p>
+          <h1 className="site-heading text-3xl font-bold mb-2">
+            Reset password
+          </h1>
+          <p className="site-subheading mb-6">
+            Create a new password for your account.
+          </p>
 
           {error && (
             <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm flex items-center gap-2">
@@ -75,9 +85,14 @@ export default function ResetPassword() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block">
-                <span className="text-sm font-semibold text-[#2a403a]">New password</span>
+                <span className="text-sm font-semibold text-[#2a403a]">
+                  New password
+                </span>
                 <div className="relative mt-1">
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]" />
+                  <Lock
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]"
+                  />
                   <input
                     type="password"
                     required
@@ -90,9 +105,14 @@ export default function ResetPassword() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-[#2a403a]">Confirm password</span>
+                <span className="text-sm font-semibold text-[#2a403a]">
+                  Confirm password
+                </span>
                 <div className="relative mt-1">
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]" />
+                  <Lock
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]"
+                  />
                   <input
                     type="password"
                     required
@@ -104,8 +124,19 @@ export default function ResetPassword() {
                 </div>
               </label>
 
-              <button type="submit" disabled={loading} className="site-btn-primary gap-2 w-full py-3">
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <><span>Reset password</span><ArrowRight size={16} /></>}
+              <button
+                type="submit"
+                disabled={loading}
+                className="site-btn-primary gap-2 w-full py-3"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <>
+                    <span>Reset password</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
               </button>
             </form>
           )}

@@ -13,8 +13,6 @@ export default function AdminOrderDetail() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quotePrice, setQuotePrice] = useState(0);
-  const [quoteMessage, setQuoteMessage] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [editingCustomer, setEditingCustomer] = useState(false);
@@ -34,31 +32,43 @@ export default function AdminOrderDetail() {
   const [emailMessage, setEmailMessage] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
+  const [savingTracking, setSavingTracking] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
 
   useEffect(() => {
     if (!id) return;
+
+    const applyOrderData = (data: Order) => {
+      setOrder(data);
+      setFullName(data.fullName);
+      setAddressLine1(data.addressLine1);
+      setAddressLine2(data.addressLine2 || "");
+      setCity(data.city);
+      setPostalCode(data.postalCode);
+      setPhoneNumber(data.phoneNumber);
+
+      const prices: { [key: string]: number } = {};
+      data.items.forEach((item: any) => {
+        if (item.id) prices[item.id] = item.price || 0;
+      });
+
+      setItemPrices(prices);
+      setDeliveryPrice(data.deliveryPrice || 0);
+      setSelectedStatus(data.status || "pending");
+      setEmailPrice(data.quotedPrice || 0);
+      setEmailMessage(data.quoteMessage || "");
+      setTrackingCode(data.trackingCode || "");
+      setTrackingUrl(data.trackingUrl || "");
+      setInternalNotes(data.internalNotes || "");
+      setCustomerNotes(data.customerNotes || "");
+    };
+
     const getOrder = async () => {
       try {
         const res = await api.get(`/admin/orders/${id}`);
-        setOrder(res.data);
-        setFullName(res.data.fullName);
-        setAddressLine1(res.data.addressLine1);
-        setAddressLine2(res.data.addressLine2 || "");
-        setCity(res.data.city);
-        setPostalCode(res.data.postalCode);
-        setPhoneNumber(res.data.phoneNumber);
-        const prices: { [key: string]: number } = {};
-        res.data.items.forEach((item: any) => {
-          if (item.id) prices[item.id] = item.price || 0;
-        });
-        setItemPrices(prices);
-        setDeliveryPrice(res.data.deliveryPrice || 0);
-        setSelectedStatus(res.data.status || "pending");
-        setEmailPrice(res.data.quotedPrice || 0);
-        setEmailMessage(res.data.quoteMessage || "");
+        applyOrderData(res.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -86,20 +96,30 @@ export default function AdminOrderDetail() {
     if (!id) return;
     const res = await api.get(`/admin/orders/${id}`);
     setOrder(res.data);
+    setTrackingCode(res.data.trackingCode || "");
+    setTrackingUrl(res.data.trackingUrl || "");
   };
 
-  const sendQuote = async () => {
+  const saveTracking = async () => {
     if (!id) return;
+    if (!trackingCode.trim()) {
+      notifyError("Tracking code is required.");
+      return;
+    }
+
+    setSavingTracking(true);
     try {
-      await api.put(`/admin/orders/${id}/quote`, {
-        price: quotePrice,
-        message: quoteMessage,
+      await api.patch(`/admin/orders/${id}/tracking`, {
+        trackingCode: trackingCode.trim(),
+        trackingUrl: trackingUrl.trim() || null,
       });
       await refresh();
-      notifySuccess("Quote sent to customer.");
+      notifySuccess("Tracking saved on order.");
     } catch (err) {
       console.error(err);
-      notifyError("Could not send quote.");
+      notifyError("Could not save tracking details.");
+    } finally {
+      setSavingTracking(false);
     }
   };
 
@@ -509,38 +529,7 @@ export default function AdminOrderDetail() {
         </article>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <article className="admin-panel p-4">
-          <h3 className="font-bold mb-2 text-[#1b2b25]">Quote Workflows</h3>
-          <div className="space-y-2">
-            <div>
-              <label className="block text-xs uppercase text-[#6c817a]">
-                Quoted Price
-              </label>
-              <input
-                value={quotePrice}
-                type="number"
-                onChange={(e) => setQuotePrice(parseFloat(e.target.value))}
-                className="admin-field"
-              />
-            </div>
-            <div>
-              <label className="block text-xs uppercase text-[#6c817a]">
-                Quote Message
-              </label>
-              <textarea
-                value={quoteMessage}
-                onChange={(e) => setQuoteMessage(e.target.value)}
-                className="admin-textarea"
-                rows={3}
-              />
-            </div>
-            <button onClick={sendQuote} className="admin-btn admin-btn-primary">
-              Send Quote
-            </button>
-          </div>
-        </article>
-
+      <div className="mb-5">
         <article className="admin-panel p-4">
           <h3 className="font-bold mb-2 text-[#1b2b25]">Order Actions</h3>
           <div className="grid gap-2">
@@ -634,8 +623,45 @@ export default function AdminOrderDetail() {
       </div>
 
       <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Customer Email</h3>
+        <h3 className="font-bold mb-2 text-[#1b2b25]">Track and Trace</h3>
         <div className="grid gap-3">
+          <div>
+            <label className="block text-xs uppercase text-[#6c817a]">
+              Tracking Code
+            </label>
+            <input
+              value={trackingCode}
+              onChange={(e) => setTrackingCode(e.target.value)}
+              className="admin-field"
+              placeholder="e.g. 3SPQ123456789"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase text-[#6c817a]">
+              Tracking URL (optional)
+            </label>
+            <input
+              value={trackingUrl}
+              onChange={(e) => setTrackingUrl(e.target.value)}
+              className="admin-field"
+              placeholder="https://carrier.example/track/..."
+            />
+          </div>
+          <button
+            type="button"
+            onClick={saveTracking}
+            disabled={savingTracking}
+            className="admin-btn admin-btn-secondary w-fit"
+          >
+            {savingTracking ? "Saving..." : "Save Tracking"}
+          </button>
+        </div>
+      </article>
+
+      <article className="admin-panel mb-5 p-4">
+        <h3 className="font-bold mb-2 text-[#1b2b25]">Communication</h3>
+        <div className="grid gap-3">
+
           <div>
             <label className="block text-xs uppercase text-[#6c817a]">
               Email Type
@@ -664,7 +690,9 @@ export default function AdminOrderDetail() {
                 <input
                   type="number"
                   value={emailPrice}
-                  onChange={(e) => setEmailPrice(parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setEmailPrice(parseFloat(e.target.value) || 0)
+                  }
                   className="admin-field"
                 />
               </div>
@@ -684,28 +712,9 @@ export default function AdminOrderDetail() {
 
           {emailType === "order_sent_tracking" && (
             <>
-              <div>
-                <label className="block text-xs uppercase text-[#6c817a]">
-                  Tracking Code
-                </label>
-                <input
-                  value={trackingCode}
-                  onChange={(e) => setTrackingCode(e.target.value)}
-                  className="admin-field"
-                  placeholder="e.g. 3SPQ123456789"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase text-[#6c817a]">
-                  Tracking URL (optional)
-                </label>
-                <input
-                  value={trackingUrl}
-                  onChange={(e) => setTrackingUrl(e.target.value)}
-                  className="admin-field"
-                  placeholder="https://carrier.example/track/..."
-                />
-              </div>
+              <p className="text-sm text-[#5b706a]">
+                Uses the saved tracking details above.
+              </p>
             </>
           )}
 

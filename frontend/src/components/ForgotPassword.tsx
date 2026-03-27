@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Mail, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Mail,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -32,7 +38,9 @@ export default function ForgotPassword() {
       <Navbar />
       <main className="site-main max-w-xl px-4 sm:px-6 py-12 flex-grow">
         <section className="site-card p-7 sm:p-9">
-          <h1 className="site-heading text-3xl font-bold mb-2">Forgot password</h1>
+          <h1 className="site-heading text-3xl font-bold mb-2">
+            Forgot password
+          </h1>
           <p className="site-subheading mb-6">
             Enter your account email and we will send you a reset link.
           </p>
@@ -51,9 +59,14 @@ export default function ForgotPassword() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block">
-                <span className="text-sm font-semibold text-[#2a403a]">Email</span>
+                <span className="text-sm font-semibold text-[#2a403a]">
+                  Email
+                </span>
                 <div className="relative mt-1">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]" />
+                  <Mail
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a8f89]"
+                  />
                   <input
                     type="email"
                     required
@@ -65,15 +78,29 @@ export default function ForgotPassword() {
                 </div>
               </label>
 
-              <button type="submit" disabled={loading} className="site-btn-primary gap-2 w-full py-3">
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <><span>Send reset email</span><ArrowRight size={16} /></>}
+              <button
+                type="submit"
+                disabled={loading}
+                className="site-btn-primary gap-2 w-full py-3"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <>
+                    <span>Send reset email</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
               </button>
             </form>
           )}
 
           <p className="mt-6 text-sm text-[#5f726c]">
             Remembered your password?{" "}
-            <Link to="/login" className="font-semibold text-[#0f766e] hover:underline">
+            <Link
+              to="/login"
+              className="font-semibold text-[#0f766e] hover:underline"
+            >
               Back to sign in
             </Link>
           </p>
