@@ -12,6 +12,9 @@ public class FilamentsController : ControllerBase
 {
     public sealed class UpdateFilamentRequest
     {
+        public string Name { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
         public decimal PricePerGram { get; set; }
         public int StockQuantity { get; set; }
     }
@@ -49,6 +52,9 @@ public class FilamentsController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateFilamentRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Material) || string.IsNullOrWhiteSpace(request.Color))
+            return BadRequest(new { message = "Name, material and color are required." });
+
         if (request.PricePerGram < 0 || request.StockQuantity < 0)
             return BadRequest(new { message = "Price and stock cannot be negative." });
 
@@ -56,6 +62,9 @@ public class FilamentsController : ControllerBase
         if (filament is null)
             return NotFound(new { message = "Filament not found." });
 
+        filament.Name = request.Name.Trim();
+        filament.Material = request.Material.Trim();
+        filament.Color = request.Color.Trim();
         filament.PricePerGram = request.PricePerGram;
         filament.StockQuantity = request.StockQuantity;
 

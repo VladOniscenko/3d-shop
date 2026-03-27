@@ -75,136 +75,133 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout>
-        <AdminBreadcrumb
-          title="User Management"
-          items={[{ label: "Admin", to: "/admin" }, { label: "Users" }]}
-          rightSlot={
-            <p className="text-sm text-[#5f736d]">Total: {totalCount}</p>
-          }
-        />
+      <AdminBreadcrumb
+        title="User Management"
+        items={[{ label: "Admin", to: "/admin" }, { label: "Users" }]}
+        rightSlot={
+          <p className="text-sm text-[#5f736d]">Total: {totalCount}</p>
+        }
+      />
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          <input
-            className="admin-field w-full sm:w-auto"
-            placeholder="Search users by name/email"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <input
+          className="admin-field w-full sm:w-auto"
+          placeholder="Search users by name/email"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button
+          onClick={() => setPage(1)}
+          className="admin-btn admin-btn-primary"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {editingUser && (
+        <div className="admin-panel mb-4 p-4">
+          <h3 className="font-bold mb-2 text-[#1d2d27]">Edit User</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label className="admin-label">
+              <span className="font-semibold">Name</span>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Name"
+                className="admin-field"
+              />
+            </label>
+            <label className="admin-label">
+              <span className="font-semibold">Email</span>
+              <input
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="Email"
+                className="admin-field"
+              />
+            </label>
+            <label className="admin-label">
+              <span className="font-semibold">Role</span>
+              <select
+                value={editRole}
+                onChange={(e) =>
+                  setEditRole(e.target.value as "customer" | "admin")
+                }
+                className="admin-select"
+              >
+                <option value="customer">Customer</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <button onClick={saveEdit} className="admin-btn admin-btn-primary">
+              Save
+            </button>
+            <button
+              onClick={cancelEdit}
+              className="admin-btn admin-btn-secondary"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="admin-panel admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>
+                  <button
+                    onClick={() => startEdit(user)}
+                    className="admin-btn admin-btn-secondary"
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {users.length === 0 && !loading && (
+          <p className="admin-empty">No users found.</p>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-sm text-[#60736d]">
+          Page {page} of {totalPages}
+        </span>
+        <div className="flex gap-2">
           <button
-            onClick={() => setPage(1)}
-            className="admin-btn admin-btn-primary"
+            className="admin-btn admin-btn-secondary"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Refresh
+            Prev
+          </button>
+          <button
+            className="admin-btn admin-btn-secondary"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
           </button>
         </div>
-
-        {editingUser && (
-          <div className="admin-panel mb-4 p-4">
-            <h3 className="font-bold mb-2 text-[#1d2d27]">Edit User</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <label className="admin-label">
-                <span className="font-semibold">Name</span>
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Name"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Email</span>
-                <input
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder="Email"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Role</span>
-                <select
-                  value={editRole}
-                  onChange={(e) =>
-                    setEditRole(e.target.value as "customer" | "admin")
-                  }
-                  className="admin-select"
-                >
-                  <option value="customer">Customer</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </label>
-            </div>
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={saveEdit}
-                className="admin-btn admin-btn-primary"
-              >
-                Save
-              </button>
-              <button
-                onClick={cancelEdit}
-                className="admin-btn admin-btn-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="admin-panel admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>
-                    <button
-                      onClick={() => startEdit(user)}
-                      className="admin-btn admin-btn-secondary"
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {users.length === 0 && !loading && (
-            <p className="admin-empty">No users found.</p>
-          )}
-        </div>
-
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-sm text-[#60736d]">
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              className="admin-btn admin-btn-secondary"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </button>
-            <button
-              className="admin-btn admin-btn-secondary"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+      </div>
     </AdminLayout>
   );
 }

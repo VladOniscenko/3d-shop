@@ -12,6 +12,9 @@ export default function AdminFilaments() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
+  const [materialEdits, setMaterialEdits] = useState<Record<string, string>>({});
+  const [colorEdits, setColorEdits] = useState<Record<string, string>>({});
   const [priceEdits, setPriceEdits] = useState<Record<string, number>>({});
   const [stockEdits, setStockEdits] = useState<Record<string, number>>({});
 
@@ -31,10 +34,19 @@ export default function AdminFilaments() {
 
       const nextPriceEdits: Record<string, number> = {};
       const nextStockEdits: Record<string, number> = {};
+      const nextNameEdits: Record<string, string> = {};
+      const nextMaterialEdits: Record<string, string> = {};
+      const nextColorEdits: Record<string, string> = {};
       nextFilaments.forEach((f: Filament) => {
         nextPriceEdits[f.id] = f.pricePerGram;
         nextStockEdits[f.id] = f.stockQuantity ?? 0;
+        nextNameEdits[f.id] = f.name;
+        nextMaterialEdits[f.id] = f.material;
+        nextColorEdits[f.id] = f.color;
       });
+      setNameEdits(nextNameEdits);
+      setMaterialEdits(nextMaterialEdits);
+      setColorEdits(nextColorEdits);
       setPriceEdits(nextPriceEdits);
       setStockEdits(nextStockEdits);
     } catch (err) {
@@ -76,8 +88,16 @@ export default function AdminFilaments() {
   };
 
   const updateFilament = async (id: string) => {
+    const nextName = (nameEdits[id] ?? "").trim();
+    const nextMaterial = (materialEdits[id] ?? "").trim();
+    const nextColor = (colorEdits[id] ?? "").trim();
     const nextPrice = priceEdits[id] ?? 0;
     const nextStock = stockEdits[id] ?? 0;
+
+    if (!nextName || !nextMaterial || !nextColor) {
+      notifyError("Name, material and color are required.");
+      return;
+    }
 
     if (nextPrice < 0 || nextStock < 0) {
       notifyError("Price and stock cannot be negative.");
@@ -94,7 +114,14 @@ export default function AdminFilaments() {
     setFilaments((prev) =>
       prev.map((f) =>
         f.id === id
-          ? { ...f, pricePerGram: nextPrice, stockQuantity: nextStock }
+          ? {
+              ...f,
+              name: nextName,
+              material: nextMaterial,
+              color: nextColor,
+              pricePerGram: nextPrice,
+              stockQuantity: nextStock,
+            }
           : f,
       ),
     );
@@ -102,6 +129,9 @@ export default function AdminFilaments() {
     setSavingId(id);
     try {
       await api.put(`/filaments/${id}`, {
+        name: nextName,
+        material: nextMaterial,
+        color: nextColor,
         pricePerGram: nextPrice,
         stockQuantity: nextStock,
       });
@@ -110,6 +140,9 @@ export default function AdminFilaments() {
       console.error(err);
       // Rollback on failure.
       setFilaments((prev) => prev.map((f) => (f.id === id ? previous : f)));
+      setNameEdits((prev) => ({ ...prev, [id]: previous.name }));
+      setMaterialEdits((prev) => ({ ...prev, [id]: previous.material }));
+      setColorEdits((prev) => ({ ...prev, [id]: previous.color }));
       setPriceEdits((prev) => ({ ...prev, [id]: previous.pricePerGram }));
       setStockEdits((prev) => ({ ...prev, [id]: previous.stockQuantity ?? 0 }));
 
@@ -136,6 +169,21 @@ export default function AdminFilaments() {
 
     // Optimistic removal.
     setFilaments((prev) => prev.filter((f) => f.id !== id));
+    setNameEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setMaterialEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setColorEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     setPriceEdits((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -155,12 +203,21 @@ export default function AdminFilaments() {
       console.error(err);
       // Rollback on failure.
       setFilaments(previous);
+      const nextNameEdits: Record<string, string> = {};
+      const nextMaterialEdits: Record<string, string> = {};
+      const nextColorEdits: Record<string, string> = {};
       const nextPriceEdits: Record<string, number> = {};
       const nextStockEdits: Record<string, number> = {};
       previous.forEach((f) => {
+        nextNameEdits[f.id] = f.name;
+        nextMaterialEdits[f.id] = f.material;
+        nextColorEdits[f.id] = f.color;
         nextPriceEdits[f.id] = f.pricePerGram;
         nextStockEdits[f.id] = f.stockQuantity ?? 0;
       });
+      setNameEdits(nextNameEdits);
+      setMaterialEdits(nextMaterialEdits);
+      setColorEdits(nextColorEdits);
       setPriceEdits(nextPriceEdits);
       setStockEdits(nextStockEdits);
 
@@ -182,163 +239,196 @@ export default function AdminFilaments() {
 
   return (
     <AdminLayout>
-        <AdminBreadcrumb
-          title="Filament Management"
-          items={[{ label: "Admin", to: "/admin" }, { label: "Filaments" }]}
-        />
+      <AdminBreadcrumb
+        title="Filament Management"
+        items={[{ label: "Admin", to: "/admin" }, { label: "Filaments" }]}
+      />
 
-        <form
-          onSubmit={addFilament}
-          className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 p-4"
-        >
-          <label className="admin-label">
-            <span className="font-semibold">Name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Name"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Material</span>
-            <input
-              value={material}
-              onChange={(e) => setMaterial(e.target.value)}
-              required
-              placeholder="Material"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Color</span>
-            <input
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              required
-              placeholder="Color"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Price Per Gram</span>
-            <input
-              type="number"
-              step="0.0001"
-              min="0"
-              value={pricePerGram}
-              onChange={(e) => setPricePerGram(parseFloat(e.target.value) || 0)}
-              required
-              placeholder="Price Per Gram"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Stock Quantity</span>
-            <input
-              type="number"
-              min="0"
-              value={stockQuantity}
-              onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
-              required
-              placeholder="Stock Quantity"
-              className="admin-field"
-            />
-          </label>
-          <button
-            type="submit"
-            className="admin-btn admin-btn-primary"
-          >
-            Add Filament
-          </button>
+      <form
+        onSubmit={addFilament}
+        className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 p-4"
+      >
+        <label className="admin-label">
+          <span className="font-semibold">Name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Name"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Material</span>
+          <input
+            value={material}
+            onChange={(e) => setMaterial(e.target.value)}
+            required
+            placeholder="Material"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Color</span>
+          <input
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            required
+            placeholder="Color"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Price Per Gram</span>
+          <input
+            type="number"
+            step="0.0001"
+            min="0"
+            value={pricePerGram}
+            onChange={(e) => setPricePerGram(parseFloat(e.target.value) || 0)}
+            required
+            placeholder="Price Per Gram"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Stock Quantity</span>
+          <input
+            type="number"
+            min="0"
+            value={stockQuantity}
+            onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
+            required
+            placeholder="Stock Quantity"
+            className="admin-field"
+          />
+        </label>
+        <button type="submit" className="admin-btn admin-btn-primary">
+          Add Filament
+        </button>
 
-          <label className="admin-label col-span-full">
-            <span className="font-semibold">Description</span>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
-              className="admin-textarea"
-              rows={3}
-            />
-          </label>
-        </form>
+        <label className="admin-label col-span-full">
+          <span className="font-semibold">Description</span>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description"
+            className="admin-textarea"
+            rows={3}
+          />
+        </label>
+      </form>
 
-        {loading ? (
-          <p className="admin-note">Loading filaments...</p>
-        ) : (
-          <div className="admin-panel admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Material</th>
-                  <th>Color</th>
-                  <th>Price/gram</th>
-                  <th>Stock</th>
-                  <th>Actions</th>
+      {loading ? (
+        <p className="admin-note">Loading filaments...</p>
+      ) : (
+        <div className="admin-panel admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Material</th>
+                <th>Color</th>
+                <th>Price/gram</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filaments.map((f) => (
+                <tr key={f.id}>
+                  <td>
+                    <input
+                      type="text"
+                      className="admin-field"
+                      value={nameEdits[f.id] ?? ""}
+                      onChange={(e) =>
+                        setNameEdits((prev) => ({
+                          ...prev,
+                          [f.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      className="admin-field"
+                      value={materialEdits[f.id] ?? ""}
+                      onChange={(e) =>
+                        setMaterialEdits((prev) => ({
+                          ...prev,
+                          [f.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      className="admin-field"
+                      value={colorEdits[f.id] ?? ""}
+                      onChange={(e) =>
+                        setColorEdits((prev) => ({
+                          ...prev,
+                          [f.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      className="admin-field w-28"
+                      value={priceEdits[f.id] ?? 0}
+                      onChange={(e) =>
+                        setPriceEdits((prev) => ({
+                          ...prev,
+                          [f.id]: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      className="admin-field w-24"
+                      value={stockEdits[f.id] ?? 0}
+                      onChange={(e) =>
+                        setStockEdits((prev) => ({
+                          ...prev,
+                          [f.id]: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateFilament(f.id)}
+                        disabled={savingId === f.id || deletingId === f.id}
+                        className="admin-btn admin-btn-primary"
+                      >
+                        {savingId === f.id ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => deleteFilament(f.id)}
+                        disabled={savingId === f.id || deletingId === f.id}
+                        className="admin-btn admin-btn-danger"
+                      >
+                        {deletingId === f.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filaments.map((f) => (
-                  <tr key={f.id}>
-                    <td>{f.name}</td>
-                    <td>{f.material}</td>
-                    <td>{f.color}</td>
-                    <td>
-                      <input
-                        type="number"
-                        step="0.0001"
-                        min="0"
-                        className="admin-field w-28"
-                        value={priceEdits[f.id] ?? 0}
-                        onChange={(e) =>
-                          setPriceEdits((prev) => ({
-                            ...prev,
-                            [f.id]: parseFloat(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        className="admin-field w-24"
-                        value={stockEdits[f.id] ?? 0}
-                        onChange={(e) =>
-                          setStockEdits((prev) => ({
-                            ...prev,
-                            [f.id]: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateFilament(f.id)}
-                          disabled={savingId === f.id || deletingId === f.id}
-                          className="admin-btn admin-btn-primary"
-                        >
-                          {savingId === f.id ? "Saving..." : "Save"}
-                        </button>
-                        <button
-                          onClick={() => deleteFilament(f.id)}
-                          disabled={savingId === f.id || deletingId === f.id}
-                          className="admin-btn admin-btn-danger"
-                        >
-                          {deletingId === f.id ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AdminLayout>
   );
 }

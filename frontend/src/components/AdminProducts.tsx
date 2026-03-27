@@ -17,7 +17,9 @@ export default function AdminProducts() {
   const [fileFile, setFileFile] = useState<File | null>(null);
   const [price, setPrice] = useState(0);
   const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
-  const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>({});
+  const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>(
+    {},
+  );
   const [priceEdits, setPriceEdits] = useState<Record<string, number>>({});
 
   const fetchProducts = async () => {
@@ -143,182 +145,183 @@ export default function AdminProducts() {
 
   return (
     <AdminLayout>
-        <AdminBreadcrumb
-          title="Product Catalog Admin"
-          items={[{ label: "Admin", to: "/admin" }, { label: "Products" }]}
-        />
+      <AdminBreadcrumb
+        title="Product Catalog Admin"
+        items={[{ label: "Admin", to: "/admin" }, { label: "Products" }]}
+      />
 
-        <form
-          onSubmit={addProduct}
-          className="admin-panel grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 p-4"
-        >
-          <label className="admin-label">
-            <span className="font-semibold">Name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Name"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Category</span>
-            <input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Category"
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Product Image</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label col-span-full sm:col-span-2">
-            <span className="font-semibold">Model File</span>
-            <input
-              type="file"
-              onChange={(e) => setFileFile(e.target.files?.[0] || null)}
-              className="admin-field"
-            />
-          </label>
-          <label className="admin-label">
-            <span className="font-semibold">Price</span>
-            <input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(parseFloat(e.target.value))}
-              required
-              placeholder="Price"
-              className="admin-field"
-            />
-          </label>
-          <button
-            type="submit"
-            className="admin-btn admin-btn-primary"
-          >
-            Add Product
-          </button>
-        </form>
+      <form
+        onSubmit={addProduct}
+        className="admin-panel grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 p-4"
+      >
+        <label className="admin-label">
+          <span className="font-semibold">Name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Name"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Category</span>
+          <input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Category"
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Product Image</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label col-span-full sm:col-span-2">
+          <span className="font-semibold">Model File</span>
+          <input
+            type="file"
+            onChange={(e) => setFileFile(e.target.files?.[0] || null)}
+            className="admin-field"
+          />
+        </label>
+        <label className="admin-label">
+          <span className="font-semibold">Price</span>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(parseFloat(e.target.value))}
+            required
+            placeholder="Price"
+            className="admin-field"
+          />
+        </label>
+        <button type="submit" className="admin-btn admin-btn-primary">
+          Add Product
+        </button>
+      </form>
 
-        {loading ? (
-          <p className="admin-note">Loading products...</p>
-        ) : (
-          <div className="admin-panel admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Image URL</th>
-                  <th>Model URL</th>
-                  <th>Price</th>
-                  <th>Actions</th>
+      {loading ? (
+        <p className="admin-note">Loading products...</p>
+      ) : (
+        <div className="admin-panel admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Image URL</th>
+                <th>Model URL</th>
+                <th>Price</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((prod) => (
+                <tr key={prod.id}>
+                  <td>
+                    <input
+                      className="admin-field"
+                      value={nameEdits[prod.id] ?? ""}
+                      onChange={(e) =>
+                        setNameEdits((prev) => ({
+                          ...prev,
+                          [prod.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="admin-field"
+                      value={categoryEdits[prod.id] ?? ""}
+                      onChange={(e) =>
+                        setCategoryEdits((prev) => ({
+                          ...prev,
+                          [prod.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    {prod.imageUrl ? (
+                      <a
+                        href={resolveAssetUrl(prod.imageUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-xs font-semibold text-teal-700 hover:underline"
+                      >
+                        Preview
+                      </a>
+                    ) : (
+                      <span className="text-xs text-[#60736d]">
+                        No image URL
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {prod.fileUrl ? (
+                      <a
+                        href={resolveAssetUrl(prod.fileUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-xs font-semibold text-teal-700 hover:underline"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="text-xs text-[#60736d]">
+                        No model URL
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="admin-field w-32"
+                      value={priceEdits[prod.id] ?? 0}
+                      onChange={(e) =>
+                        setPriceEdits((prev) => ({
+                          ...prev,
+                          [prod.id]: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateProduct(prod.id)}
+                        disabled={savingId === prod.id}
+                        className="admin-btn admin-btn-primary"
+                      >
+                        {savingId === prod.id ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(prod.id)}
+                        disabled={savingId === prod.id}
+                        className="admin-btn admin-btn-danger"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {products.map((prod) => (
-                  <tr key={prod.id}>
-                    <td>
-                      <input
-                        className="admin-field"
-                        value={nameEdits[prod.id] ?? ""}
-                        onChange={(e) =>
-                          setNameEdits((prev) => ({
-                            ...prev,
-                            [prod.id]: e.target.value,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="admin-field"
-                        value={categoryEdits[prod.id] ?? ""}
-                        onChange={(e) =>
-                          setCategoryEdits((prev) => ({
-                            ...prev,
-                            [prod.id]: e.target.value,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      {prod.imageUrl ? (
-                        <a
-                          href={resolveAssetUrl(prod.imageUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-block text-xs font-semibold text-teal-700 hover:underline"
-                        >
-                          Preview
-                        </a>
-                      ) : (
-                        <span className="text-xs text-[#60736d]">No image URL</span>
-                      )}
-                    </td>
-                    <td>
-                      {prod.fileUrl ? (
-                        <a
-                          href={resolveAssetUrl(prod.fileUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-block text-xs font-semibold text-teal-700 hover:underline"
-                        >
-                          Open
-                        </a>
-                      ) : (
-                        <span className="text-xs text-[#60736d]">No model URL</span>
-                      )}
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="admin-field w-32"
-                        value={priceEdits[prod.id] ?? 0}
-                        onChange={(e) =>
-                          setPriceEdits((prev) => ({
-                            ...prev,
-                            [prod.id]: parseFloat(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => updateProduct(prod.id)}
-                          disabled={savingId === prod.id}
-                          className="admin-btn admin-btn-primary"
-                        >
-                          {savingId === prod.id ? "Saving..." : "Save"}
-                        </button>
-                        <button
-                          onClick={() => deleteProduct(prod.id)}
-                          disabled={savingId === prod.id}
-                          className="admin-btn admin-btn-danger"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!loading && products.length === 0 && (
-              <p className="admin-empty">No products found.</p>
-            )}
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {!loading && products.length === 0 && (
+            <p className="admin-empty">No products found.</p>
+          )}
+        </div>
+      )}
     </AdminLayout>
   );
 }

@@ -66,7 +66,9 @@ export default function AdminBreadcrumb({
               })}
             </ol>
           </nav>
-          <h1 className="text-3xl font-bold tracking-tight text-[#16251f]">{title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-[#16251f]">
+            {title}
+          </h1>
         </div>
 
         {rightSlot ? <div>{rightSlot}</div> : null}

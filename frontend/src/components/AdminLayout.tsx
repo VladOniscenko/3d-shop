@@ -6,11 +6,16 @@ type AdminLayoutProps = {
   wide?: boolean;
 };
 
-export default function AdminLayout({ children, wide = false }: AdminLayoutProps) {
+export default function AdminLayout({
+  children,
+  wide = false,
+}: AdminLayoutProps) {
   return (
     <div className="admin-shell">
       <Navbar />
-      <main className={wide ? "admin-main admin-main-wide" : "admin-main"}>{children}</main>
+      <main className={wide ? "admin-main admin-main-wide" : "admin-main"}>
+        {children}
+      </main>
     </div>
   );
 }

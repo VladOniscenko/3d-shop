@@ -175,161 +175,159 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-        <AdminBreadcrumb title="Admin Dashboard" items={[{ label: "Admin" }]} />
+      <AdminBreadcrumb title="Admin Dashboard" items={[{ label: "Admin" }]} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Total Users"
-            value={usersCount || summary.totalUsers}
-            hint="Registered accounts"
-          />
-          <StatCard
-            label="Total Orders"
-            value={summary.totalOrders}
-            hint="All time"
-          />
-          <StatCard
-            label="Pending Orders"
-            value={summary.pendingOrders}
-            hint="Needs review/action"
-          />
-          <StatCard
-            label="Paid Orders"
-            value={paidOrders}
-            hint="Confirmed payments"
-          />
-          <StatCard
-            label="Quoted Orders"
-            value={quotedOrders}
-            hint="Quote sent"
-          />
-          <StatCard
-            label="Printing Orders"
-            value={printingOrders}
-            hint="In production"
-          />
-          <StatCard label="Sent Orders" value={sentOrders} hint="Shipped" />
-          <StatCard
-            label="Delivered Orders"
-            value={deliveredOrders}
-            hint="Reached customer"
-          />
-          <StatCard
-            label="Completed Orders"
-            value={completedOrders}
-            hint="Completed lifecycle"
-          />
-          <StatCard
-            label="Cancelled Orders"
-            value={cancelledOrders}
-            hint="Cancelled by admin/user"
-          />
-          <StatCard label="Orders (24h)" value={ordersToday} hint="Last day" />
-          <StatCard
-            label="Orders (7d)"
-            value={ordersThisWeek}
-            hint="Last week"
-          />
-          <StatCard
-            label="Orders (30d)"
-            value={ordersThisMonth}
-            hint="Last month"
-          />
-          <StatCard
-            label="Unique Customers"
-            value={uniqueCustomers}
-            hint="Customers with orders"
-          />
-          <StatCard
-            label="Total Item Qty"
-            value={totalOrderItems}
-            hint="Units across all orders"
-          />
-          <StatCard
-            label="Avg Items / Order"
-            value={avgItemsPerOrder.toFixed(2)}
-            hint="Operational complexity"
-          />
-          <StatCard
-            label="Quoted Revenue"
-            value={`EUR ${quotedRevenue.toFixed(2)}`}
-            hint="Sum of quoted prices"
-          />
-          <StatCard
-            label="Paid Revenue"
-            value={`EUR ${paidRevenue.toFixed(2)}`}
-            hint="Revenue from paid orders"
-          />
-          <StatCard
-            label="Avg Quote Value"
-            value={`EUR ${averageQuotedValue.toFixed(2)}`}
-            hint="Average quoted order"
-          />
-          <StatCard
-            label="Products"
-            value={products.length}
-            hint="Catalog size"
-          />
-          <StatCard
-            label="Filament SKUs"
-            value={filaments.length}
-            hint="Material-color entries"
-          />
-          <StatCard
-            label="In-stock Filaments"
-            value={inStockFilaments}
-            hint="Available right now"
-          />
-          <StatCard
-            label="Low-stock Filaments"
-            value={lowStockFilaments}
-            hint="1-100 units"
-          />
-          <StatCard
-            label="Out-of-stock Filaments"
-            value={outOfStockFilaments}
-            hint="Needs restock"
-          />
-          <StatCard
-            label="Materials"
-            value={uniqueMaterials}
-            hint="Distinct filament materials"
-          />
-          <StatCard
-            label="Avg Filament Price/g"
-            value={`EUR ${averageFilamentPrice.toFixed(4)}`}
-            hint="Across filament SKUs"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="Total Users"
+          value={usersCount || summary.totalUsers}
+          hint="Registered accounts"
+        />
+        <StatCard
+          label="Total Orders"
+          value={summary.totalOrders}
+          hint="All time"
+        />
+        <StatCard
+          label="Pending Orders"
+          value={summary.pendingOrders}
+          hint="Needs review/action"
+        />
+        <StatCard
+          label="Paid Orders"
+          value={paidOrders}
+          hint="Confirmed payments"
+        />
+        <StatCard
+          label="Quoted Orders"
+          value={quotedOrders}
+          hint="Quote sent"
+        />
+        <StatCard
+          label="Printing Orders"
+          value={printingOrders}
+          hint="In production"
+        />
+        <StatCard label="Sent Orders" value={sentOrders} hint="Shipped" />
+        <StatCard
+          label="Delivered Orders"
+          value={deliveredOrders}
+          hint="Reached customer"
+        />
+        <StatCard
+          label="Completed Orders"
+          value={completedOrders}
+          hint="Completed lifecycle"
+        />
+        <StatCard
+          label="Cancelled Orders"
+          value={cancelledOrders}
+          hint="Cancelled by admin/user"
+        />
+        <StatCard label="Orders (24h)" value={ordersToday} hint="Last day" />
+        <StatCard label="Orders (7d)" value={ordersThisWeek} hint="Last week" />
+        <StatCard
+          label="Orders (30d)"
+          value={ordersThisMonth}
+          hint="Last month"
+        />
+        <StatCard
+          label="Unique Customers"
+          value={uniqueCustomers}
+          hint="Customers with orders"
+        />
+        <StatCard
+          label="Total Item Qty"
+          value={totalOrderItems}
+          hint="Units across all orders"
+        />
+        <StatCard
+          label="Avg Items / Order"
+          value={avgItemsPerOrder.toFixed(2)}
+          hint="Operational complexity"
+        />
+        <StatCard
+          label="Quoted Revenue"
+          value={`EUR ${quotedRevenue.toFixed(2)}`}
+          hint="Sum of quoted prices"
+        />
+        <StatCard
+          label="Paid Revenue"
+          value={`EUR ${paidRevenue.toFixed(2)}`}
+          hint="Revenue from paid orders"
+        />
+        <StatCard
+          label="Avg Quote Value"
+          value={`EUR ${averageQuotedValue.toFixed(2)}`}
+          hint="Average quoted order"
+        />
+        <StatCard
+          label="Products"
+          value={products.length}
+          hint="Catalog size"
+        />
+        <StatCard
+          label="Filament SKUs"
+          value={filaments.length}
+          hint="Material-color entries"
+        />
+        <StatCard
+          label="In-stock Filaments"
+          value={inStockFilaments}
+          hint="Available right now"
+        />
+        <StatCard
+          label="Low-stock Filaments"
+          value={lowStockFilaments}
+          hint="1-100 units"
+        />
+        <StatCard
+          label="Out-of-stock Filaments"
+          value={outOfStockFilaments}
+          hint="Needs restock"
+        />
+        <StatCard
+          label="Materials"
+          value={uniqueMaterials}
+          hint="Distinct filament materials"
+        />
+        <StatCard
+          label="Avg Filament Price/g"
+          value={`EUR ${averageFilamentPrice.toFixed(4)}`}
+          hint="Across filament SKUs"
+        />
+      </div>
 
-        <section className="admin-panel p-6">
-          <h2 className="text-xl font-semibold mb-4 text-[#16251f]">Recent Orders</h2>
-          {summary.recentOrders.length === 0 ? (
-            <p className="admin-note">No recent orders found.</p>
-          ) : (
-            <div className="space-y-3">
-              {summary.recentOrders.map((order) => (
-                <Link
-                  key={order.id}
-                  to={`/admin/orders/${order.id}`}
-                  className="block rounded-xl border border-[#dbe7e2] bg-[#f7fcf9] p-3 transition-colors hover:bg-[#eaf6f2]"
-                >
-                  <div className="flex justify-between">
-                    <span className="font-bold text-[#1f312b]">
-                      Project #{order.id.slice(0, 8)}
-                    </span>
-                    <span className="text-sm text-[#5f736d]">
-                      {new Date(order.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#516760]">
-                    {order.fullName} • {order.status.replace("_", " ")}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+      <section className="admin-panel p-6">
+        <h2 className="text-xl font-semibold mb-4 text-[#16251f]">
+          Recent Orders
+        </h2>
+        {summary.recentOrders.length === 0 ? (
+          <p className="admin-note">No recent orders found.</p>
+        ) : (
+          <div className="space-y-3">
+            {summary.recentOrders.map((order) => (
+              <Link
+                key={order.id}
+                to={`/admin/orders/${order.id}`}
+                className="block rounded-xl border border-[#dbe7e2] bg-[#f7fcf9] p-3 transition-colors hover:bg-[#eaf6f2]"
+              >
+                <div className="flex justify-between">
+                  <span className="font-bold text-[#1f312b]">
+                    Project #{order.id.slice(0, 8)}
+                  </span>
+                  <span className="text-sm text-[#5f736d]">
+                    {new Date(order.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-[#516760]">
+                  {order.fullName} • {order.status.replace("_", " ")}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </AdminLayout>
   );
 }
