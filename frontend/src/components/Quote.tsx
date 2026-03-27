@@ -10,6 +10,8 @@ import {
   Layers,
   Palette,
   MessageSquare,
+  Phone,
+  Hash,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -29,9 +31,9 @@ export default function Quote() {
     addressLine1: "",
     city: "",
     postalCode: "",
+    phoneNumber: "",
   });
 
-  // 1. Fetch real filaments from your .NET API
   useEffect(() => {
     const fetchFilaments = async () => {
       try {
@@ -44,12 +46,10 @@ export default function Quote() {
     fetchFilaments();
   }, []);
 
-  // Get unique materials for the first dropdown
   const availableMaterials = Array.from(
     new Set(filaments.map((f) => f.material)),
   );
 
-  // 2. Handle File Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -61,7 +61,6 @@ export default function Quote() {
     try {
       const res = await api.post("/upload", formData);
 
-      // Default to the first material and its first available color
       const defaultMat = availableMaterials[0] || "PLA";
       const defaultColor =
         filaments.find((f) => f.material === defaultMat)?.color || "Black";
@@ -73,6 +72,7 @@ export default function Quote() {
         material: defaultMat,
         color: defaultColor,
         price: 0,
+        count: 1, // Ensure your OrderItem.cs has a 'Count' property!
       };
       setItems([...items, newItem]);
     } catch (err) {
@@ -86,7 +86,7 @@ export default function Quote() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof OrderItem, value: string) => {
+  const updateItem = (index: number, field: keyof OrderItem, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -99,6 +99,7 @@ export default function Quote() {
 
     setIsSubmitting(true);
     try {
+      // This sends fullName, addressLine1, city, postalCode, phoneNumber, and items
       const payload = { ...address, items };
       await api.post("/orders/quote", payload);
       navigate("/orders");
@@ -175,8 +176,7 @@ export default function Quote() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {/* Material Selector */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Layers size={12} /> Material
@@ -186,7 +186,6 @@ export default function Quote() {
                             value={item.material}
                             onChange={(e) => {
                               const newMat = e.target.value;
-                              // Auto-select first available color for this material
                               const firstColor =
                                 filaments.find((f) => f.material === newMat)
                                   ?.color || "";
@@ -207,7 +206,6 @@ export default function Quote() {
                           </select>
                         </div>
 
-                        {/* Filtered Color Selector */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Palette size={12} /> Color
@@ -227,6 +225,25 @@ export default function Quote() {
                                 </option>
                               ))}
                           </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                            <Hash size={12} /> Quantity
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                            value={item.count}
+                            onChange={(e) =>
+                              updateItem(
+                                idx,
+                                "count",
+                                parseInt(e.target.value) || 1,
+                              )
+                            }
+                          />
                         </div>
                       </div>
 
@@ -267,6 +284,24 @@ export default function Quote() {
                     setAddress({ ...address, fullName: e.target.value })
                   }
                 />
+
+                <div className="relative">
+                  <Phone
+                    className="absolute left-3 top-2.5 text-gray-400"
+                    size={18}
+                  />
+                  <input
+                    required
+                    type="tel"
+                    placeholder="Phone Number"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    value={address.phoneNumber}
+                    onChange={(e) =>
+                      setAddress({ ...address, phoneNumber: e.target.value })
+                    }
+                  />
+                </div>
+
                 <input
                   required
                   placeholder="Street Address"
@@ -310,9 +345,6 @@ export default function Quote() {
                 )}
                 Submit Quote Request
               </button>
-              <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest">
-                Safe & Secure 3D Printing
-              </p>
             </div>
           </div>
         </form>
