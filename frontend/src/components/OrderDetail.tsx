@@ -16,6 +16,8 @@ import {
   XCircle,
   Phone,
   Hash,
+  Truck,
+  Tag,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -84,6 +86,15 @@ export default function OrderDetail() {
     );
   }
 
+  const hasMissingPrice = order.items.some(
+    (item) => item.price == null || item.price <= 0,
+  );
+
+  const totalPrice = hasMissingPrice
+    ? 0
+    : order.items.reduce((sum, item) => sum + item.price, 0) +
+      (order.deliveryPrice ?? 0);
+
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
@@ -135,9 +146,17 @@ export default function OrderDetail() {
                         <Box className="text-emerald-600" size={24} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 truncate">
-                          {item.fileName}
-                        </p>
+                        <div className="flex justify-between items-start">
+                          <p className="font-bold text-gray-900 truncate">
+                            {item.fileName}
+                          </p>
+                          {/* ITEM PRICE IF SET */}
+                          {item.price > 0 && (
+                            <span className="font-bold text-emerald-700">
+                              ${item.price.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-3 mt-1">
                           <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                             <Layers size={12} /> {item.material}
@@ -188,7 +207,7 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {/* Sidebar: Address & Info */}
+          {/* Sidebar: Address & Pricing Info */}
           <div className="space-y-6">
             <div className="bg-[#133827] text-white rounded-2xl p-8 shadow-lg">
               <h3 className="font-bold mb-6 flex items-center gap-2 text-emerald-400">
@@ -217,6 +236,33 @@ export default function OrderDetail() {
                     </p>
                   </div>
                 </div>
+
+                {/* PRICING SECTION IN SIDEBAR */}
+                <div className="pt-6 mt-2 border-t border-white/10 space-y-3">
+                  {/* Delivery Price (Assume DeliveryPrice exists in your Order model, otherwise replace with fixed value or condition) */}
+                  <div className="flex justify-between items-center text-emerald-100/70">
+                    <span className="flex items-center gap-2">
+                      <Truck size={14} /> Delivery
+                    </span>
+                    <span>
+                      {order.deliveryPrice && order.deliveryPrice > 0
+                        ? "€" + order.deliveryPrice
+                        : "To be calculated"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xl font-bold text-white pt-2">
+                    <span className="flex items-center gap-2">
+                      <Tag size={18} className="text-emerald-400" /> Total
+                    </span>
+                    <span className="text-emerald-400">
+                      {totalPrice > 0
+                        ? `€${totalPrice.toFixed(2)}`
+                        : "Pending Quote"}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="pt-4 border-t border-white/10">
                   <p className="text-emerald-100/40 text-xs uppercase font-bold tracking-widest mb-1">
                     Status

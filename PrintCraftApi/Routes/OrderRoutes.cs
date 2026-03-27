@@ -63,6 +63,7 @@ public static class OrderRoutes
                 {
                     item.Id = Guid.NewGuid(); // Give each item its own ID
                     item.OrderId = order.Id;  // Link it to the main Order
+                    item.Price = 0;
                 }
             }
 
