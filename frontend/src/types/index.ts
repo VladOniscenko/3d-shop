@@ -55,7 +55,7 @@ export interface Product {
 export interface Order {
   id: string;
   userId: string;
-  status: "pending_quote" | "printing" | "shipped" | "completed"; // Matches your .NET defaults
+  status: "pending_quote" | "printing" | "shipped" | "completed" | "cancelled";
 
   // Shipping Address (New)
   fullName: string;
@@ -63,6 +63,7 @@ export interface Order {
   addressLine2?: string;
   city: string;
   postalCode: string;
+  phoneNumber: string;
 
   totalPrice: number;
   createdAt: string; // Dates from JSON come back as strings
@@ -78,4 +79,5 @@ export interface OrderItem {
   material: string;
   color: string;
   price: number;
+  count: number;
 }

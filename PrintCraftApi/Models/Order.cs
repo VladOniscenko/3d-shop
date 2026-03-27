@@ -13,6 +13,7 @@ public class Order
     public string? AddressLine2 { get; set; }
     [Required] public string City { get; set; } = string.Empty;
     [Required] public string PostalCode { get; set; } = string.Empty;
+    [Required] public string PhoneNumber { get; set; } = string.Empty;
 
     public string Status { get; set; } = "pending_quote";
     public decimal TotalPrice { get; set; } = 0;

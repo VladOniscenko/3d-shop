@@ -145,7 +145,6 @@ export default function OrderDetail() {
                           <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">
                             <Palette size={12} /> {item.color}
                           </span>
-                          {/* DISPLAY QUANTITY/COUNT */}
                           <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                             <Hash size={12} /> x{item.count || 1}
                           </span>
@@ -202,7 +201,6 @@ export default function OrderDetail() {
                   <p className="font-bold">{order.fullName}</p>
                 </div>
 
-                {/* DISPLAY PHONE NUMBER */}
                 <div className="flex gap-3">
                   <Phone size={16} className="text-emerald-500 shrink-0" />
                   <p className="text-emerald-50/80">
