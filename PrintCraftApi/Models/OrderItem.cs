@@ -10,5 +10,5 @@ public class OrderItem
     public string Material { get; set; } = "PLA";
     public string Color { get; set; } = "Black";
     public int Count { get; set; }
-    public decimal Price { get; set; } = 0;
+    public double Price { get; set; } = 0;
 }
