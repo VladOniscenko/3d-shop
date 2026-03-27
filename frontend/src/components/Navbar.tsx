@@ -6,18 +6,30 @@ import Logo from "./Logo";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Check if user is logged in on mount and whenever the component updates
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
+
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const parsed = JSON.parse(userStr);
+        setUserRole(parsed?.role || null);
+      } catch {
+        setUserRole(null);
+      }
+    }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsLoggedIn(false);
+    setUserRole(null);
     navigate("/");
   };
 
@@ -29,9 +41,13 @@ const Navbar = () => {
     { name: "FAQ", path: "/faq" },
   ];
 
-  // If logged in, add "My Orders" to the navigation
+  // If logged in, add "My Orders" and admin dashboard (for admins) to the navigation
   const visibleLinks = isLoggedIn
-    ? [...navLinks, { name: "My Orders", path: "/orders" }]
+    ? [
+        ...navLinks,
+        { name: "My Orders", path: "/orders" },
+        ...(userRole === "admin" ? [{ name: "Admin", path: "/admin" }] : []),
+      ]
     : navLinks;
 
   return (

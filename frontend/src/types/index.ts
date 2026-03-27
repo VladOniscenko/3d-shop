@@ -49,7 +49,17 @@ export interface Product {
 export interface Order {
   id: string;
   userId: string;
-  status: "pending_quote" | "printing" | "shipped" | "completed" | "cancelled";
+  status:
+    | "pending_quote"
+    | "quoted"
+    | "printing"
+    | "completed"
+    | "shipped"
+    | "sent"
+    | "delivered"
+    | "paid"
+    | "cancelled";
+  orderType: "quote" | "online";
 
   // Shipping Address (New)
   fullName: string;
@@ -60,6 +70,12 @@ export interface Order {
   phoneNumber: string;
 
   deliveryPrice?: number;
+  quotedPrice?: number;
+  quoteMessage?: string;
+  internalNotes?: string;
+  customerNotes?: string;
+  isPaid?: boolean;
+  updatedAt?: string;
   createdAt: string; // Dates from JSON come back as strings
   items: OrderItem[]; // The list of 3D models
 }
