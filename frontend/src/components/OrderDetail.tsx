@@ -255,7 +255,8 @@ export default function OrderDetail() {
 
                   <div className="flex justify-between items-center text-xl font-bold text-white pt-2">
                     <span className="flex items-center gap-2">
-                      <Tag size={18} className="text-emerald-400" /> {t("orderDetail.total")}
+                      <Tag size={18} className="text-emerald-400" />{" "}
+                      {t("orderDetail.total")}
                     </span>
                     <span className="text-emerald-400">
                       {totalPrice > 0
