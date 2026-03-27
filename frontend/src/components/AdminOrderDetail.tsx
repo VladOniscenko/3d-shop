@@ -326,462 +326,490 @@ export default function AdminOrderDetail() {
         ]}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+      <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <article className="admin-panel p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="font-bold text-[#1b2b25]">Customer info</h2>
-            <button
-              onClick={() => setEditingCustomer(!editingCustomer)}
-              className="text-sm text-teal-700 hover:underline"
-            >
-              {editingCustomer ? "Cancel" : "Edit"}
-            </button>
-          </div>
-          {editingCustomer ? (
-            <div className="space-y-2">
-              <label className="admin-label">
-                <span className="font-semibold">Full Name</span>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Address Line 1</span>
-                <input
-                  value={addressLine1}
-                  onChange={(e) => setAddressLine1(e.target.value)}
-                  placeholder="Address Line 1"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Address Line 2</span>
-                <input
-                  value={addressLine2}
-                  onChange={(e) => setAddressLine2(e.target.value)}
-                  placeholder="Address Line 2"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">City</span>
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Postal Code</span>
-                <input
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                  placeholder="Postal Code"
-                  className="admin-field"
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">Phone Number</span>
-                <input
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Phone Number"
-                  className="admin-field"
-                />
-              </label>
-              <button
-                onClick={saveCustomerInfo}
-                className="admin-btn admin-btn-primary"
-              >
-                Save
-              </button>
-            </div>
-          ) : (
-            <>
-              <p>{order.fullName}</p>
-              <p>
-                {order.addressLine1}
-                {order.addressLine2 ? `, ${order.addressLine2}` : ""}
-              </p>
-              <p>
-                {order.city}, {order.postalCode}
-              </p>
-              <p>{order.phoneNumber}</p>
-              <p className={statusStyle(order.status)}>
-                {order.status.replace("_", " ")}
-              </p>
-              <p className="mt-2 text-sm text-[#60736d]">
-                Created: {new Date(order.createdAt).toLocaleString()}
-              </p>
-            </>
-          )}
+          <p className="text-xs uppercase text-[#6c817a]">Status</p>
+          <p className={`${statusStyle(order.status)} mt-2 w-fit`}>
+            {order.status.replace("_", " ")}
+          </p>
         </article>
-
-        <article className="admin-panel p-4 lg:col-span-2">
-          <h2 className="font-bold mb-2 text-[#1b2b25]">Model files & specs</h2>
-          {order.items.length === 0 ? (
-            <p className="admin-note">No items in this order.</p>
-          ) : (
-            <ul className="space-y-3">
-              {order.items.map((item) => (
-                <li
-                  key={item.id || item.fileName}
-                  className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
-                >
-                  <p className="font-semibold text-[#22342f]">
-                    {item.fileName ?? item.fileUrl}
-                  </p>
-                  <p className="text-xs text-[#5c716b]">
-                    Material: {item.material}, Color: {item.color}, Qty:{" "}
-                    {item.count}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#304843]">Price: €</span>
-                    <input
-                      type="number"
-                      value={item.id ? itemPrices[item.id] || 0 : 0}
-                      onChange={(e) => {
-                        if (!item.id) return;
-                        const newPrice = parseFloat(e.target.value) || 0;
-                        setItemPrices({
-                          ...itemPrices,
-                          [item.id]: newPrice,
-                        });
-                      }}
-                      className="admin-field w-24"
-                    />
-                    <button
-                      type="button"
-                      disabled={!item.id || savingItemId === item.id}
-                      onClick={() =>
-                        item.id &&
-                        updateItemPrice(item.id, itemPrices[item.id] || 0)
-                      }
-                      className="admin-btn admin-btn-primary"
-                    >
-                      {savingItemId === item.id ? "Saving..." : "Save"}
-                    </button>
-                  </div>
-                  {item.fileUrl && (
-                    <a
-                      href={resolveAssetUrl(item.fileUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-semibold text-teal-700 hover:underline"
-                    >
-                      Download/Preview file
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="mt-3 flex items-center justify-end gap-2">
-            <span className="text-[#304843]">Delivery: €</span>
-            <input
-              type="number"
-              value={deliveryPrice}
-              onChange={(e) => {
-                const newPrice = parseFloat(e.target.value) || 0;
-                setDeliveryPrice(newPrice);
-              }}
-              className="admin-field w-24"
-            />
-            <button
-              type="button"
-              disabled={savingDelivery}
-              onClick={() => updateDeliveryPrice(deliveryPrice)}
-              className="admin-btn admin-btn-primary"
-            >
-              {savingDelivery ? "Saving..." : "Save"}
-            </button>
-          </div>
-          <div className="mt-1 text-right">
-            <span className="font-bold">
-              Total (including delivery): €{totalPrice.toFixed(2)}
-            </span>
-          </div>
-        </article>
-      </div>
-
-      <div className="mb-5">
         <article className="admin-panel p-4">
-          <h3 className="font-bold mb-2 text-[#1b2b25]">Order Actions</h3>
-          <div className="grid gap-2">
-            {/* Status update dropdown */}
-            <div className="flex items-center gap-2 mb-2">
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="admin-select"
-              >
-                <option value="pending_quote">Pending Quote</option>
-                <option value="quoted">Quoted</option>
-                <option value="printing">Printing</option>
-                <option value="sent">Sent</option>
-                <option value="delivered">Delivered</option>
-                <option value="paid">Paid</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="pending">Pending</option>
-              </select>
+          <p className="text-xs uppercase text-[#6c817a]">Created</p>
+          <p className="mt-2 text-sm text-[#2e423d]">
+            {new Date(order.createdAt).toLocaleString()}
+          </p>
+        </article>
+        <article className="admin-panel p-4">
+          <p className="text-xs uppercase text-[#6c817a]">Items</p>
+          <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
+            {order.items.length}
+          </p>
+        </article>
+        <article className="admin-panel p-4">
+          <p className="text-xs uppercase text-[#6c817a]">Total</p>
+          <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
+            EUR {totalPrice.toFixed(2)}
+          </p>
+        </article>
+      </section>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <div className="space-y-5 xl:col-span-2">
+          <article className="admin-panel p-4">
+            <h2 className="font-bold mb-2 text-[#1b2b25]">
+              Model files & specs
+            </h2>
+            {order.items.length === 0 ? (
+              <p className="admin-note">No items in this order.</p>
+            ) : (
+              <ul className="space-y-3">
+                {order.items.map((item) => (
+                  <li
+                    key={item.id || item.fileName}
+                    className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
+                  >
+                    <p className="font-semibold text-[#22342f]">
+                      {item.fileName ?? item.fileUrl}
+                    </p>
+                    <p className="text-xs text-[#5c716b]">
+                      Material: {item.material}, Color: {item.color}, Qty:{" "}
+                      {item.count}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#304843]">Price: EUR</span>
+                      <input
+                        type="number"
+                        value={item.id ? itemPrices[item.id] || 0 : 0}
+                        onChange={(e) => {
+                          if (!item.id) return;
+                          const newPrice = parseFloat(e.target.value) || 0;
+                          setItemPrices({
+                            ...itemPrices,
+                            [item.id]: newPrice,
+                          });
+                        }}
+                        className="admin-field w-24"
+                      />
+                      <button
+                        type="button"
+                        disabled={!item.id || savingItemId === item.id}
+                        onClick={() =>
+                          item.id &&
+                          updateItemPrice(item.id, itemPrices[item.id] || 0)
+                        }
+                        className="admin-btn admin-btn-primary"
+                      >
+                        {savingItemId === item.id ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                    {item.fileUrl && (
+                      <a
+                        href={resolveAssetUrl(item.fileUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-semibold text-teal-700 hover:underline"
+                      >
+                        Download/Preview file
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <span className="text-[#304843]">Delivery: EUR</span>
+              <input
+                type="number"
+                value={deliveryPrice}
+                onChange={(e) => {
+                  const newPrice = parseFloat(e.target.value) || 0;
+                  setDeliveryPrice(newPrice);
+                }}
+                className="admin-field w-24"
+              />
               <button
                 type="button"
+                disabled={savingDelivery}
+                onClick={() => updateDeliveryPrice(deliveryPrice)}
                 className="admin-btn admin-btn-primary"
-                onClick={updateOrderStatus}
               >
-                Update Status
+                {savingDelivery ? "Saving..." : "Save"}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="admin-btn admin-btn-danger"
-            >
-              Delete Order
-            </button>
-            {/* Custom Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-                <div className="admin-panel max-w-sm w-full p-6">
-                  <p className="mb-4 font-semibold">
-                    Are you sure you want to delete this order? This will also
-                    delete all associated files.
-                  </p>
-                  <div className="flex gap-4 justify-end">
-                    <button
-                      type="button"
-                      className="admin-btn admin-btn-secondary"
-                      onClick={() => setShowDeleteConfirm(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-btn admin-btn-danger"
-                      onClick={async () => {
-                        setShowDeleteConfirm(false);
-                        await deleteOrder();
-                      }}
-                    >
-                      Yes, Delete
-                    </button>
-                  </div>
-                </div>
+            <div className="mt-1 text-right">
+              <span className="font-bold">
+                Total (including delivery): EUR {totalPrice.toFixed(2)}
+              </span>
+            </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Status History</h3>
+            {statusHistory.length === 0 ? (
+              <p className="admin-note">No status changes recorded yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
+                      <th className="py-2 pr-3">Changed At</th>
+                      <th className="py-2 pr-3">From</th>
+                      <th className="py-2 pr-3">To</th>
+                      <th className="py-2 pr-3">By</th>
+                      <th className="py-2">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statusHistory.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className="border-b border-[#eef4f1] text-[#304843]"
+                      >
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {new Date(entry.changedAt).toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-3">
+                          {entry.previousStatus || "-"}
+                        </td>
+                        <td className="py-2 pr-3 font-semibold">
+                          {entry.newStatus}
+                        </td>
+                        <td className="py-2 pr-3">{entry.changedBy || "-"}</td>
+                        <td className="py-2">{entry.note || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-          </div>
-        </article>
-      </div>
+          </article>
 
-      <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Track and Trace</h3>
-        <div className="grid gap-3">
-          <div>
-            <label className="block text-xs uppercase text-[#6c817a]">
-              Tracking Code
-            </label>
-            <input
-              value={trackingCode}
-              onChange={(e) => setTrackingCode(e.target.value)}
-              className="admin-field"
-              placeholder="e.g. 3SPQ123456789"
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase text-[#6c817a]">
-              Tracking URL (optional)
-            </label>
-            <input
-              value={trackingUrl}
-              onChange={(e) => setTrackingUrl(e.target.value)}
-              className="admin-field"
-              placeholder="https://carrier.example/track/..."
-            />
-          </div>
-          <button
-            type="button"
-            onClick={saveTracking}
-            disabled={savingTracking}
-            className="admin-btn admin-btn-secondary w-fit"
-          >
-            {savingTracking ? "Saving..." : "Save Tracking"}
-          </button>
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">
+              Communication History
+            </h3>
+            {communications.length === 0 ? (
+              <p className="admin-note">No communication has been sent yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
+                      <th className="py-2 pr-3">Sent At</th>
+                      <th className="py-2 pr-3">Type</th>
+                      <th className="py-2 pr-3">Channel</th>
+                      <th className="py-2 pr-3">Recipient</th>
+                      <th className="py-2">Subject</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {communications.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className="border-b border-[#eef4f1] text-[#304843]"
+                      >
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {new Date(entry.sentAt).toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-3">{entry.communicationType}</td>
+                        <td className="py-2 pr-3">{entry.channel}</td>
+                        <td className="py-2 pr-3">{entry.recipientEmail}</td>
+                        <td className="py-2">{entry.subject}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
         </div>
-      </article>
 
-      <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Communication</h3>
-        <div className="grid gap-3">
-          <div>
-            <label className="block text-xs uppercase text-[#6c817a]">
-              Email Type
-            </label>
-            <select
-              value={emailType}
-              onChange={(e) => setEmailType(e.target.value)}
-              className="admin-select"
-            >
-              <option value="quote_requested">Quote Requested</option>
-              <option value="quote_confirmation">
-                Quote Confirmation + Price
-              </option>
-              <option value="order_sent_tracking">
-                Order Sent + Track and Trace
-              </option>
-            </select>
-          </div>
+        <div className="space-y-5">
+          <article className="admin-panel p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="font-bold text-[#1b2b25]">Customer info</h2>
+              <button
+                onClick={() => setEditingCustomer(!editingCustomer)}
+                className="text-sm text-teal-700 hover:underline"
+              >
+                {editingCustomer ? "Cancel" : "Edit"}
+              </button>
+            </div>
+            {editingCustomer ? (
+              <div className="space-y-2">
+                <label className="admin-label">
+                  <span className="font-semibold">Full Name</span>
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Full Name"
+                    className="admin-field"
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">Address Line 1</span>
+                  <input
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
+                    placeholder="Address Line 1"
+                    className="admin-field"
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">Address Line 2</span>
+                  <input
+                    value={addressLine2}
+                    onChange={(e) => setAddressLine2(e.target.value)}
+                    placeholder="Address Line 2"
+                    className="admin-field"
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">City</span>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="City"
+                    className="admin-field"
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">Postal Code</span>
+                  <input
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="Postal Code"
+                    className="admin-field"
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">Phone Number</span>
+                  <input
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Phone Number"
+                    className="admin-field"
+                  />
+                </label>
+                <button
+                  onClick={saveCustomerInfo}
+                  className="admin-btn admin-btn-primary"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1 text-[#2e423d]">
+                <p>{order.fullName}</p>
+                <p>
+                  {order.addressLine1}
+                  {order.addressLine2 ? `, ${order.addressLine2}` : ""}
+                </p>
+                <p>
+                  {order.city}, {order.postalCode}
+                </p>
+                <p>{order.phoneNumber}</p>
+              </div>
+            )}
+          </article>
 
-          {emailType === "quote_confirmation" && (
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Order Actions</h3>
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2 mb-2">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="admin-select"
+                >
+                  <option value="pending_quote">Pending Quote</option>
+                  <option value="quoted">Quoted</option>
+                  <option value="printing">Printing</option>
+                  <option value="sent">Sent</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="paid">Paid</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="pending">Pending</option>
+                </select>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-primary"
+                  onClick={updateOrderStatus}
+                >
+                  Update Status
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="admin-btn admin-btn-danger"
+              >
+                Delete Order
+              </button>
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                  <div className="admin-panel w-full max-w-sm p-6">
+                    <p className="mb-4 font-semibold">
+                      Are you sure you want to delete this order? This will also
+                      delete all associated files.
+                    </p>
+                    <div className="flex justify-end gap-4">
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-secondary"
+                        onClick={() => setShowDeleteConfirm(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-danger"
+                        onClick={async () => {
+                          setShowDeleteConfirm(false);
+                          await deleteOrder();
+                        }}
+                      >
+                        Yes, Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Track and Trace</h3>
+            <div className="grid gap-3">
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Tracking Code
+                </label>
+                <input
+                  value={trackingCode}
+                  onChange={(e) => setTrackingCode(e.target.value)}
+                  className="admin-field"
+                  placeholder="e.g. 3SPQ123456789"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Tracking URL (optional)
+                </label>
+                <input
+                  value={trackingUrl}
+                  onChange={(e) => setTrackingUrl(e.target.value)}
+                  className="admin-field"
+                  placeholder="https://carrier.example/track/..."
+                />
+              </div>
+              <button
+                type="button"
+                onClick={saveTracking}
+                disabled={savingTracking}
+                className="admin-btn admin-btn-secondary w-fit"
+              >
+                {savingTracking ? "Saving..." : "Save Tracking"}
+              </button>
+            </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Communication</h3>
+            <div className="grid gap-3">
+              <div>
+                <label className="block text-xs uppercase text-[#6c817a]">
+                  Email Type
+                </label>
+                <select
+                  value={emailType}
+                  onChange={(e) => setEmailType(e.target.value)}
+                  className="admin-select"
+                >
+                  <option value="quote_requested">Quote Requested</option>
+                  <option value="quote_confirmation">
+                    Quote Confirmation + Price
+                  </option>
+                  <option value="order_sent_tracking">
+                    Order Sent + Track and Trace
+                  </option>
+                </select>
+              </div>
+
+              {emailType === "quote_confirmation" && (
+                <p className="text-sm text-[#5b706a]">
+                  Price and message are generated automatically from order item
+                  prices and delivery.
+                </p>
+              )}
+
+              {emailType === "order_sent_tracking" && (
+                <p className="text-sm text-[#5b706a]">
+                  Uses the saved tracking details above.
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={sendCustomerEmail}
+                disabled={sendingEmail}
+                className="admin-btn admin-btn-primary w-fit"
+              >
+                {sendingEmail ? "Sending..." : "Send Email"}
+              </button>
+            </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Notes</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-[#5f736d]">
+                  Internal Notes
+                </label>
+                <textarea
+                  value={internalNotes}
+                  onChange={(e) => setInternalNotes(e.target.value)}
+                  rows={3}
+                  className="admin-textarea"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-[#5f736d]">
+                  Customer Notes
+                </label>
+                <textarea
+                  value={customerNotes}
+                  onChange={(e) => setCustomerNotes(e.target.value)}
+                  rows={3}
+                  className="admin-textarea"
+                />
+              </div>
+              <button
+                onClick={saveNotes}
+                className="admin-btn admin-btn-primary"
+              >
+                Save Notes
+              </button>
+            </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">
+              Admin & Customer Messaging
+            </h3>
             <p className="text-sm text-[#5b706a]">
-              Price and message are generated automatically from order item
-              prices and delivery.
+              Quote: {order.quoteMessage || "None"}
             </p>
-          )}
-
-          {emailType === "order_sent_tracking" && (
-            <>
-              <p className="text-sm text-[#5b706a]">
-                Uses the saved tracking details above.
-              </p>
-            </>
-          )}
-
-          <button
-            type="button"
-            onClick={sendCustomerEmail}
-            disabled={sendingEmail}
-            className="admin-btn admin-btn-primary w-fit"
-          >
-            {sendingEmail ? "Sending..." : "Send Email"}
-          </button>
+            <p className="text-sm text-[#5b706a]">
+              Internal Notes: {order.internalNotes || "None"}
+            </p>
+            <p className="text-sm text-[#5b706a]">
+              Customer Notes: {order.customerNotes || "None"}
+            </p>
+          </article>
         </div>
-      </article>
-
-      <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Communication History</h3>
-        {communications.length === 0 ? (
-          <p className="admin-note">No communication has been sent yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                  <th className="py-2 pr-3">Sent At</th>
-                  <th className="py-2 pr-3">Type</th>
-                  <th className="py-2 pr-3">Channel</th>
-                  <th className="py-2 pr-3">Recipient</th>
-                  <th className="py-2">Subject</th>
-                </tr>
-              </thead>
-              <tbody>
-                {communications.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-[#eef4f1] text-[#304843]"
-                  >
-                    <td className="py-2 pr-3 whitespace-nowrap">
-                      {new Date(entry.sentAt).toLocaleString()}
-                    </td>
-                    <td className="py-2 pr-3">{entry.communicationType}</td>
-                    <td className="py-2 pr-3">{entry.channel}</td>
-                    <td className="py-2 pr-3">{entry.recipientEmail}</td>
-                    <td className="py-2">{entry.subject}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
-
-      <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Status History</h3>
-        {statusHistory.length === 0 ? (
-          <p className="admin-note">No status changes recorded yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                  <th className="py-2 pr-3">Changed At</th>
-                  <th className="py-2 pr-3">From</th>
-                  <th className="py-2 pr-3">To</th>
-                  <th className="py-2 pr-3">By</th>
-                  <th className="py-2">Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {statusHistory.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-[#eef4f1] text-[#304843]"
-                  >
-                    <td className="py-2 pr-3 whitespace-nowrap">
-                      {new Date(entry.changedAt).toLocaleString()}
-                    </td>
-                    <td className="py-2 pr-3">{entry.previousStatus || "-"}</td>
-                    <td className="py-2 pr-3 font-semibold">
-                      {entry.newStatus}
-                    </td>
-                    <td className="py-2 pr-3">{entry.changedBy || "-"}</td>
-                    <td className="py-2">{entry.note || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
-
-      <article className="admin-panel mb-5 p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">Notes</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-[#5f736d]">
-              Internal Notes
-            </label>
-            <textarea
-              value={internalNotes}
-              onChange={(e) => setInternalNotes(e.target.value)}
-              rows={3}
-              className="admin-textarea"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-[#5f736d]">
-              Customer Notes
-            </label>
-            <textarea
-              value={customerNotes}
-              onChange={(e) => setCustomerNotes(e.target.value)}
-              rows={3}
-              className="admin-textarea"
-            />
-          </div>
-          <button onClick={saveNotes} className="admin-btn admin-btn-primary">
-            Save Notes
-          </button>
-        </div>
-      </article>
-
-      <article className="admin-panel p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">
-          Admin & Customer Messaging
-        </h3>
-        <p className="text-sm text-[#5b706a]">
-          Quote: {order.quoteMessage || "None"}
-        </p>
-        <p className="text-sm text-[#5b706a]">
-          Internal Notes: {order.internalNotes || "None"}
-        </p>
-        <p className="text-sm text-[#5b706a]">
-          Customer Notes: {order.customerNotes || "None"}
-        </p>
-      </article>
+      </div>
     </AdminLayout>
   );
 }
