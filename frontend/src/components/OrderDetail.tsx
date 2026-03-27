@@ -282,37 +282,49 @@ export default function OrderDetail() {
                 <TimelineItem
                   icon={<FileText size={16} />}
                   title={t("orderDetail.quoteRequested")}
-                  date={statusStep >= 1 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 1 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 1}
                 />
                 <TimelineItem
                   icon={<Clock size={16} />}
                   title={t("orderStatus.quoted")}
-                  date={statusStep >= 2 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 2 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 2}
                 />
                 <TimelineItem
                   icon={<CheckCircle2 size={16} />}
                   title={t("orderStatus.paid")}
-                  date={statusStep >= 3 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 3 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 3}
                 />
                 <TimelineItem
                   icon={<Clock size={16} />}
                   title={t("orderDetail.printing")}
-                  date={statusStep >= 4 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 4 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 4}
                 />
                 <TimelineItem
                   icon={<CheckCircle2 size={16} />}
                   title={t("orderDetail.completed")}
-                  date={statusStep >= 5 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 5 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 5}
                 />
                 <TimelineItem
                   icon={<Truck size={16} />}
                   title={t("orderStatus.sent")}
-                  date={statusStep >= 6 ? reachedDate : t("orderDetail.pending")}
+                  date={
+                    statusStep >= 6 ? reachedDate : t("orderDetail.pending")
+                  }
                   active={statusStep >= 6}
                 />
               </div>
