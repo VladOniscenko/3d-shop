@@ -52,7 +52,10 @@ const Navbar = () => {
       </div>
 
       <div className="hidden lg:flex items-center gap-4">
-        <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
+        <button
+          onClick={() => navigate("/cart")}
+          className="p-2 text-gray-600 hover:text-gray-900 transition-colors relative"
+        >
           <ShoppingCart size={20} />
         </button>
 

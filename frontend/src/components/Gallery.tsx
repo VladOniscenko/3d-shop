@@ -79,19 +79,19 @@ export default function Gallery() {
   }, [activeFilter]);
 
   const handleAddToCart = (product: Product) => {
-    // Construct the full URL if needed, or just use the relative path
     const fullImageUrl = product.imageUrl
       ? "http://localhost:5243" + product.imageUrl
       : "";
 
     addToCart({
       fileName: product.name,
-      fileUrl: product.imageUrl || "", // The path for the backend
-      imageUrl: fullImageUrl, // The path for the frontend (REQUIRED by your type)
+      fileUrl: product.imageUrl || "",
+      imageUrl: fullImageUrl,
       material: "PLA",
       color: "Black",
       count: 1,
-      price: 0,
+      // Passing the actual price from the product data
+      price: product.price || 0,
       notes: `Gallery Item: ${product.name}`,
     });
 
@@ -190,7 +190,7 @@ export default function Gallery() {
                             </>
                           ) : (
                             <>
-                              <ShoppingCart size={18} /> Add to Project
+                              <ShoppingCart size={18} /> Add to Cart
                             </>
                           )}
                         </button>
@@ -199,9 +199,13 @@ export default function Gallery() {
 
                     <div className="mt-5 px-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase">
+                        <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase truncate">
                           {item.name}
                         </h3>
+                        {/* Displaying the Price */}
+                        <span className="text-emerald-700 font-black text-lg ml-2">
+                          ${item.price?.toFixed(2) || "0.00"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-emerald-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -230,7 +234,7 @@ export default function Gallery() {
         )}
       </main>
 
-      {/* Floating Cart Notification (Fixed at bottom) */}
+      {/* Floating Cart Notification */}
       {addedItemId && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-bounce">
           <button

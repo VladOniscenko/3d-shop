@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+button {
+  cursor: pointer;
+  pointer-events: auto; /* Ensures the button can be clicked */
+}
