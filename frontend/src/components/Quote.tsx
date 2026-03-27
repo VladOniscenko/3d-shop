@@ -72,7 +72,7 @@ export default function Quote() {
         material: defaultMat,
         color: defaultColor,
         price: 0,
-        count: 1, // Ensure your OrderItem.cs has a 'Count' property!
+        count: 1,
       };
       setItems([...items, newItem]);
     } catch (err) {
@@ -99,7 +99,6 @@ export default function Quote() {
 
     setIsSubmitting(true);
     try {
-      // This sends fullName, addressLine1, city, postalCode, phoneNumber, and items
       const payload = { ...address, items };
       await api.post("/orders/quote", payload);
       navigate("/orders");
@@ -345,6 +344,9 @@ export default function Quote() {
                 )}
                 Submit Quote Request
               </button>
+              <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest">
+                Safe & Secure 3D Printing
+              </p>
             </div>
           </div>
         </form>
