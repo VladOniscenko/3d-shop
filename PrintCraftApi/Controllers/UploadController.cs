@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace PrintCraftApi.Controllers;
 
@@ -16,6 +17,7 @@ public class UploadController : ControllerBase
 
     [HttpPost]
     [DisableRequestSizeLimit]
+    [EnableRateLimiting("UploadLimit")]
     public async Task<IActionResult> Upload([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Mollie.Api.Client;
 using Mollie.Api.Models;
@@ -30,6 +31,7 @@ public class PaymentsController : ControllerBase
 
     [HttpPost("create")]
     [Authorize]
+    [EnableRateLimiting("CheckoutLimit")]
     public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequest req)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

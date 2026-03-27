@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace PrintCraftApi.Controllers;
 
@@ -24,6 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("AuthBurst")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest req)
     {
         var name = req.Name?.Trim();
@@ -55,6 +57,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthBurst")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
         var normalizedEmail = req.Email.Trim().ToLowerInvariant();
