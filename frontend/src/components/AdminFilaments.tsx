@@ -13,7 +13,9 @@ export default function AdminFilaments() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
-  const [materialEdits, setMaterialEdits] = useState<Record<string, string>>({});
+  const [materialEdits, setMaterialEdits] = useState<Record<string, string>>(
+    {},
+  );
   const [colorEdits, setColorEdits] = useState<Record<string, string>>({});
   const [priceEdits, setPriceEdits] = useState<Record<string, number>>({});
   const [stockEdits, setStockEdits] = useState<Record<string, number>>({});
