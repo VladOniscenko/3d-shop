@@ -126,7 +126,9 @@ export default function AdminDashboard() {
     .filter((order) => order.isPaid || order.status === "paid")
     .reduce((sum, order) => sum + (order.quotedPrice || 0), 0);
 
-  const ordersWithQuote = orders.filter((order) => (order.quotedPrice || 0) > 0);
+  const ordersWithQuote = orders.filter(
+    (order) => (order.quotedPrice || 0) > 0,
+  );
   const averageQuotedValue =
     ordersWithQuote.length > 0 ? quotedRevenue / ordersWithQuote.length : 0;
 
@@ -152,7 +154,8 @@ export default function AdminDashboard() {
       sum + order.items.reduce((inner, item) => inner + (item.count || 0), 0),
     0,
   );
-  const avgItemsPerOrder = orders.length > 0 ? totalOrderItems / orders.length : 0;
+  const avgItemsPerOrder =
+    orders.length > 0 ? totalOrderItems / orders.length : 0;
 
   const lowStockFilaments = filaments.filter(
     (f) => (f.stockQuantity || 0) > 0 && (f.stockQuantity || 0) <= 100,
@@ -207,11 +210,7 @@ export default function AdminDashboard() {
             value={printingOrders}
             hint="In production"
           />
-          <StatCard
-            label="Sent Orders"
-            value={sentOrders}
-            hint="Shipped"
-          />
+          <StatCard label="Sent Orders" value={sentOrders} hint="Shipped" />
           <StatCard
             label="Delivered Orders"
             value={deliveredOrders}
@@ -228,7 +227,11 @@ export default function AdminDashboard() {
             hint="Cancelled by admin/user"
           />
           <StatCard label="Orders (24h)" value={ordersToday} hint="Last day" />
-          <StatCard label="Orders (7d)" value={ordersThisWeek} hint="Last week" />
+          <StatCard
+            label="Orders (7d)"
+            value={ordersThisWeek}
+            hint="Last week"
+          />
           <StatCard
             label="Orders (30d)"
             value={ordersThisMonth}
@@ -264,7 +267,11 @@ export default function AdminDashboard() {
             value={`EUR ${averageQuotedValue.toFixed(2)}`}
             hint="Average quoted order"
           />
-          <StatCard label="Products" value={products.length} hint="Catalog size" />
+          <StatCard
+            label="Products"
+            value={products.length}
+            hint="Catalog size"
+          />
           <StatCard
             label="Filament SKUs"
             value={filaments.length}
@@ -310,7 +317,9 @@ export default function AdminDashboard() {
                   className="block bg-gray-50 p-3 rounded-xl border border-gray-100 hover:bg-emerald-50"
                 >
                   <div className="flex justify-between">
-                    <span className="font-bold">Project #{order.id.slice(0, 8)}</span>
+                    <span className="font-bold">
+                      Project #{order.id.slice(0, 8)}
+                    </span>
                     <span className="text-sm text-gray-500">
                       {new Date(order.createdAt).toLocaleString()}
                     </span>
