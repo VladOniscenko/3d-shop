@@ -19,6 +19,7 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import type { Filament } from "../types";
 
+export default function CheckoutPage() {
   const {
     cart,
     removeFromCart,
@@ -86,22 +87,15 @@ import type { Filament } from "../types";
       const item = cart.find((i) => i.id === itemId);
       if (!item) return;
 
-      const updatedValues: Record<string, any> = {};
+      const updatedCount = field === "count" ? value : item.count;
+      let updatedMaterial = field === "material" ? value : item.material;
+      let updatedColor = field === "color" ? value : item.color;
+
       if (field === "material") {
-        updatedValues.material = value;
-        const firstColor =
-          filaments.find((f) => f.material === value)?.color || "";
-        updatedValues.color = firstColor;
-      } else {
-        updatedValues[field] = value;
+        updatedColor = filaments.find((f) => f.material === value)?.color || "";
       }
 
-      await updateCartItem(
-        itemId,
-        updatedValues.count,
-        updatedValues.material,
-        updatedValues.color,
-      );
+      await updateCartItem(itemId, updatedCount, updatedMaterial, updatedColor);
     } catch (err) {
       console.error("Failed to update item:", err);
     }
@@ -155,10 +149,8 @@ import type { Filament } from "../types";
         postalCode: address.postalCode.trim(),
       };
 
-      // Create Order & Get Mollie URL from Backend
       const res = await api.post("/payments/create", payload);
 
-      // Redirect to Mollie Secure Checkout
       if (res.data.checkoutUrl) {
         window.location.href = res.data.checkoutUrl;
       } else {
@@ -217,7 +209,8 @@ import type { Filament } from "../types";
       <Navbar />
       {showError && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg font-semibold animate-fade-in">
-          Your cart was updated elsewhere. Please refresh your cart and try again.
+          Your cart was updated elsewhere. Please refresh your cart and try
+          again.
         </div>
       )}
       <main className="max-w-7xl mx-auto px-6 py-12">
@@ -231,7 +224,6 @@ import type { Filament } from "../types";
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
           <div className="lg:col-span-2 space-y-6">
-            {/* Review Items */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
                 Review Items
@@ -341,7 +333,6 @@ import type { Filament } from "../types";
               </div>
             </div>
 
-            {/* Payment Method */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
                 Payment Method
@@ -362,7 +353,6 @@ import type { Filament } from "../types";
             </div>
           </div>
 
-          {/* Checkout Info */}
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
               <div className="mb-8 space-y-3">
@@ -533,10 +523,6 @@ import type { Filament } from "../types";
                   </>
                 )}
               </button>
-
-              <p className="text-[10px] text-gray-400 text-center mt-4 uppercase font-bold tracking-widest">
-                Secure 256-bit SSL Encryption
-              </p>
             </div>
           </div>
         </form>

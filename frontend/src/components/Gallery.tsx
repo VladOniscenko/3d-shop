@@ -79,6 +79,14 @@ export default function Gallery() {
   }, [activeFilter]);
 
   const handleAddToCart = async (product: Product) => {
+    // Check if user is authenticated
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in first to add items to your cart.");
+      navigate("/login");
+      return;
+    }
+
     try {
       await addToCart(product.id, 1, "PLA", "Black");
 
