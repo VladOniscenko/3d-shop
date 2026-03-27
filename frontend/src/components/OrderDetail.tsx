@@ -13,16 +13,20 @@ import {
   Palette,
   MapPin,
   User,
+  XCircle,
+  Phone,
+  Hash,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
-import type { Order } from "../types"; // Import your updated Order interface
+import type { Order } from "../types";
 
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -37,6 +41,26 @@ export default function OrderDetail() {
     };
     if (id) fetchOrderDetails();
   }, [id]);
+
+  const handleCancel = async () => {
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this project? This action cannot be undone.",
+    );
+
+    if (!confirmCancel) return;
+
+    setIsCancelling(true);
+    try {
+      await api.put(`/orders/${id}/cancel`);
+      alert("Project cancelled successfully.");
+      navigate("/orders");
+    } catch (err) {
+      alert("Could not cancel project. It might already be in production.");
+      console.error(err);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -65,20 +89,37 @@ export default function OrderDetail() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
-        <button
-          onClick={() => navigate("/orders")}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-8 group"
-        >
-          <ArrowLeft
-            size={20}
-            className="group-hover:-translate-x-1 transition-transform"
-          />
-          Back to Projects
-        </button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <button
+            onClick={() => navigate("/orders")}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group"
+          >
+            <ArrowLeft
+              size={20}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            Back to Projects
+          </button>
+
+          {order.status === "pending_quote" && (
+            <button
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+            >
+              {isCancelling ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <XCircle size={18} />
+              )}
+              Cancel Request
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {/* 3. Items List (Supporting Multiple Models) */}
+            {/* Items List */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 3D Models in this Project
@@ -97,12 +138,16 @@ export default function OrderDetail() {
                         <p className="font-bold text-gray-900 truncate">
                           {item.fileName}
                         </p>
-                        <div className="flex gap-3 mt-1">
+                        <div className="flex flex-wrap gap-3 mt-1">
                           <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                             <Layers size={12} /> {item.material}
                           </span>
                           <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">
                             <Palette size={12} /> {item.color}
+                          </span>
+                          {/* DISPLAY QUANTITY/COUNT */}
+                          <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                            <Hash size={12} /> x{item.count || 1}
                           </span>
                         </div>
                       </div>
@@ -156,6 +201,15 @@ export default function OrderDetail() {
                   <User size={16} className="text-emerald-500 shrink-0" />
                   <p className="font-bold">{order.fullName}</p>
                 </div>
+
+                {/* DISPLAY PHONE NUMBER */}
+                <div className="flex gap-3">
+                  <Phone size={16} className="text-emerald-500 shrink-0" />
+                  <p className="text-emerald-50/80">
+                    {order.phoneNumber || "No phone provided"}
+                  </p>
+                </div>
+
                 <div className="flex gap-3">
                   <MapPin size={16} className="text-emerald-500 shrink-0" />
                   <div className="text-emerald-50/80">
