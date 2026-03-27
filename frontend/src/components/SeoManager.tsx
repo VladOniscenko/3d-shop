@@ -1,90 +1,12 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useI18n } from "../i18n/I18nContext";
 
 type RouteSeo = {
   title: string;
   description: string;
   keywords: string;
   index: boolean;
-};
-
-const DEFAULT_SEO: RouteSeo = {
-  title: "3D Print Service Nederland | PrintCraft",
-  description:
-    "Professionele 3D print service voor heel Nederland. Upload je model en ontvang snel een quote.",
-  keywords:
-    "3D print service Nederland, 3D printen Nederland, online 3D print service, prototype printen",
-  index: true,
-};
-
-const SEO_BY_ROUTE: Record<string, RouteSeo> = {
-  "/": {
-    title: "3D Print Service Nederland | PrintCraft",
-    description:
-      "Professionele 3D print service voor prototypes, onderdelen en maatwerk prints in heel Nederland.",
-    keywords:
-      "3D print service Nederland, 3D printen Nederland, online 3D print service, maatwerk 3D print",
-    index: true,
-  },
-  "/gallery": {
-    title: "3D Print Modellen Galerie | PrintCraft Nederland",
-    description:
-      "Bekijk populaire 3D print modellen en start direct je bestelling vanuit heel Nederland.",
-    keywords: "3D modellen printen, 3D print galerie, 3D print Nederland",
-    index: true,
-  },
-  "/materials": {
-    title: "3D Print Materialen (PLA, PETG) | PrintCraft NL",
-    description:
-      "Kies het juiste 3D print materiaal en kleur voor jouw project. Overzicht van beschikbare filaments.",
-    keywords: "PLA printen, PETG printen, 3D filament Nederland, 3D materialen",
-    index: true,
-  },
-  "/how-it-works": {
-    title: "Hoe Werkt Onze 3D Print Service | PrintCraft",
-    description:
-      "Van upload tot levering: ontdek hoe je in een paar stappen jouw 3D model laat printen in Nederland.",
-    keywords:
-      "hoe werkt 3D print service, 3D print proces, 3D printen Nederland",
-    index: true,
-  },
-  "/faq": {
-    title: "FAQ 3D Printen | PrintCraft Nederland",
-    description:
-      "Veelgestelde vragen over levertijd, materialen, prijzen en kwaliteit van onze 3D print service.",
-    keywords: "3D print FAQ, 3D print vragen, 3D print Nederland",
-    index: true,
-  },
-  "/login": {
-    title: "Inloggen | PrintCraft",
-    description: "Log in op je PrintCraft account.",
-    keywords: "PrintCraft login",
-    index: false,
-  },
-  "/signup": {
-    title: "Account Aanmaken | PrintCraft",
-    description: "Maak een PrintCraft account aan.",
-    keywords: "PrintCraft registratie",
-    index: false,
-  },
-  "/quote": {
-    title: "Quote Aanvragen | PrintCraft",
-    description: "Vraag een 3D print quote aan.",
-    keywords: "3D print quote",
-    index: false,
-  },
-  "/orders": {
-    title: "Mijn Orders | PrintCraft",
-    description: "Bekijk je orderoverzicht.",
-    keywords: "orders",
-    index: false,
-  },
-  "/cart": {
-    title: "Winkelwagen | PrintCraft",
-    description: "Rond je bestelling af.",
-    keywords: "winkelwagen",
-    index: false,
-  },
 };
 
 function upsertMetaByName(name: string, content: string) {
@@ -119,7 +41,12 @@ function upsertCanonical(url: string) {
   link.href = url;
 }
 
-function upsertJsonLd(pathname: string, canonicalUrl: string) {
+function upsertJsonLd(
+  pathname: string,
+  canonicalUrl: string,
+  language: "en" | "nl",
+  pageName: string,
+) {
   const existing = document.getElementById("seo-jsonld");
   if (existing) {
     existing.remove();
@@ -140,7 +67,7 @@ function upsertJsonLd(pathname: string, canonicalUrl: string) {
           "@type": "WebSite",
           name: "PrintCraft",
           url: window.location.origin,
-          inLanguage: "nl-NL",
+          inLanguage: language === "nl" ? "nl-NL" : "en",
         },
         {
           "@type": "LocalBusiness",
@@ -161,9 +88,9 @@ function upsertJsonLd(pathname: string, canonicalUrl: string) {
         },
         {
           "@type": "WebPage",
-          name: "3D Print Service Nederland",
+          name: pageName,
           url: canonicalUrl,
-          inLanguage: "nl-NL",
+          inLanguage: language === "nl" ? "nl-NL" : "en",
         },
       ],
     },
@@ -175,16 +102,87 @@ function upsertJsonLd(pathname: string, canonicalUrl: string) {
 
 export default function SeoManager() {
   const location = useLocation();
+  const { t, language } = useI18n();
 
   useEffect(() => {
+    const defaultSeo: RouteSeo = {
+      title: t("seo.default.title"),
+      description: t("seo.default.description"),
+      keywords: t("seo.default.keywords"),
+      index: true,
+    };
+
+    const seoByRoute: Record<string, RouteSeo> = {
+      "/": {
+        title: t("seo.home.title"),
+        description: t("seo.home.description"),
+        keywords: t("seo.home.keywords"),
+        index: true,
+      },
+      "/gallery": {
+        title: t("seo.gallery.title"),
+        description: t("seo.gallery.description"),
+        keywords: t("seo.gallery.keywords"),
+        index: true,
+      },
+      "/materials": {
+        title: t("seo.materials.title"),
+        description: t("seo.materials.description"),
+        keywords: t("seo.materials.keywords"),
+        index: true,
+      },
+      "/how-it-works": {
+        title: t("seo.how.title"),
+        description: t("seo.how.description"),
+        keywords: t("seo.how.keywords"),
+        index: true,
+      },
+      "/faq": {
+        title: t("seo.faq.title"),
+        description: t("seo.faq.description"),
+        keywords: t("seo.faq.keywords"),
+        index: true,
+      },
+      "/login": {
+        title: `${t("nav.logIn")} | PrintCraft`,
+        description: `${t("nav.logIn")} PrintCraft`,
+        keywords: "PrintCraft login",
+        index: false,
+      },
+      "/signup": {
+        title: `${t("nav.getStarted")} | PrintCraft`,
+        description: `${t("nav.getStarted")} PrintCraft`,
+        keywords: "PrintCraft signup",
+        index: false,
+      },
+      "/quote": {
+        title: `${t("hero.ctaQuote")} | PrintCraft`,
+        description: `${t("hero.ctaQuote")} PrintCraft`,
+        keywords: "3D print quote",
+        index: false,
+      },
+      "/orders": {
+        title: `${t("nav.myOrders")} | PrintCraft`,
+        description: `${t("nav.myOrders")} PrintCraft`,
+        keywords: "orders",
+        index: false,
+      },
+      "/cart": {
+        title: "Cart | PrintCraft",
+        description: "Cart PrintCraft",
+        keywords: "cart",
+        index: false,
+      },
+    };
+
     const isOrderDetail = location.pathname.startsWith("/orders/");
     const routeSeo = isOrderDetail
-      ? { ...SEO_BY_ROUTE["/orders"], index: false }
-      : SEO_BY_ROUTE[location.pathname] || DEFAULT_SEO;
+      ? { ...seoByRoute["/orders"], index: false }
+      : seoByRoute[location.pathname] || defaultSeo;
 
     const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
-    document.documentElement.lang = "nl-NL";
+    document.documentElement.lang = language === "nl" ? "nl-NL" : "en";
     document.title = routeSeo.title;
 
     upsertMetaByName("description", routeSeo.description);
@@ -197,14 +195,14 @@ export default function SeoManager() {
     upsertMetaByProperty("og:title", routeSeo.title);
     upsertMetaByProperty("og:description", routeSeo.description);
     upsertMetaByProperty("og:url", canonicalUrl);
-    upsertMetaByProperty("og:locale", "nl_NL");
+    upsertMetaByProperty("og:locale", language === "nl" ? "nl_NL" : "en_US");
 
     upsertMetaByName("twitter:title", routeSeo.title);
     upsertMetaByName("twitter:description", routeSeo.description);
 
     upsertCanonical(canonicalUrl);
-    upsertJsonLd(location.pathname, canonicalUrl);
-  }, [location.pathname]);
+    upsertJsonLd(location.pathname, canonicalUrl, language, routeSeo.title);
+  }, [language, location.pathname, t]);
 
   return null;
 }

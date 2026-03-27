@@ -2,44 +2,19 @@
 import { useState } from "react";
 import Navbar from "./Navbar";
 import { ChevronDown, ChevronUp, MessageCircleQuestion } from "lucide-react";
-import { Link } from "react-router-dom";
-
-// --- Data ---
-const faqData = [
-  {
-    question: "What type of 3D files do you accept?",
-    answer:
-      "We accept the most common 3D files: .STL, .OBJ, and .3MF. If you have a different file type from your design software, you can usually use the 'Export' or 'Save As' option to turn it into an STL file before uploading.",
-  },
-  {
-    question: "How much does a custom print cost?",
-    answer:
-      "The price depends on the size of the object, how solid it needs to be inside, and the material you choose. A small desk toy might be $10, while a large custom bracket could be $40. Use our 'Get a Quote' button for an exact, no-hidden-fee price.",
-  },
-  {
-    question: "How long will it take to get my item?",
-    answer:
-      "Usually, we finish printing and drop your package in the mail within 2 to 5 business days. Shipping time depends on where you live, but we always provide a tracking number so you can watch it travel.",
-  },
-  {
-    question:
-      "I have an idea, but I don't know how to make a 3D file. Can you help?",
-    answer:
-      "Yes! If you have sketches, reference photos, or just a really good description of what you need, submit a 'Custom Design' request. Our team can build the 3D file for you.",
-  },
-  {
-    question: "Are the printed parts safe for food or drinks?",
-    answer:
-      "Standard 3D printed plastics are generally not recommended for direct contact with food or hot drinks because tiny bacteria can hide in the printing lines. However, we can advise you on food-safe coatings if that is what your project needs.",
-  },
-  {
-    question: "What happens if my print breaks in the mail?",
-    answer:
-      "We pack everything very carefully, but accidents happen. If your item arrives broken or has a major printing mistake, just send us a photo within 3 days, and we will reprint and reship it to you for free.",
-  },
-];
+import { useI18n } from "../i18n/I18nContext";
 
 export default function FAQ() {
+  const { t } = useI18n();
+  const faqData = [
+    { question: t("faq.q1"), answer: t("faq.a1") },
+    { question: t("faq.q2"), answer: t("faq.a2") },
+    { question: t("faq.q3"), answer: t("faq.a3") },
+    { question: t("faq.q4"), answer: t("faq.a4") },
+    { question: t("faq.q5"), answer: t("faq.a5") },
+    { question: t("faq.q6"), answer: t("faq.a6") },
+  ];
+
   // Keeps track of which question is currently open
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -62,12 +37,9 @@ export default function FAQ() {
             />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Frequently Asked Questions
+            {t("faq.title")}
           </h1>
-          <p className="text-emerald-50/80 text-lg">
-            Got questions about 3D printing, shipping, or materials? We have got
-            you covered.
-          </p>
+          <p className="text-emerald-50/80 text-lg">{t("faq.subtitle")}</p>
         </div>
       </header>
 
@@ -119,17 +91,15 @@ export default function FAQ() {
         </div>
 
         {/* Contact Support Box */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-500 mb-4">
-            Still can't find the answer you're looking for?
-          </p>
+        {/* <div className="mt-12 text-center">
+          <p className="text-gray-500 mb-4">{t("faq.contactText")}</p>
           <Link
             to="/quote"
             className="text-[#133827] font-bold hover:underline"
           >
-            Send us a message
+            {t("faq.contactCta")}
           </Link>
-        </div>
+        </div> */}
       </main>
 
       {/* Footer */}

@@ -12,8 +12,10 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import api from "../services/api"; // Your axios instance
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Signup() {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,8 +35,7 @@ export default function Signup() {
       await api.post("/auth/register", {
         name: name,
         email: email,
-        passwordHash: password, // The backend hashes this
-        role: "customer",
+        password: password,
       });
 
       // 2. Show success state
@@ -47,10 +48,7 @@ export default function Signup() {
     } catch (err: any) {
       console.error("Signup error", err);
       // Show specific error message from API if available
-      setError(
-        err.response?.data ||
-          "Could not create account. Email might already be in use.",
-      );
+      setError(err.response?.data || t("signup.error.default"));
     } finally {
       setLoading(false);
     }
@@ -64,17 +62,15 @@ export default function Signup() {
           <Logo />
 
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Create an account
+            {t("signup.title")}
           </h2>
-          <p className="text-gray-500 mb-8">
-            Start bringing your 3D ideas to life today.
-          </p>
+          <p className="text-gray-500 mb-8">{t("signup.subtitle")}</p>
 
           {/* Success State */}
           {isSuccess && (
             <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-lg flex items-center gap-2 text-sm">
               <CheckCircle2 size={18} />
-              Account created! Redirecting to login...
+              {t("signup.success")}
             </div>
           )}
 
@@ -92,7 +88,7 @@ export default function Signup() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Full Name
+                {t("signup.name")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -115,7 +111,7 @@ export default function Signup() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email address
+                {t("login.email")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -138,7 +134,7 @@ export default function Signup() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Password
+                {t("login.password")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -151,7 +147,7 @@ export default function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all sm:text-sm"
-                  placeholder="Create a strong password"
+                  placeholder={t("signup.passwordPlaceholder")}
                 />
               </div>
             </div>
@@ -165,19 +161,19 @@ export default function Signup() {
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  Sign up <ArrowRight size={18} />
+                  {t("signup.submit")} <ArrowRight size={18} />
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-600">
-            Already have an account?{" "}
+            {t("signup.haveAccount")}{" "}
             <Link
               to="/login"
               className="font-semibold text-emerald-700 hover:text-emerald-600 transition-colors"
             >
-              Sign in
+              {t("signup.signIn")}
             </Link>
           </p>
         </div>
@@ -193,11 +189,10 @@ export default function Signup() {
             <Printer size={64} className="text-emerald-400" />
           </div>
           <h2 className="text-4xl font-bold mb-4 leading-tight">
-            Join the makers.
+            {t("signup.visualTitle")}
           </h2>
           <p className="text-emerald-100/80 text-lg max-w-md mx-auto">
-            Create a free account to get instant quotes, save your favorite
-            materials, and track your print history.
+            {t("signup.visualDesc")}
           </p>
         </div>
       </div>

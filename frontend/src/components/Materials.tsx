@@ -3,8 +3,10 @@ import { ArrowRight, Box, Loader2, Database, Tag, Info } from "lucide-react";
 import Navbar from "./Navbar";
 import type { Filament } from "../types"; // Use the new interface name
 import api from "../services/api";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Materials() {
+  const { t } = useI18n();
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,11 +47,10 @@ export default function Materials() {
       <header className="bg-[#133827] py-16 px-6 text-center">
         <div className="max-w-3xl mx-auto text-white">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Materials Library
+            {t("materials.pageTitle")}
           </h1>
           <p className="text-emerald-50/80 text-lg">
-            High-quality filaments for every project, from decorative models to
-            functional parts.
+            {t("materials.pageSubtitle")}
           </p>
         </div>
       </header>
@@ -58,7 +59,7 @@ export default function Materials() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-emerald-800">
             <Loader2 className="animate-spin mb-4" size={48} />
-            <p className="font-medium">Loading materials...</p>
+            <p className="font-medium">{t("materials.pageLoading")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -97,7 +98,8 @@ export default function Materials() {
                 {/* Metadata Tags */}
                 <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-50">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-                    <Database size={12} /> {f.stockQuantity}g in stock
+                    <Database size={12} /> {f.stockQuantity}g{" "}
+                    {t("materials.stock")}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                     <Tag size={12} /> {f.color}
@@ -113,22 +115,21 @@ export default function Materials() {
           <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full mb-4">
             <Info size={24} />
           </div>
-          <h3 className="text-2xl font-bold mb-2">Need a specific material?</h3>
+          <h3 className="text-2xl font-bold mb-2">{t("materials.ctaTitle")}</h3>
           <p className="text-gray-500 mb-8 max-w-xl mx-auto">
-            We can order specialty filaments like Wood, Carbon Fiber, or
-            Glow-in-the-dark for large projects.
+            {t("materials.ctaDesc")}
           </p>
           <a
             href="/quote"
             className="inline-flex items-center gap-2 bg-[#133827] text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-900 transition-all shadow-lg shadow-emerald-900/10"
           >
-            Start Your Project <ArrowRight size={18} />
+            {t("materials.ctaButton")} <ArrowRight size={18} />
           </a>
         </div>
       </main>
 
       <footer className="py-12 text-center text-gray-400 text-xs">
-        <p>© 2026 PrintCraft Collective. Professional 3D Printing Services.</p>
+        <p>{t("materials.footer")}</p>
       </footer>
     </div>
   );

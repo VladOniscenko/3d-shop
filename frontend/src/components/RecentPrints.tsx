@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import { useI18n } from "../i18n/I18nContext";
 
 interface Print {
   id: string;
@@ -54,6 +55,7 @@ const getPrintDesign = (category: string) => {
 };
 
 export default function RecentPrints() {
+  const { t } = useI18n();
   const [prints, setPrints] = useState<Print[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,17 +83,17 @@ export default function RecentPrints() {
       <div className="flex items-end justify-between">
         <div>
           <h3 className="text-3xl font-black text-gray-900 tracking-tight uppercase">
-            Recent Work
+            {t("recent.title")}
           </h3>
           <p className="text-gray-400 text-sm font-medium mt-1">
-            Real projects delivered to our community
+            {t("recent.subtitle")}
           </p>
         </div>
         <Link
           to="/gallery"
           className="text-emerald-600 font-bold text-sm flex items-center gap-1 hover:underline group"
         >
-          View Full Gallery{" "}
+          {t("recent.viewAll")}{" "}
           <ChevronRight
             size={16}
             className="group-hover:translate-x-1 transition-transform"
@@ -103,7 +105,7 @@ export default function RecentPrints() {
         <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
           <Loader2 className="animate-spin text-emerald-600 mb-2" size={32} />
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            Loading Showcase
+            {t("recent.loading")}
           </p>
         </div>
       ) : (
@@ -157,7 +159,7 @@ export default function RecentPrints() {
       {!loading && prints.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-widest italic">
-            Portfolio update in progress...
+            {t("recent.empty")}
           </p>
         </div>
       )}

@@ -22,8 +22,10 @@ import {
 import Navbar from "./Navbar";
 import api from "../services/api";
 import type { Order } from "../types";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function OrderDetail() {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -45,19 +47,17 @@ export default function OrderDetail() {
   }, [id]);
 
   const handleDeleteQuote = async () => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to delete this quote? This will permanently remove the quote and uploaded files.",
-    );
+    const confirmCancel = window.confirm(t("orderDetail.deleteQuote") + "?");
 
     if (!confirmCancel) return;
 
     setIsCancelling(true);
     try {
       await api.put(`/orders/${id}/cancel`);
-      alert("Quote deleted successfully.");
+      alert(t("orderDetail.deleteQuote"));
       navigate("/orders");
     } catch (err) {
-      alert("Could not delete quote. It may already be processed.");
+      alert(t("gallery.addFailed"));
       console.error(err);
     } finally {
       setIsCancelling(false);
@@ -75,12 +75,12 @@ export default function OrderDetail() {
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-6 text-center">
-        <h2 className="text-2xl font-bold mb-2">Order not found</h2>
+        <h2 className="text-2xl font-bold mb-2">{t("orderDetail.notFound")}</h2>
         <button
           onClick={() => navigate("/orders")}
           className="text-emerald-700 font-bold underline"
         >
-          Go back to my projects
+          {t("orderDetail.back")}
         </button>
       </div>
     );
@@ -109,7 +109,7 @@ export default function OrderDetail() {
               size={20}
               className="group-hover:-translate-x-1 transition-transform"
             />
-            Back to Projects
+            {t("orderDetail.back")}
           </button>
 
           {order.status === "pending_quote" && (
@@ -123,7 +123,7 @@ export default function OrderDetail() {
               ) : (
                 <XCircle size={18} />
               )}
-              Delete Quote
+              {t("orderDetail.deleteQuote")}
             </button>
           )}
         </div>
@@ -133,7 +133,7 @@ export default function OrderDetail() {
             {/* Items List */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                3D Models in this Project
+                {t("orderDetail.modelsInProject")}
               </h2>
               <div className="space-y-4">
                 {order.items.map((item, idx) => (
@@ -183,24 +183,26 @@ export default function OrderDetail() {
 
             {/* Timeline */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-lg mb-8">Project Timeline</h3>
+              <h3 className="font-bold text-lg mb-8">
+                {t("orderDetail.timeline")}
+              </h3>
               <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-100">
                 <TimelineItem
                   icon={<FileText size={16} />}
-                  title="Quote Requested"
+                  title={t("orderDetail.quoteRequested")}
                   date={new Date(order.createdAt).toLocaleDateString()}
                   active={true}
                 />
                 <TimelineItem
                   icon={<Clock size={16} />}
-                  title="Printing"
-                  date="Pending"
+                  title={t("orderDetail.printing")}
+                  date={t("orderDetail.pending")}
                   active={order.status === "printing"}
                 />
                 <TimelineItem
                   icon={<CheckCircle2 size={16} />}
-                  title="Completed"
-                  date="Pending"
+                  title={t("orderDetail.completed")}
+                  date={t("orderDetail.pending")}
                   active={order.status === "completed"}
                 />
               </div>
@@ -212,7 +214,7 @@ export default function OrderDetail() {
             <div className="bg-[#133827] text-white rounded-2xl p-8 shadow-lg">
               <h3 className="font-bold mb-6 flex items-center gap-2 text-emerald-400">
                 <MapPin size={20} />
-                Shipping Details
+                {t("orderDetail.shippingDetails")}
               </h3>
               <div className="space-y-4 text-sm">
                 <div className="flex gap-3">
@@ -223,7 +225,7 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <Phone size={16} className="text-emerald-500 shrink-0" />
                   <p className="text-emerald-50/80">
-                    {order.phoneNumber || "No phone provided"}
+                    {order.phoneNumber || t("orderDetail.noPhone")}
                   </p>
                 </div>
 
@@ -242,30 +244,30 @@ export default function OrderDetail() {
                   {/* Delivery Price (Assume DeliveryPrice exists in your Order model, otherwise replace with fixed value or condition) */}
                   <div className="flex justify-between items-center text-emerald-100/70">
                     <span className="flex items-center gap-2">
-                      <Truck size={14} /> Delivery
+                      <Truck size={14} /> {t("orderDetail.delivery")}
                     </span>
                     <span>
                       {order.deliveryPrice && order.deliveryPrice > 0
                         ? "€" + order.deliveryPrice
-                        : "To be calculated"}
+                        : t("orderDetail.toBeCalculated")}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center text-xl font-bold text-white pt-2">
                     <span className="flex items-center gap-2">
-                      <Tag size={18} className="text-emerald-400" /> Total
+                      <Tag size={18} className="text-emerald-400" /> {t("orderDetail.total")}
                     </span>
                     <span className="text-emerald-400">
                       {totalPrice > 0
                         ? `€${totalPrice.toFixed(2)}`
-                        : "Pending Quote"}
+                        : t("orderDetail.pendingQuote")}
                     </span>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/10">
                   <p className="text-emerald-100/40 text-xs uppercase font-bold tracking-widest mb-1">
-                    Status
+                    {t("orderDetail.status")}
                   </p>
                   <p className="text-xl font-bold text-emerald-400 uppercase tracking-tight">
                     {order.status.replace("_", " ")}
@@ -276,7 +278,8 @@ export default function OrderDetail() {
 
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <h4 className="font-bold text-sm text-gray-900 mb-2 flex items-center gap-2">
-                <Calendar size={16} className="text-emerald-600" /> Reference ID
+                <Calendar size={16} className="text-emerald-600" />{" "}
+                {t("orderDetail.referenceId")}
               </h4>
               <p className="text-[10px] font-mono text-gray-400 break-all">
                 {order.id}

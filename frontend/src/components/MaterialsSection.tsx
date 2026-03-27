@@ -3,8 +3,10 @@ import { ArrowRight, Box, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Filament } from "../types"; // Import your main interface
 import api from "../services/api";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function MaterialsSection() {
+  const { t } = useI18n();
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,16 +49,14 @@ export default function MaterialsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold mb-2">Materials & Colors</h3>
-        <p className="text-gray-500 text-sm">
-          Premium filaments for your perfect print
-        </p>
+        <h3 className="text-2xl font-bold mb-2">{t("materials.title")}</h3>
+        <p className="text-gray-500 text-sm">{t("materials.subtitle")}</p>
       </div>
 
       {loading ? (
         <div className="flex items-center gap-2 text-gray-400 py-4">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">Loading options...</span>
+          <span className="text-sm">{t("materials.loading")}</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -97,7 +97,7 @@ export default function MaterialsSection() {
         to="/materials"
         className="inline-flex items-center gap-2 text-sm font-semibold text-[#133827] hover:gap-3 transition-all"
       >
-        View Full Library <ArrowRight size={16} />
+        {t("materials.viewAll")} <ArrowRight size={16} />
       </Link>
     </div>
   );

@@ -1,38 +1,41 @@
 import { Upload, Settings2, Printer, PackageCheck } from "lucide-react";
 import { Link } from "react-router-dom"; // 1. Import Link
 import type { StepItem } from "../types";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function HowItWorks() {
+  const { t } = useI18n();
+
   const steps: StepItem[] = [
     {
       number: 1,
       icon: <Upload size={32} />,
-      title: "Request",
-      desc: "Upload your 3D file or describe your idea.",
+      title: t("how.step1.title"),
+      desc: t("how.step1.desc"),
     },
     {
       number: 2,
       icon: <Settings2 size={32} />,
-      title: "Review & Quote",
-      desc: "We review your file and send a personalized price.",
+      title: t("how.step2.title"),
+      desc: t("how.step2.desc"),
     },
     {
       number: 3,
       icon: <Printer size={32} />,
-      title: "We Print",
-      desc: "Your order is printed with care on our P2S.",
+      title: t("how.step3.title"),
+      desc: t("how.step3.desc"),
     },
     {
       number: 4,
       icon: <PackageCheck size={32} />,
-      title: "Packed & Shipped",
-      desc: "We ship your high-quality print to your door.",
+      title: t("how.step4.title"),
+      desc: t("how.step4.desc"),
     },
   ];
 
   return (
     <section>
-      <h3 className="text-2xl font-bold mb-6">How It Works</h3>
+      <h3 className="text-2xl font-bold mb-6">{t("how.title")}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {steps.map((step) => (
           /* 2. Changed div to Link and added 'block' and 'to' */

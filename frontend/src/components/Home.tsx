@@ -3,8 +3,11 @@ import Hero from "./Hero";
 import HowItWorks from "./HowItWorks";
 import MaterialsSection from "./MaterialsSection";
 import RecentPrints from "./RecentPrints";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Home() {
+  const { t } = useI18n();
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 selection:bg-emerald-100">
       <Navbar />
@@ -17,7 +20,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="bg-white border-t border-gray-100 py-12 px-6 text-center text-gray-500 text-sm">
-        <p>© 2026 PrintCraft Collective. All rights reserved.</p>
+        <p>{t("home.footer")}</p>
       </footer>
     </div>
   );

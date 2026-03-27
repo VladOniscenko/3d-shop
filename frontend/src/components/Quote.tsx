@@ -21,8 +21,10 @@ import {
   normalizeShippingInfo,
   validateShippingInfo,
 } from "../utils/shippingValidation";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Quote() {
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -88,7 +90,7 @@ export default function Quote() {
       };
       setItems([...items, newItem]);
     } catch (err) {
-      alert("Upload failed. Please try again.");
+      alert(t("gallery.addFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -106,13 +108,12 @@ export default function Quote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0)
-      return alert("Please upload at least one 3D model.");
+    if (items.length === 0) return alert(t("quote.noFiles"));
 
     const errors = validateShippingInfo(address);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0) {
-      return alert("Please fix shipping info before submitting.");
+      return alert(t("quote.shipping"));
     }
 
     setIsSubmitting(true);
@@ -142,11 +143,9 @@ export default function Quote() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-10 text-center">
           <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            Request a Quote
+            {t("quote.title")}
           </h2>
-          <p className="text-gray-500 text-lg">
-            Upload models and choose from our live inventory.
-          </p>
+          <p className="text-gray-500 text-lg">{t("quote.subtitle")}</p>
         </div>
 
         <form
@@ -158,7 +157,7 @@ export default function Quote() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800">
                   <Package className="text-emerald-600" size={20} />
-                  Your 3D Models
+                  {t("quote.models")}
                 </h3>
                 <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center gap-2">
                   {isUploading ? (
@@ -166,7 +165,7 @@ export default function Quote() {
                   ) : (
                     <Plus size={16} />
                   )}
-                  Add File
+                  {t("quote.addFile")}
                   <input
                     type="file"
                     className="hidden"
@@ -179,7 +178,7 @@ export default function Quote() {
               {items.length === 0 ? (
                 <div className="border-2 border-dashed border-gray-200 rounded-xl py-12 text-center">
                   <Upload className="mx-auto text-gray-300 mb-2" size={32} />
-                  <p className="text-gray-400">No files added yet.</p>
+                  <p className="text-gray-400">{t("quote.noFiles")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -297,7 +296,7 @@ export default function Quote() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
                 <MapPin className="text-emerald-600" size={20} />
-                Shipping Info
+                {t("quote.shipping")}
               </h3>
               <div className="space-y-4">
                 <input
@@ -417,10 +416,10 @@ export default function Quote() {
                 ) : (
                   <CheckCircle size={20} />
                 )}
-                Submit Quote Request
+                {t("quote.submit")}
               </button>
               <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest">
-                Safe & Secure 3D Printing
+                {t("quote.secure")}
               </p>
             </div>
           </div>

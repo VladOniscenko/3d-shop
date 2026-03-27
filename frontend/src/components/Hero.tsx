@@ -1,20 +1,22 @@
 import { Upload, Box, Clock, Leaf } from "lucide-react";
 import { Link } from "react-router-dom"; // 1. Add this import
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Hero() {
+  const { t } = useI18n();
+
   return (
     <section className="bg-[#133827] rounded-[2rem] p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden">
       {/* Left Content */}
       <div className="lg:w-1/2 text-white z-10 space-y-8">
         <div className="space-y-4 max-w-xl">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-            Custom 3D Prints,
+            {t("hero.titleLine1")}
             <br />
-            Made to Order
+            {t("hero.titleLine2")}
           </h1>
           <p className="text-emerald-50/80 text-lg leading-relaxed max-w-md">
-            Bring your ideas to life with precision prints from our Bambu Lab
-            P2S. We serve customers across the Netherlands.
+            {t("hero.description")}
           </p>
         </div>
 
@@ -24,7 +26,7 @@ export default function Hero() {
             to="/quote"
             className="flex items-center gap-2 bg-white text-gray-900 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg"
           >
-            <Upload size={20} /> Request a Quote
+            <Upload size={20} /> {t("hero.ctaQuote")}
           </Link>
         </div>
 
@@ -33,22 +35,28 @@ export default function Hero() {
           <div className="flex items-center gap-3">
             <Clock size={24} className="text-emerald-400" />
             <div>
-              <p className="font-semibold text-sm">Fast Turnaround</p>
-              <p className="text-xs text-white/60">2-5 business days</p>
+              <p className="font-semibold text-sm">
+                {t("hero.fastTurnaround")}
+              </p>
+              <p className="text-xs text-white/60">
+                {t("hero.fastTurnaroundValue")}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Box size={24} className="text-emerald-400" />
             <div>
-              <p className="font-semibold text-sm">High Quality</p>
-              <p className="text-xs text-white/60">Precision prints</p>
+              <p className="font-semibold text-sm">{t("hero.highQuality")}</p>
+              <p className="text-xs text-white/60">
+                {t("hero.highQualityValue")}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Leaf size={24} className="text-emerald-400" />
             <div>
-              <p className="font-semibold text-sm">Eco-Friendly</p>
-              <p className="text-xs text-white/60">Sustainable materials</p>
+              <p className="font-semibold text-sm">{t("hero.eco")}</p>
+              <p className="text-xs text-white/60">{t("hero.ecoValue")}</p>
             </div>
           </div>
         </div>

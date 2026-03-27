@@ -10,8 +10,10 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import api from "../services/api"; // Import your axios service
+import { useI18n } from "../i18n/I18nContext";
 
 export default function Login() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,7 @@ export default function Login() {
       navigate("/quote");
     } catch (err: any) {
       console.error("Login error", err);
-      setError("Invalid email or password. Please try again.");
+      setError(t("login.error.invalid"));
     } finally {
       setLoading(false);
     }
@@ -53,11 +55,9 @@ export default function Login() {
           <Logo />
 
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back
+            {t("login.welcome")}
           </h2>
-          <p className="text-gray-500 mb-8">
-            Please enter your details to access your account.
-          </p>
+          <p className="text-gray-500 mb-8">{t("login.subtitle")}</p>
 
           {/* Error Alert */}
           {error && (
@@ -73,7 +73,7 @@ export default function Login() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email address
+                {t("login.email")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -96,7 +96,7 @@ export default function Login() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Password
+                {t("login.password")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -125,14 +125,14 @@ export default function Login() {
                   htmlFor="remember-me"
                   className="ml-2 block text-sm text-gray-700"
                 >
-                  Remember me
+                  {t("login.remember")}
                 </label>
               </div>
               <a
                 href="#"
                 className="text-sm font-medium text-emerald-700 hover:text-emerald-600"
               >
-                Forgot password?
+                {t("login.forgot")}
               </a>
             </div>
 
@@ -145,19 +145,19 @@ export default function Login() {
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  Sign in <ArrowRight size={18} />
+                  {t("login.signIn")} <ArrowRight size={18} />
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            {t("login.noAccount")}{" "}
             <Link
               to="/signup"
               className="font-semibold text-emerald-700 hover:text-emerald-600 transition-colors"
             >
-              Sign up for free
+              {t("login.signUpFree")}
             </Link>
           </p>
         </div>
@@ -173,13 +173,12 @@ export default function Login() {
             <Printer size={64} className="text-emerald-400" />
           </div>
           <h2 className="text-4xl font-bold mb-4 leading-tight">
-            Bring your digital
+            {t("login.visualTitle1")}
             <br />
-            ideas to the real world.
+            {t("login.visualTitle2")}
           </h2>
           <p className="text-emerald-100/80 text-lg max-w-md mx-auto">
-            Log in to track your orders, upload new designs, and manage your
-            custom 3D printing projects.
+            {t("login.visualDesc")}
           </p>
         </div>
       </div>

@@ -22,8 +22,10 @@ import {
   normalizeShippingInfo,
   validateShippingInfo,
 } from "../utils/shippingValidation";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function CheckoutPage() {
+  const { t } = useI18n();
   const {
     cart,
     removeFromCart,
@@ -116,12 +118,12 @@ export default function CheckoutPage() {
     e.preventDefault();
 
     if (cart.length === 0) {
-      alert("Your cart is empty.");
+      alert(t("cart.empty"));
       return;
     }
 
     if (!validateForm()) {
-      alert("Please fill in all required fields correctly.");
+      alert(t("quote.shipping"));
       return;
     }
 
@@ -138,7 +140,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error("Checkout Error:", err);
-      alert("Something went wrong. Please check your address and try again.");
+      alert(t("gallery.addFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -153,7 +155,7 @@ export default function CheckoutPage() {
             className="animate-spin text-emerald-600 mb-4 mx-auto"
             size={48}
           />
-          <p className="text-gray-500">Loading cart...</p>
+          <p className="text-gray-500">{t("cart.loading")}</p>
         </div>
       </div>
     );
@@ -167,16 +169,14 @@ export default function CheckoutPage() {
           <div className="bg-white p-12 rounded-3xl border border-gray-200 shadow-sm inline-block">
             <ShoppingCart className="mx-auto text-gray-300 mb-4" size={64} />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Cart is empty
+              {t("cart.empty")}
             </h2>
-            <p className="text-gray-500 mb-8">
-              Browse the gallery to find something to print.
-            </p>
+            <p className="text-gray-500 mb-8">{t("cart.emptyDesc")}</p>
             <button
               onClick={() => navigate("/gallery")}
               className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center gap-2 mx-auto"
             >
-              Go to Gallery <ArrowRight size={18} />
+              {t("cart.goGallery")} <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -189,14 +189,13 @@ export default function CheckoutPage() {
       <Navbar />
       {showError && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg font-semibold animate-fade-in">
-          Your cart was updated elsewhere. Please refresh your cart and try
-          again.
+          {t("cart.conflict")}
         </div>
       )}
       <main className="max-w-7xl mx-auto px-6 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
           <ShoppingCart className="text-emerald-600" size={32} />
-          Finalize Order
+          {t("cart.finalize")}
         </h2>
 
         <form
@@ -206,7 +205,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                Review Items
+                {t("cart.review")}
               </h3>
               <div className="space-y-6">
                 {cart.map((item) => (
@@ -247,7 +246,7 @@ export default function CheckoutPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Layers size={12} /> Material
+                              <Layers size={12} /> {t("cart.material")}
                             </label>
                             <select
                               className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
@@ -269,7 +268,7 @@ export default function CheckoutPage() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Palette size={12} /> Color
+                              <Palette size={12} /> {t("cart.color")}
                             </label>
                             <select
                               className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
@@ -289,7 +288,7 @@ export default function CheckoutPage() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Hash size={12} /> Quantity
+                              <Hash size={12} /> {t("cart.quantity")}
                             </label>
                             <input
                               type="number"
@@ -316,7 +315,7 @@ export default function CheckoutPage() {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                Payment Method
+                {t("cart.paymentMethod")}
               </h3>
               <div className="p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 flex items-center gap-4">
                 <div className="p-2 rounded-lg bg-emerald-500 text-white">
@@ -324,10 +323,10 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">
-                    Online Payment (Mollie)
+                    {t("cart.paymentOnline")}
                   </p>
                   <p className="text-xs text-gray-500">
-                    iDEAL, Credit Card, Bancontact, etc.
+                    {t("cart.paymentOptions")}
                   </p>
                 </div>
               </div>
@@ -338,17 +337,17 @@ export default function CheckoutPage() {
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
               <div className="mb-8 space-y-3">
                 <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-sm">
-                  Summary
+                  {t("cart.summary")}
                 </h3>
                 <div className="flex justify-between text-gray-500 text-sm">
-                  <span>Subtotal</span>
+                  <span>{t("cart.subtotal")}</span>
                   <span className="font-medium text-gray-900">
                     €{subtotal.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-gray-500 text-sm">
                   <span className="flex items-center gap-2">
-                    <Truck size={16} /> Delivery
+                    <Truck size={16} /> {t("cart.delivery")}
                   </span>
                   <span className="font-medium text-gray-900">
                     €{DELIVERY_PRICE.toFixed(2)}
@@ -356,7 +355,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex justify-between">
                   <span className="font-black text-gray-900 text-lg">
-                    Total
+                    {t("cart.total")}
                   </span>
                   <span className="font-black text-emerald-600 text-lg">
                     €{total.toFixed(2)}
@@ -367,7 +366,8 @@ export default function CheckoutPage() {
               <hr className="mb-8 border-gray-100" />
 
               <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
-                <MapPin className="text-emerald-600" size={20} /> Shipping
+                <MapPin className="text-emerald-600" size={20} />{" "}
+                {t("cart.shipping")}
               </h3>
               <div className="space-y-4">
                 <div>
@@ -495,12 +495,12 @@ export default function CheckoutPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin" size={20} />
-                    Processing...
+                    {t("cart.processing")}
                   </>
                 ) : (
                   <>
                     <CreditCard size={20} />
-                    Pay with Mollie
+                    {t("cart.payMollie")}
                   </>
                 )}
               </button>

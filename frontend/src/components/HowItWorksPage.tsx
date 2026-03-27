@@ -8,32 +8,34 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function HowItWorksPage() {
+  const { t } = useI18n();
   const detailedSteps = [
     {
       number: 1,
       icon: <Upload size={40} className="text-emerald-600" />,
-      title: "Request",
-      desc: "Start by sending us your 3D design file (like an STL or OBJ file). If you do not have a file but have a great idea, you can describe it to us, and we can help you design it from scratch.",
+      title: t("how.pageStep1Title"),
+      desc: t("how.pageStep1Desc"),
     },
     {
       number: 2,
       icon: <Settings2 size={40} className="text-emerald-600" />,
-      title: "Review & Quote",
-      desc: "Our team checks your file to make sure it will print perfectly. We look at the size, the best material for the job, and how long it will take. Then, we send you a clear, honest price with no hidden fees.",
+      title: t("how.pageStep2Title"),
+      desc: t("how.pageStep2Desc"),
     },
     {
       number: 3,
       icon: <Printer size={40} className="text-emerald-600" />,
-      title: "We Print",
-      desc: "Once you approve the price, we send your design to our high-speed Bambu Lab P2S printers. We keep a close eye on the first few layers to make sure everything is sticking properly and looking great.",
+      title: t("how.pageStep3Title"),
+      desc: t("how.pageStep3Desc"),
     },
     {
       number: 4,
       icon: <PackageCheck size={40} className="text-emerald-600" />,
-      title: "Packed & Shipped",
-      desc: "After the print is done, we carefully remove it, clean up any rough edges, and pack it safely in eco-friendly materials. We then ship it straight to your front door.",
+      title: t("how.pageStep4Title"),
+      desc: t("how.pageStep4Desc"),
     },
   ];
 
@@ -44,11 +46,10 @@ export default function HowItWorksPage() {
       {/* Page Header */}
       <header className="bg-[#133827] py-16 px-6 text-center">
         <div className="max-w-3xl mx-auto text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h1>
-          <p className="text-emerald-50/80 text-lg">
-            Getting your custom parts printed is as easy as 1-2-3 (and 4!). Here
-            is exactly what happens when you start a project with us.
-          </p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            {t("how.pageTitle")}
+          </h1>
+          <p className="text-emerald-50/80 text-lg">{t("how.pageSubtitle")}</p>
         </div>
       </header>
 
@@ -89,16 +90,13 @@ export default function HowItWorksPage() {
             <CheckCircle2 size={48} className="text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold mb-2">Our Quality Promise</h3>
-            <p className="text-gray-600 mb-6">
-              If your print does not match the file you sent or has major flaws,
-              we will reprint it for free. We want you to love what you make.
-            </p>
+            <h3 className="text-2xl font-bold mb-2">{t("how.promiseTitle")}</h3>
+            <p className="text-gray-600 mb-6">{t("how.promiseDesc")}</p>
             <Link
               to="/quote"
               className="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
             >
-              Start your first project <ArrowRight size={18} />
+              {t("how.promiseCta")} <ArrowRight size={18} />
             </Link>
           </div>
         </div>

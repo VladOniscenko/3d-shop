@@ -15,6 +15,7 @@ import api from "../services/api";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../types";
+import { useI18n } from "../i18n/I18nContext";
 
 const getCategoryDesign = (category: string) => {
   switch (category) {
@@ -54,6 +55,7 @@ const getCategoryDesign = (category: string) => {
 const categories = ["All", "Toys", "Tools", "Decor", "Tech"];
 
 export default function Gallery() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
@@ -87,7 +89,7 @@ export default function Gallery() {
     // Check if user is authenticated
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Please log in first to add items to your cart.");
+      alert(t("gallery.loginFirst"));
       navigate("/login");
       return;
     }
@@ -100,7 +102,7 @@ export default function Gallery() {
       setTimeout(() => setAddedItemId(null), 2000);
     } catch (err) {
       console.error("Failed to add to cart:", err);
-      alert("Failed to add to cart. Please try again.");
+      alert(t("gallery.addFailed"));
     } finally {
       setPendingAddIds((prev) => {
         const next = new Set(prev);
@@ -123,10 +125,10 @@ export default function Gallery() {
 
         <div className="relative max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-black text-white mb-6 tracking-tight">
-            Print <span className="text-emerald-400">Showcase</span>
+            {t("gallery.title")}
           </h1>
           <p className="text-emerald-100/70 text-xl max-w-2xl mx-auto leading-relaxed">
-            Choose a model from our collection to start your next project.
+            {t("gallery.subtitle")}
           </p>
         </div>
       </header>
@@ -153,7 +155,7 @@ export default function Gallery() {
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="animate-spin text-emerald-600 mb-4" size={48} />
             <p className="text-gray-400 font-medium tracking-wide uppercase text-xs">
-              Syncing Gallery
+              {t("gallery.loading")}
             </p>
           </div>
         ) : (
@@ -198,16 +200,17 @@ export default function Gallery() {
                         >
                           {isAdded ? (
                             <>
-                              <Check size={18} /> Added!
+                              <Check size={18} /> {t("gallery.added")}
                             </>
                           ) : isAdding ? (
                             <>
                               <Loader2 size={18} className="animate-spin" />{" "}
-                              Adding...
+                              {t("gallery.adding")}
                             </>
                           ) : (
                             <>
-                              <ShoppingCart size={18} /> Add to Cart
+                              <ShoppingCart size={18} />{" "}
+                              {t("gallery.addToCart")}
                             </>
                           )}
                         </button>
@@ -239,11 +242,9 @@ export default function Gallery() {
               <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-gray-200">
                 <ImageIcon size={64} className="mx-auto mb-4 text-gray-200" />
                 <h3 className="text-xl font-bold text-gray-900">
-                  Archive Empty
+                  {t("gallery.emptyTitle")}
                 </h3>
-                <p className="text-gray-400 mt-2">
-                  Check back later for new prints.
-                </p>
+                <p className="text-gray-400 mt-2">{t("gallery.emptyDesc")}</p>
               </div>
             )}
           </>
@@ -258,7 +259,7 @@ export default function Gallery() {
             className="bg-[#133827] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-emerald-400/30"
           >
             <ShoppingCart size={20} className="text-emerald-400" />
-            <span className="font-bold text-sm">View in Cart</span>
+            <span className="font-bold text-sm">{t("gallery.viewInCart")}</span>
           </button>
         </div>
       )}
