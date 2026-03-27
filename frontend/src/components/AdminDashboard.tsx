@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "./Navbar";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Filament, Order, Product } from "../types";
 
@@ -35,10 +35,10 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="bg-white border rounded-2xl p-5 shadow-sm">
-      <h2 className="text-sm text-gray-500">{label}</h2>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
-      {hint ? <p className="text-xs text-gray-500 mt-1">{hint}</p> : null}
+    <div className="admin-kpi-card">
+      <h2 className="admin-kpi-label">{label}</h2>
+      <p className="admin-kpi-value">{value}</p>
+      {hint ? <p className="admin-kpi-hint">{hint}</p> : null}
     </div>
   );
 }
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+      <div className="admin-shell flex items-center justify-center">
         <div>Loading dashboard...</div>
       </div>
     );
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center text-red-600">
+      <div className="admin-shell flex items-center justify-center text-rose-700">
         {error}
       </div>
     );
@@ -174,9 +174,7 @@ export default function AdminDashboard() {
       : 0;
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <AdminLayout>
         <AdminBreadcrumb title="Admin Dashboard" items={[{ label: "Admin" }]} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -304,27 +302,27 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <section className="bg-white border rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
+        <section className="admin-panel p-6">
+          <h2 className="text-xl font-semibold mb-4 text-[#16251f]">Recent Orders</h2>
           {summary.recentOrders.length === 0 ? (
-            <p className="text-gray-500">No recent orders found.</p>
+            <p className="admin-note">No recent orders found.</p>
           ) : (
             <div className="space-y-3">
               {summary.recentOrders.map((order) => (
                 <Link
                   key={order.id}
                   to={`/admin/orders/${order.id}`}
-                  className="block bg-gray-50 p-3 rounded-xl border border-gray-100 hover:bg-emerald-50"
+                  className="block rounded-xl border border-[#dbe7e2] bg-[#f7fcf9] p-3 transition-colors hover:bg-[#eaf6f2]"
                 >
                   <div className="flex justify-between">
-                    <span className="font-bold">
+                    <span className="font-bold text-[#1f312b]">
                       Project #{order.id.slice(0, 8)}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-[#5f736d]">
                       {new Date(order.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[#516760]">
                     {order.fullName} • {order.status.replace("_", " ")}
                   </p>
                 </Link>
@@ -332,7 +330,6 @@ export default function AdminDashboard() {
             </div>
           )}
         </section>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

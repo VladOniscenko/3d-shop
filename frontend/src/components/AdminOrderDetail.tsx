@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import Navbar from "./Navbar";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
@@ -222,28 +223,28 @@ export default function AdminOrderDetail() {
   };
 
   const statusStyle = (status: string) => {
-    let base = "px-2 py-1 rounded-lg text-xs font-semibold";
+    const base = "admin-status-pill";
     switch (status) {
       case "pending_quote":
-        return `${base} bg-amber-100 text-amber-700`;
+        return `${base} bg-amber-100 text-amber-800`;
       case "quoted":
-        return `${base} bg-blue-100 text-blue-700`;
+        return `${base} bg-sky-100 text-sky-800`;
       case "printing":
-        return `${base} bg-indigo-100 text-indigo-700`;
+        return `${base} bg-indigo-100 text-indigo-800`;
       case "completed":
-        return `${base} bg-emerald-100 text-emerald-700`;
+        return `${base} bg-emerald-100 text-emerald-800`;
       case "paid":
-        return `${base} bg-teal-100 text-teal-700`;
+        return `${base} bg-teal-100 text-teal-800`;
       case "cancelled":
-        return `${base} bg-rose-100 text-rose-700`;
+        return `${base} bg-rose-100 text-rose-800`;
       default:
-        return `${base} bg-gray-100 text-gray-700`;
+        return `${base} bg-slate-100 text-slate-700`;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+      <div className="admin-shell flex items-center justify-center">
         Loading...
       </div>
     );
@@ -251,9 +252,9 @@ export default function AdminOrderDetail() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex flex-col items-center justify-center">
+      <div className="admin-shell flex flex-col items-center justify-center">
         <p>Order not found</p>
-        <Link to="/admin/orders" className="text-emerald-600 underline mt-2">
+        <Link to="/admin/orders" className="mt-2 text-teal-700 underline">
           Back to orders
         </Link>
       </div>
@@ -273,9 +274,7 @@ export default function AdminOrderDetail() {
     }, 0) || 0) + deliveryPrice;
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <AdminLayout>
         <AdminBreadcrumb
           title={`Order ${order.id.slice(0, 8)}`}
           items={[
@@ -286,75 +285,75 @@ export default function AdminOrderDetail() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-          <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+          <article className="admin-panel p-4">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="font-bold">Customer info</h2>
+              <h2 className="font-bold text-[#1b2b25]">Customer info</h2>
               <button
                 onClick={() => setEditingCustomer(!editingCustomer)}
-                className="text-sm text-emerald-600 hover:underline"
+                className="text-sm text-teal-700 hover:underline"
               >
                 {editingCustomer ? "Cancel" : "Edit"}
               </button>
             </div>
             {editingCustomer ? (
               <div className="space-y-2">
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">Full Name</span>
                   <input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Full Name"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">Address Line 1</span>
                   <input
                     value={addressLine1}
                     onChange={(e) => setAddressLine1(e.target.value)}
                     placeholder="Address Line 1"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">Address Line 2</span>
                   <input
                     value={addressLine2}
                     onChange={(e) => setAddressLine2(e.target.value)}
                     placeholder="Address Line 2"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">City</span>
                   <input
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="City"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">Postal Code</span>
                   <input
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="Postal Code"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <label className="admin-label">
                   <span className="font-semibold">Phone Number</span>
                   <input
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Phone Number"
-                    className="w-full border rounded px-2 py-1"
+                    className="admin-field"
                   />
                 </label>
                 <button
                   onClick={saveCustomerInfo}
-                  className="px-3 py-1 bg-emerald-600 text-white rounded"
+                  className="admin-btn admin-btn-primary"
                 >
                   Save
                 </button>
@@ -373,33 +372,33 @@ export default function AdminOrderDetail() {
                 <p className={statusStyle(order.status)}>
                   {order.status.replace("_", " ")}
                 </p>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-[#60736d]">
                   Created: {new Date(order.createdAt).toLocaleString()}
                 </p>
               </>
             )}
           </article>
 
-          <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2">
-            <h2 className="font-bold mb-2">Model files & specs</h2>
+          <article className="admin-panel p-4 lg:col-span-2">
+            <h2 className="font-bold mb-2 text-[#1b2b25]">Model files & specs</h2>
             {order.items.length === 0 ? (
-              <p className="text-gray-500">No items in this order.</p>
+              <p className="admin-note">No items in this order.</p>
             ) : (
               <ul className="space-y-3">
                 {order.items.map((item) => (
                   <li
                     key={item.id || item.fileName}
-                    className="border rounded-lg p-2"
+                    className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
                   >
-                    <p className="font-semibold">
+                    <p className="font-semibold text-[#22342f]">
                       {item.fileName ?? item.fileUrl}
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-[#5c716b]">
                       Material: {item.material}, Color: {item.color}, Qty:{" "}
                       {item.count}
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-800">Price: €</span>
+                      <span className="text-[#304843]">Price: €</span>
                       <input
                         type="number"
                         value={item.id ? itemPrices[item.id] || 0 : 0}
@@ -411,7 +410,7 @@ export default function AdminOrderDetail() {
                             [item.id]: newPrice,
                           });
                         }}
-                        className="border rounded px-1 py-0.5 w-20"
+                        className="admin-field w-24"
                       />
                       <button
                         type="button"
@@ -420,17 +419,17 @@ export default function AdminOrderDetail() {
                           item.id &&
                           updateItemPrice(item.id, itemPrices[item.id] || 0)
                         }
-                        className="px-2 py-1 rounded bg-emerald-600 text-white text-xs disabled:opacity-50"
+                        className="admin-btn admin-btn-primary"
                       >
                         {savingItemId === item.id ? "Saving..." : "Save"}
                       </button>
                     </div>
                     {item.fileUrl && (
                       <a
-                        href={item.fileUrl}
+                        href={resolveAssetUrl(item.fileUrl)}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
+                        className="text-sm font-semibold text-teal-700 hover:underline"
                       >
                         Download/Preview file
                       </a>
@@ -440,7 +439,7 @@ export default function AdminOrderDetail() {
               </ul>
             )}
             <div className="mt-3 flex items-center justify-end gap-2">
-              <span className="text-gray-800">Delivery: €</span>
+              <span className="text-[#304843]">Delivery: €</span>
               <input
                 type="number"
                 value={deliveryPrice}
@@ -448,13 +447,13 @@ export default function AdminOrderDetail() {
                   const newPrice = parseFloat(e.target.value) || 0;
                   setDeliveryPrice(newPrice);
                 }}
-                className="border rounded px-1 py-0.5 w-20"
+                className="admin-field w-24"
               />
               <button
                 type="button"
                 disabled={savingDelivery}
                 onClick={() => updateDeliveryPrice(deliveryPrice)}
-                className="px-2 py-1 rounded bg-emerald-600 text-white text-xs disabled:opacity-50"
+                className="admin-btn admin-btn-primary"
               >
                 {savingDelivery ? "Saving..." : "Save"}
               </button>
@@ -468,49 +467,49 @@ export default function AdminOrderDetail() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-          <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-            <h3 className="font-bold mb-2">Quote Workflows</h3>
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Quote Workflows</h3>
             <div className="space-y-2">
               <div>
-                <label className="block text-xs uppercase text-gray-400">
+                <label className="block text-xs uppercase text-[#6c817a]">
                   Quoted Price
                 </label>
                 <input
                   value={quotePrice}
                   type="number"
                   onChange={(e) => setQuotePrice(parseFloat(e.target.value))}
-                  className="w-full border rounded-lg px-2 py-1"
+                  className="admin-field"
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase text-gray-400">
+                <label className="block text-xs uppercase text-[#6c817a]">
                   Quote Message
                 </label>
                 <textarea
                   value={quoteMessage}
                   onChange={(e) => setQuoteMessage(e.target.value)}
-                  className="w-full border rounded-lg px-2 py-1"
+                  className="admin-textarea"
                   rows={3}
                 />
               </div>
               <button
                 onClick={sendQuote}
-                className="px-3 py-2 text-white rounded-lg bg-blue-600"
+                className="admin-btn admin-btn-primary"
               >
                 Send Quote
               </button>
             </div>
           </article>
 
-          <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-            <h3 className="font-bold mb-2">Order Actions</h3>
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Order Actions</h3>
             <div className="grid gap-2">
               {/* Status update dropdown */}
               <div className="flex items-center gap-2 mb-2">
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="border rounded px-2 py-1"
+                  className="admin-select"
                 >
                   <option value="pending_quote">Pending Quote</option>
                   <option value="quoted">Quoted</option>
@@ -523,7 +522,7 @@ export default function AdminOrderDetail() {
                 </select>
                 <button
                   type="button"
-                  className="px-3 py-2 rounded-lg bg-blue-500 text-white"
+                  className="admin-btn admin-btn-primary"
                   onClick={updateOrderStatus}
                 >
                   Update Status
@@ -531,39 +530,39 @@ export default function AdminOrderDetail() {
               </div>
               <button
                 onClick={confirmOrder}
-                className="px-3 py-2 rounded-lg bg-indigo-600 text-white"
+                className="admin-btn admin-btn-secondary"
               >
                 Confirm and Start Printing
               </button>
               <button
                 onClick={markSent}
-                className="px-3 py-2 rounded-lg bg-purple-600 text-white"
+                className="admin-btn admin-btn-secondary"
               >
                 Mark as Sent
               </button>
               <button
                 onClick={markDelivered}
-                className="px-3 py-2 rounded-lg bg-green-600 text-white"
+                className="admin-btn admin-btn-secondary"
               >
                 Mark as Delivered
               </button>
               <button
                 onClick={markPaid}
-                className="px-3 py-2 rounded-lg bg-teal-600 text-white"
+                className="admin-btn admin-btn-secondary"
               >
                 Mark as Paid
               </button>
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="px-3 py-2 rounded-lg bg-red-600 text-white"
+                className="admin-btn admin-btn-danger"
               >
                 Delete Order
               </button>
               {/* Custom Delete Confirmation Modal */}
               {showDeleteConfirm && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                  <div className="admin-panel max-w-sm w-full p-6">
                     <p className="mb-4 font-semibold">
                       Are you sure you want to delete this order? This will also
                       delete all associated files.
@@ -571,14 +570,14 @@ export default function AdminOrderDetail() {
                     <div className="flex gap-4 justify-end">
                       <button
                         type="button"
-                        className="px-4 py-2 bg-gray-300 rounded"
+                        className="admin-btn admin-btn-secondary"
                         onClick={() => setShowDeleteConfirm(false)}
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
-                        className="px-4 py-2 bg-red-600 text-white rounded"
+                        className="admin-btn admin-btn-danger"
                         onClick={async () => {
                           setShowDeleteConfirm(false);
                           await deleteOrder();
@@ -594,53 +593,52 @@ export default function AdminOrderDetail() {
           </article>
         </div>
 
-        <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-5">
-          <h3 className="font-bold mb-2">Notes</h3>
+        <article className="admin-panel mb-5 p-4">
+          <h3 className="font-bold mb-2 text-[#1b2b25]">Notes</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-gray-500">
+              <label className="block text-xs text-[#5f736d]">
                 Internal Notes
               </label>
               <textarea
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={3}
-                className="w-full border rounded-lg px-2 py-1"
+                className="admin-textarea"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500">
+              <label className="block text-xs text-[#5f736d]">
                 Customer Notes
               </label>
               <textarea
                 value={customerNotes}
                 onChange={(e) => setCustomerNotes(e.target.value)}
                 rows={3}
-                className="w-full border rounded-lg px-2 py-1"
+                className="admin-textarea"
               />
             </div>
             <button
               onClick={saveNotes}
-              className="px-3 py-2 rounded-lg bg-emerald-600 text-white"
+              className="admin-btn admin-btn-primary"
             >
               Save Notes
             </button>
           </div>
         </article>
 
-        <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="font-bold mb-2">Admin & Customer Messaging</h3>
-          <p className="text-sm text-gray-600">
+        <article className="admin-panel p-4">
+          <h3 className="font-bold mb-2 text-[#1b2b25]">Admin & Customer Messaging</h3>
+          <p className="text-sm text-[#5b706a]">
             Quote: {order.quoteMessage || "None"}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[#5b706a]">
             Internal Notes: {order.internalNotes || "None"}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[#5b706a]">
             Customer Notes: {order.customerNotes || "None"}
           </p>
         </article>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

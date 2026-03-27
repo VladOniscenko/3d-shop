@@ -18,6 +18,7 @@ import type { Product } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 const getCategoryDesign = (category: string) => {
   switch (category) {
@@ -174,7 +175,7 @@ export default function Gallery() {
                     <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-gray-100 shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-2">
                       {item.imageUrl ? (
                         <img
-                          src={"http://localhost:5243" + item.imageUrl}
+                          src={resolveAssetUrl(item.imageUrl)}
                           alt={item.name}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />

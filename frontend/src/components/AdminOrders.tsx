@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "./Navbar";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
 
@@ -55,23 +55,21 @@ export default function AdminOrders() {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-6 py-10">
+    <AdminLayout>
         <AdminBreadcrumb
           title="Order Management"
           items={[{ label: "Admin", to: "/admin" }, { label: "Orders" }]}
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5 p-4">
           <input
-            className="border border-gray-200 rounded-xl p-2"
+            className="admin-field"
             placeholder="Search orders..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            className="border border-gray-200 rounded-xl p-2"
+            className="admin-select"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -82,7 +80,7 @@ export default function AdminOrders() {
             ))}
           </select>
           <select
-            className="border border-gray-200 rounded-xl p-2"
+            className="admin-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -94,52 +92,49 @@ export default function AdminOrders() {
           </select>
           <button
             onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-            className="bg-gray-100 rounded-xl border border-gray-200 text-sm font-semibold py-2"
+            className="admin-btn admin-btn-secondary"
           >
             Sort: {sortDir.toUpperCase()}
           </button>
         </div>
 
         {loading ? (
-          <p>Loading orders...</p>
+          <p className="admin-note">Loading orders...</p>
         ) : orders.length === 0 ? (
-          <p>No matching orders.</p>
+          <p className="admin-note">No matching orders.</p>
         ) : (
-          <div className="overflow-x-auto bg-white border border-gray-100 rounded-2xl shadow-sm">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+          <div className="admin-panel admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Project</th>
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Quoted</th>
-                  <th className="px-4 py-3">Created</th>
+                  <th>Project</th>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Quoted</th>
+                  <th>Created</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="border-t border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3">
+                  <tr key={order.id}>
+                    <td>
                       <Link
                         to={`/admin/orders/${order.id}`}
-                        className="text-emerald-700 hover:underline"
+                        className="font-semibold text-[#0f766e] hover:underline"
                       >
                         {order.id.slice(0, 8)}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{order.fullName}</td>
-                    <td className="px-4 py-3">
+                    <td>{order.fullName}</td>
+                    <td className="capitalize">
                       {order.status.replace("_", " ")}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {order.quotedPrice
                         ? `€${order.quotedPrice.toFixed(2)}`
                         : "n/a"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -150,27 +145,26 @@ export default function AdminOrders() {
         )}
 
         <div className="flex items-center justify-between mt-4">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-[#60736d]">
             Page {page} of {totalPages}
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40"
+              className="admin-btn admin-btn-secondary"
             >
               Prev
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40"
+              className="admin-btn admin-btn-secondary"
             >
               Next
             </button>
           </div>
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

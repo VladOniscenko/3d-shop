@@ -11,6 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 interface Print {
   id: string;
@@ -121,7 +122,7 @@ export default function RecentPrints() {
                 <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-1">
                   {print.imageUrl ? (
                     <img
-                      src={"http://localhost:5243" + print.imageUrl}
+                      src={resolveAssetUrl(print.imageUrl)}
                       alt={print.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />

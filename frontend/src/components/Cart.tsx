@@ -25,6 +25,7 @@ import {
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 export default function CheckoutPage() {
   const { t } = useI18n();
@@ -220,7 +221,7 @@ export default function CheckoutPage() {
                       <div className="bg-white w-full md:w-32 h-32 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
                         {item.imageUrl ? (
                           <img
-                            src={"http://localhost:5243" + item.imageUrl}
+                            src={resolveAssetUrl(item.imageUrl)}
                             alt={item.productName}
                             className="object-cover w-full h-full"
                           />

@@ -1,4 +1,224 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
 @import "tailwindcss";
+
+:root {
+  --admin-bg-top: #f5efe4;
+  --admin-bg-mid: #eef5f2;
+  --admin-bg-bottom: #f8faf8;
+  --admin-text: #1d2a26;
+  --admin-muted: #60736d;
+  --admin-border: #d8e4df;
+  --admin-accent: #0f766e;
+  --admin-accent-strong: #0b5a54;
+  --admin-danger: #be123c;
+}
+
+body {
+  color: var(--admin-text);
+  background: #ffffff;
+  font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(15, 118, 110, 0.14), transparent 38%),
+    radial-gradient(circle at 85% 7%, rgba(245, 158, 11, 0.08), transparent 34%),
+    linear-gradient(180deg, var(--admin-bg-top) 0%, var(--admin-bg-mid) 44%, var(--admin-bg-bottom) 100%);
+}
+
+.admin-main {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 3.5rem;
+}
+
+.admin-main-wide {
+  max-width: 82rem;
+}
+
+.admin-panel {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  box-shadow: 0 12px 28px rgba(14, 35, 31, 0.08);
+  backdrop-filter: blur(4px);
+}
+
+.admin-kpi-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 8px 18px rgba(9, 30, 26, 0.06);
+}
+
+.admin-kpi-label {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-kpi-value {
+  margin-top: 0.35rem;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #12211d;
+}
+
+.admin-kpi-hint {
+  margin-top: 0.45rem;
+  font-size: 0.76rem;
+  color: var(--admin-muted);
+}
+
+.admin-field,
+.admin-select,
+.admin-textarea {
+  width: 100%;
+  border: 1px solid #c7d8d1;
+  background: #fcfefc;
+  border-radius: 0.72rem;
+  color: #1f302b;
+  font-size: 0.95rem;
+  padding: 0.58rem 0.7rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.admin-field:focus,
+.admin-select:focus,
+.admin-textarea:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.81rem;
+  color: #455953;
+}
+
+.admin-label span {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.72rem;
+  border: 1px solid transparent;
+  padding: 0.52rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+}
+
+.admin-btn-primary {
+  background: linear-gradient(180deg, #11998f 0%, #0f766e 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 14px rgba(15, 118, 110, 0.23);
+}
+
+.admin-btn-primary:hover {
+  background: linear-gradient(180deg, #0f8e85 0%, #0d635c 100%);
+}
+
+.admin-btn-secondary {
+  background: #f5faf8;
+  border-color: #bed0c9;
+  color: #27544e;
+}
+
+.admin-btn-danger {
+  background: var(--admin-danger);
+  color: #ffffff;
+  box-shadow: 0 8px 14px rgba(190, 18, 60, 0.2);
+}
+
+.admin-btn:disabled {
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-table thead {
+  background: #edf4f0;
+}
+
+.admin-table th {
+  color: #4a635b;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  font-weight: 700;
+  padding: 0.75rem 0.9rem;
+}
+
+.admin-table td {
+  border-top: 1px solid #e1ebe6;
+  padding: 0.75rem 0.9rem;
+  color: #22322d;
+  vertical-align: top;
+}
+
+.admin-table tbody tr:hover {
+  background: #f4faf7;
+}
+
+.admin-empty {
+  padding: 1.2rem;
+  text-align: center;
+  color: #5f736d;
+  font-size: 0.88rem;
+}
+
+.admin-note {
+  color: #60736d;
+  font-size: 0.85rem;
+}
+
+.admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    padding: 1.5rem 0.95rem 2.2rem;
+  }
+
+  .admin-kpi-value {
+    font-size: 1.6rem;
+  }
+}
 
 button {
   cursor: pointer;

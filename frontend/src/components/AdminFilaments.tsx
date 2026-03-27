@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Navbar from "./Navbar";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Filament } from "../types";
 import { useNotify } from "../context/NotifyContext";
@@ -181,9 +181,7 @@ export default function AdminFilaments() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <AdminLayout>
         <AdminBreadcrumb
           title="Filament Management"
           items={[{ label: "Admin", to: "/admin" }, { label: "Filaments" }]}
@@ -191,39 +189,39 @@ export default function AdminFilaments() {
 
         <form
           onSubmit={addFilament}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
+          className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 p-4"
         >
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Name"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Material</span>
             <input
               value={material}
               onChange={(e) => setMaterial(e.target.value)}
               required
               placeholder="Material"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Color</span>
             <input
               value={color}
               onChange={(e) => setColor(e.target.value)}
               required
               placeholder="Color"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Price Per Gram</span>
             <input
               type="number"
@@ -233,10 +231,10 @@ export default function AdminFilaments() {
               onChange={(e) => setPricePerGram(parseFloat(e.target.value) || 0)}
               required
               placeholder="Price Per Gram"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Stock Quantity</span>
             <input
               type="number"
@@ -245,58 +243,55 @@ export default function AdminFilaments() {
               onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
               required
               placeholder="Stock Quantity"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
           <button
             type="submit"
-            className="px-4 py-2 bg-emerald-600 text-white rounded-xl"
+            className="admin-btn admin-btn-primary"
           >
             Add Filament
           </button>
 
-          <label className="flex flex-col gap-1 text-sm text-gray-700 col-span-full">
+          <label className="admin-label col-span-full">
             <span className="font-semibold">Description</span>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description"
-              className="border rounded-xl p-2"
+              className="admin-textarea"
               rows={3}
             />
           </label>
         </form>
 
         {loading ? (
-          <p>Loading filaments...</p>
+          <p className="admin-note">Loading filaments...</p>
         ) : (
-          <div className="overflow-x-auto bg-white border border-gray-100 rounded-2xl shadow-sm">
-            <table className="min-w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+          <div className="admin-panel admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Material</th>
-                  <th className="px-4 py-3">Color</th>
-                  <th className="px-4 py-3">Price/gram</th>
-                  <th className="px-4 py-3">Stock</th>
-                  <th className="px-4 py-3">Actions</th>
+                  <th>Name</th>
+                  <th>Material</th>
+                  <th>Color</th>
+                  <th>Price/gram</th>
+                  <th>Stock</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filaments.map((f) => (
-                  <tr
-                    key={f.id}
-                    className="border-t border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3">{f.name}</td>
-                    <td className="px-4 py-3">{f.material}</td>
-                    <td className="px-4 py-3">{f.color}</td>
-                    <td className="px-4 py-3">
+                  <tr key={f.id}>
+                    <td>{f.name}</td>
+                    <td>{f.material}</td>
+                    <td>{f.color}</td>
+                    <td>
                       <input
                         type="number"
                         step="0.0001"
                         min="0"
-                        className="border rounded-lg p-1.5 w-28"
+                        className="admin-field w-28"
                         value={priceEdits[f.id] ?? 0}
                         onChange={(e) =>
                           setPriceEdits((prev) => ({
@@ -306,11 +301,11 @@ export default function AdminFilaments() {
                         }
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <input
                         type="number"
                         min="0"
-                        className="border rounded-lg p-1.5 w-24"
+                        className="admin-field w-24"
                         value={stockEdits[f.id] ?? 0}
                         onChange={(e) =>
                           setStockEdits((prev) => ({
@@ -320,19 +315,19 @@ export default function AdminFilaments() {
                         }
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateFilament(f.id)}
                           disabled={savingId === f.id || deletingId === f.id}
-                          className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg disabled:opacity-50"
+                          className="admin-btn admin-btn-primary"
                         >
                           {savingId === f.id ? "Saving..." : "Save"}
                         </button>
                         <button
                           onClick={() => deleteFilament(f.id)}
                           disabled={savingId === f.id || deletingId === f.id}
-                          className="px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg disabled:opacity-50"
+                          className="admin-btn admin-btn-danger"
                         >
                           {deletingId === f.id ? "Deleting..." : "Delete"}
                         </button>
@@ -344,7 +339,6 @@ export default function AdminFilaments() {
             </table>
           </div>
         )}
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

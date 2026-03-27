@@ -1,25 +1,44 @@
 import { useEffect, useState } from "react";
-import Navbar from "./Navbar";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Product } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 export default function AdminProducts() {
   const { notifyError, notifySuccess } = useNotify();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [fileFile, setFileFile] = useState<File | null>(null);
   const [price, setPrice] = useState(0);
+  const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
+  const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>({});
+  const [priceEdits, setPriceEdits] = useState<Record<string, number>>({});
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await api.get("/products");
-      setProducts(res.data);
+      const nextProducts = Array.isArray(res.data) ? res.data : [];
+      setProducts(nextProducts);
+
+      const nextNameEdits: Record<string, string> = {};
+      const nextCategoryEdits: Record<string, string> = {};
+      const nextPriceEdits: Record<string, number> = {};
+      nextProducts.forEach((prod: Product) => {
+        nextNameEdits[prod.id] = prod.name;
+        nextCategoryEdits[prod.id] = prod.category;
+        nextPriceEdits[prod.id] = prod.price;
+      });
+
+      setNameEdits(nextNameEdits);
+      setCategoryEdits(nextCategoryEdits);
+      setPriceEdits(nextPriceEdits);
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,10 +96,53 @@ export default function AdminProducts() {
     }
   };
 
+  const updateProduct = async (id: string) => {
+    const existing = products.find((prod) => prod.id === id);
+    if (!existing) {
+      notifyError("Product not found.");
+      return;
+    }
+
+    const nextName = (nameEdits[id] || "").trim();
+    const nextCategory = (categoryEdits[id] || "").trim();
+    const nextPrice = priceEdits[id] ?? 0;
+
+    if (!nextName || !nextCategory) {
+      notifyError("Name and category are required.");
+      return;
+    }
+
+    if (nextPrice < 0) {
+      notifyError("Price cannot be negative.");
+      return;
+    }
+
+    setSavingId(id);
+    try {
+      const payload: Product = {
+        ...existing,
+        name: nextName,
+        category: nextCategory,
+        imageUrl: existing.imageUrl,
+        fileUrl: existing.fileUrl,
+        price: nextPrice,
+      };
+      await api.put(`/products/${id}`, payload);
+
+      setProducts((prev) =>
+        prev.map((prod) => (prod.id === id ? payload : prod)),
+      );
+      notifySuccess("Product updated.");
+    } catch (err) {
+      console.error(err);
+      notifyError("Could not update product.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <AdminLayout>
         <AdminBreadcrumb
           title="Product Catalog Admin"
           items={[{ label: "Admin", to: "/admin" }, { label: "Products" }]}
@@ -88,45 +150,45 @@ export default function AdminProducts() {
 
         <form
           onSubmit={addProduct}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
+          className="admin-panel grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 p-4"
         >
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Name"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Category</span>
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="Category"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Product Image</span>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700 col-span-full sm:col-span-2">
+          <label className="admin-label col-span-full sm:col-span-2">
             <span className="font-semibold">Model File</span>
             <input
               type="file"
               onChange={(e) => setFileFile(e.target.files?.[0] || null)}
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <label className="admin-label">
             <span className="font-semibold">Price</span>
             <input
               type="number"
@@ -134,54 +196,129 @@ export default function AdminProducts() {
               onChange={(e) => setPrice(parseFloat(e.target.value))}
               required
               placeholder="Price"
-              className="border rounded-xl p-2"
+              className="admin-field"
             />
           </label>
           <button
             type="submit"
-            className="px-4 py-2 bg-emerald-600 text-white rounded-xl"
+            className="admin-btn admin-btn-primary"
           >
             Add Product
           </button>
         </form>
 
         {loading ? (
-          <p>Loading products...</p>
+          <p className="admin-note">Loading products...</p>
         ) : (
-          <div className="overflow-x-auto bg-white border border-gray-100 rounded-2xl shadow-sm">
-            <table className="min-w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+          <div className="admin-panel admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Price</th>
-                  <th className="px-4 py-3">Actions</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Image URL</th>
+                  <th>Model URL</th>
+                  <th>Price</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((prod) => (
-                  <tr
-                    key={prod.id}
-                    className="border-t border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3">{prod.name}</td>
-                    <td className="px-4 py-3">{prod.category}</td>
-                    <td className="px-4 py-3">€{prod.price.toFixed(2)}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => deleteProduct(prod.id)}
-                        className="text-sm text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
+                  <tr key={prod.id}>
+                    <td>
+                      <input
+                        className="admin-field"
+                        value={nameEdits[prod.id] ?? ""}
+                        onChange={(e) =>
+                          setNameEdits((prev) => ({
+                            ...prev,
+                            [prod.id]: e.target.value,
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="admin-field"
+                        value={categoryEdits[prod.id] ?? ""}
+                        onChange={(e) =>
+                          setCategoryEdits((prev) => ({
+                            ...prev,
+                            [prod.id]: e.target.value,
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      {prod.imageUrl ? (
+                        <a
+                          href={resolveAssetUrl(prod.imageUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-block text-xs font-semibold text-teal-700 hover:underline"
+                        >
+                          Preview
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#60736d]">No image URL</span>
+                      )}
+                    </td>
+                    <td>
+                      {prod.fileUrl ? (
+                        <a
+                          href={resolveAssetUrl(prod.fileUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-block text-xs font-semibold text-teal-700 hover:underline"
+                        >
+                          Open
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#60736d]">No model URL</span>
+                      )}
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="admin-field w-32"
+                        value={priceEdits[prod.id] ?? 0}
+                        onChange={(e) =>
+                          setPriceEdits((prev) => ({
+                            ...prev,
+                            [prod.id]: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => updateProduct(prod.id)}
+                          disabled={savingId === prod.id}
+                          className="admin-btn admin-btn-primary"
+                        >
+                          {savingId === prod.id ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(prod.id)}
+                          disabled={savingId === prod.id}
+                          className="admin-btn admin-btn-danger"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {!loading && products.length === 0 && (
+              <p className="admin-empty">No products found.</p>
+            )}
           </div>
         )}
-      </main>
-    </div>
+    </AdminLayout>
   );
 }
