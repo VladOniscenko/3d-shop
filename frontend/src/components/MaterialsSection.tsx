@@ -49,8 +49,10 @@ export default function MaterialsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold mb-2">{t("materials.title")}</h3>
-        <p className="text-gray-500 text-sm">{t("materials.subtitle")}</p>
+        <h3 className="site-heading text-3xl font-black mb-2">
+          {t("materials.title")}
+        </h3>
+        <p className="site-subheading text-sm">{t("materials.subtitle")}</p>
       </div>
 
       {loading ? (
@@ -63,7 +65,7 @@ export default function MaterialsSection() {
           {filaments.map((f) => (
             <div
               key={f.id}
-              className="flex items-center gap-4 bg-[#f3f4f6] p-4 rounded-xl hover:bg-white hover:shadow-md transition-all group"
+              className="flex items-center gap-4 bg-[#f6fbf8] border border-[#d9e8e1] p-4 rounded-xl hover:bg-white hover:shadow-md transition-all group"
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 transition-transform group-hover:scale-110 ${getColorClass(f.color)}`}
@@ -79,12 +81,12 @@ export default function MaterialsSection() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-sm text-gray-900">{f.name}</p>
-                  <span className="text-[10px] font-black bg-white/50 px-1.5 py-0.5 rounded text-gray-500">
+                  <p className="font-bold text-sm text-[#1a2b25]">{f.name}</p>
+                  <span className="text-[10px] font-black bg-white px-1.5 py-0.5 rounded text-[#60736d] border border-[#e2ece8]">
                     {f.material}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 line-clamp-1">
+                <p className="text-xs text-[#60736d] line-clamp-1">
                   {f.description}
                 </p>
               </div>
@@ -95,7 +97,7 @@ export default function MaterialsSection() {
 
       <Link
         to="/materials"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#133827] hover:gap-3 transition-all"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f766e] hover:gap-3 transition-all"
       >
         {t("materials.viewAll")} <ArrowRight size={16} />
       </Link>

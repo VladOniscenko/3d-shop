@@ -142,15 +142,15 @@ export default function Quote() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="site-shell">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="site-main px-4 sm:px-6 py-12">
         <div className="mb-10 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
+          <h2 className="site-heading text-4xl font-bold mb-2">
             {t("quote.title")}
           </h2>
-          <p className="text-gray-500 text-lg">{t("quote.subtitle")}</p>
+          <p className="site-subheading text-lg">{t("quote.subtitle")}</p>
         </div>
 
         <form

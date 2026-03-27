@@ -117,37 +117,28 @@ export default function Gallery() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfdfd] flex flex-col">
+    <div className="site-shell flex flex-col">
       <Navbar />
 
       {/* Hero Header */}
-      <header className="relative bg-[#133827] py-20 px-6 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-500 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-200 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-black text-white mb-6 tracking-tight">
-            {t("gallery.title")}
-          </h1>
-          <p className="text-emerald-100/70 text-xl max-w-2xl mx-auto leading-relaxed">
-            {t("gallery.subtitle")}
-          </p>
+      <header className="site-page-hero reveal-soft">
+        <div className="site-page-hero-card reveal-up">
+          <h1 className="site-page-hero-title">{t("gallery.title")}</h1>
+          <p className="site-page-hero-subtitle">{t("gallery.subtitle")}</p>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 flex-grow w-full">
+      <main className="site-main px-4 sm:px-6 py-12 flex-grow w-full reveal-up stagger-1">
         {/* Filter Navigation */}
-        <div className="flex flex-wrap justify-center gap-2 mb-16 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-fit mx-auto">
+        <div className="site-card reveal-up stagger-2 flex flex-wrap justify-center gap-2 mb-12 p-2.5 w-fit mx-auto">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveFilter(category)}
               className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
                 activeFilter === category
-                  ? "bg-[#133827] text-white shadow-lg shadow-emerald-900/20 scale-105"
-                  : "bg-transparent text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+                  ? "bg-[#0f766e] text-white shadow-lg shadow-emerald-900/20 scale-105"
+                  : "bg-transparent text-[#5f726c] hover:text-[#1d2f28] hover:bg-[#f4faf7]"
               }`}
             >
               {category}
@@ -164,15 +155,18 @@ export default function Gallery() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {items.map((item) => {
                 const design = getCategoryDesign(item.category);
                 const isAdded = addedItemId === item.id;
                 const isAdding = pendingAddIds.has(item.id);
 
                 return (
-                  <div key={item.id} className="group relative flex flex-col">
-                    <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-gray-100 shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-2">
+                  <div
+                    key={item.id}
+                    className="group relative flex flex-col reveal-up stagger-3"
+                  >
+                    <div className="relative aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-gray-100 shadow-sm border border-[#dbe8e2] transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-1.5">
                       {item.imageUrl ? (
                         <img
                           src={resolveAssetUrl(item.imageUrl)}
@@ -192,14 +186,14 @@ export default function Gallery() {
                       )}
 
                       {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#133827]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#103a2e]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                         <button
                           onClick={() => handleAddToCart(item)}
                           disabled={isAdded || isAdding}
                           className={`w-full py-3 rounded-xl font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center justify-center gap-2 ${
                             isAdded || isAdding
                               ? "bg-emerald-500 text-white translate-y-0"
-                              : "bg-white text-[#133827] hover:bg-emerald-50 active:scale-95"
+                              : "bg-white text-[#103328] hover:bg-emerald-50 active:scale-95"
                           }`}
                         >
                           {isAdded ? (
@@ -223,10 +217,10 @@ export default function Gallery() {
 
                     <div className="mt-5 px-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase truncate">
+                        <h3 className="font-black text-[#1b2c27] text-lg tracking-tight uppercase truncate">
                           {item.name}
                         </h3>
-                        <span className="text-emerald-700 font-black text-lg ml-2">
+                        <span className="text-[#0f766e] font-black text-lg ml-2">
                           €{item.price?.toFixed(2) || "0.00"}
                         </span>
                       </div>
@@ -243,12 +237,12 @@ export default function Gallery() {
             </div>
 
             {items.length === 0 && (
-              <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-gray-200">
+              <div className="text-center py-32 bg-white rounded-[2rem] border border-dashed border-[#d9e8e2]">
                 <ImageIcon size={64} className="mx-auto mb-4 text-gray-200" />
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-[#1b2c27]">
                   {t("gallery.emptyTitle")}
                 </h3>
-                <p className="text-gray-400 mt-2">{t("gallery.emptyDesc")}</p>
+                <p className="text-[#6b7f79] mt-2">{t("gallery.emptyDesc")}</p>
               </div>
             )}
           </>

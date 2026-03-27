@@ -189,14 +189,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="site-shell">
       <Navbar />
       {showError && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg font-semibold animate-fade-in">
           {t("cart.conflict")}
         </div>
       )}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="site-main px-4 sm:px-6 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
           <ShoppingCart className="text-emerald-600" size={32} />
           {t("cart.finalize")}

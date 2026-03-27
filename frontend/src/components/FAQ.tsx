@@ -27,38 +27,36 @@ export default function FAQ() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 flex flex-col">
+    <div className="site-shell font-sans text-gray-900 flex flex-col">
       <Navbar />
 
       {/* Header Section */}
-      <header className="bg-[#133827] py-16 px-6 text-center">
-        <div className="max-w-3xl mx-auto text-white">
+      <header className="site-page-hero reveal-soft">
+        <div className="site-page-hero-card reveal-up">
           <div className="flex justify-center mb-6">
             <MessageCircleQuestion
               size={56}
               className="text-emerald-400 opacity-80"
             />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {t("faq.title")}
-          </h1>
-          <p className="text-emerald-50/80 text-lg">{t("faq.subtitle")}</p>
+          <h1 className="site-page-hero-title">{t("faq.title")}</h1>
+          <p className="site-page-hero-subtitle">{t("faq.subtitle")}</p>
         </div>
       </header>
 
       {/* FAQ Accordion List */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-16 w-full flex-grow">
-        <div className="space-y-4">
+      <main className="site-main max-w-4xl px-4 sm:px-6 py-12 w-full flex-grow reveal-up stagger-1">
+        <div className="space-y-4 reveal-up stagger-2">
           {faqData.map((faq, index) => {
             const isOpen = openIndex === index;
 
             return (
               <div
                 key={index}
-                className={`bg-white border rounded-2xl overflow-hidden transition-all duration-200 ${
+                className={`site-card reveal-up stagger-3 rounded-2xl overflow-hidden transition-all duration-200 ${
                   isOpen
                     ? "border-emerald-500 shadow-md"
-                    : "border-gray-200 hover:border-emerald-300 shadow-sm"
+                    : "border-[#d7e5df] hover:border-emerald-300"
                 }`}
               >
                 {/* Clickable Header */}
@@ -67,12 +65,12 @@ export default function FAQ() {
                   className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
                 >
                   <h3
-                    className={`font-bold text-lg pr-8 ${isOpen ? "text-[#133827]" : "text-gray-900"}`}
+                    className={`font-bold text-lg pr-8 ${isOpen ? "text-[#0f5f53]" : "text-[#1d2d27]"}`}
                   >
                     {faq.question}
                   </h3>
                   <div
-                    className={`shrink-0 transition-transform duration-200 ${isOpen ? "text-emerald-600" : "text-gray-400"}`}
+                    className={`shrink-0 transition-transform duration-200 ${isOpen ? "text-emerald-600" : "text-[#7f948d]"}`}
                   >
                     {isOpen ? (
                       <ChevronUp size={24} />
@@ -84,7 +82,7 @@ export default function FAQ() {
 
                 {/* Expandable Answer */}
                 {isOpen && (
-                  <div className="px-6 pb-6 text-gray-600 leading-relaxed animate-in fade-in slide-in-from-top-2">
+                  <div className="px-6 pb-6 text-[#5f726c] leading-relaxed animate-in fade-in slide-in-from-top-2">
                     {faq.answer}
                   </div>
                 )}
@@ -94,12 +92,9 @@ export default function FAQ() {
         </div>
 
         {/* Contact Support Box */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-500 mb-4">{t("faq.contactText")}</p>
-          <Link
-            to={supportPath}
-            className="text-[#133827] font-bold hover:underline"
-          >
+        <div className="site-card reveal-up stagger-4 mt-10 text-center p-8">
+          <p className="text-[#5f726c] mb-4">{t("faq.contactText")}</p>
+          <Link to={supportPath} className="site-btn-primary">
             {t("faq.contactCta")}
           </Link>
         </div>

@@ -7,16 +7,16 @@ export default function Hero() {
   const isLoggedIn = !!localStorage.getItem("token");
 
   return (
-    <section className="bg-[#133827] rounded-[2rem] p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden">
+    <section className="rounded-[2rem] p-8 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden bg-gradient-to-br from-[#12382b] via-[#0f5144] to-[#0a645e] shadow-[0_28px_50px_rgba(12,56,43,0.28)]">
       {/* Left Content */}
       <div className="lg:w-1/2 text-white z-10 space-y-8">
         <div className="space-y-4 max-w-xl">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight">
             {t("hero.titleLine1")}
             <br />
             {t("hero.titleLine2")}
           </h1>
-          <p className="text-emerald-50/80 text-lg leading-relaxed max-w-md">
+          <p className="text-emerald-50/85 text-lg leading-relaxed max-w-md">
             {t("hero.description")}
           </p>
         </div>
@@ -25,7 +25,7 @@ export default function Hero() {
           {/* 2. Changed to Link and pointed to /upload */}
           <Link
             to={isLoggedIn ? "/quote" : "/signup"}
-            className="flex items-center gap-2 bg-white text-gray-900 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+            className="site-btn-primary gap-2"
           >
             <Upload size={20} />{" "}
             {isLoggedIn ? t("hero.ctaQuote") : t("nav.getStarted")}
@@ -66,7 +66,7 @@ export default function Hero() {
 
       {/* Right Illustration */}
       <div className="lg:w-1/2 w-full h-[300px] lg:h-[400px] relative z-10 flex justify-center items-center">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-emerald-300/20 rounded-full blur-3xl"></div>
         <svg
           viewBox="0 0 400 300"
           className="w-full h-full max-w-md drop-shadow-2xl"

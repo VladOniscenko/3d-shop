@@ -41,43 +41,41 @@ export default function HowItWorksPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 flex flex-col">
+    <div className="site-shell font-sans text-gray-900 flex flex-col">
       <Navbar />
 
       {/* Page Header */}
-      <header className="bg-[#133827] py-16 px-6 text-center">
-        <div className="max-w-3xl mx-auto text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {t("how.pageTitle")}
-          </h1>
-          <p className="text-emerald-50/80 text-lg">{t("how.pageSubtitle")}</p>
+      <header className="site-page-hero reveal-soft">
+        <div className="site-page-hero-card reveal-up">
+          <h1 className="site-page-hero-title">{t("how.pageTitle")}</h1>
+          <p className="site-page-hero-subtitle">{t("how.pageSubtitle")}</p>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 flex-grow">
+      <main className="site-main max-w-5xl px-4 sm:px-6 py-12 flex-grow reveal-up stagger-1">
         {/* The Step-by-Step List */}
-        <div className="space-y-12">
+        <div className="space-y-7">
           {detailedSteps.map((step) => (
             <div
               key={step.number}
-              className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start gap-8"
+              className="site-card reveal-up stagger-2 p-6 sm:p-8 rounded-2xl flex flex-col md:flex-row items-start gap-7"
             >
               {/* Icon & Number Circle */}
               <div className="shrink-0 relative">
                 <div className="w-20 h-20 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100">
                   {step.icon}
                 </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#133827] text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-[#0f766e] text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
                   {step.number}
                 </div>
               </div>
 
               {/* Text Content */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                <h2 className="text-2xl font-bold text-[#1b2c27] mb-3">
                   {step.title}
                 </h2>
-                <p className="text-gray-600 leading-relaxed text-lg">
+                <p className="text-[#5f726c] leading-relaxed text-lg">
                   {step.desc}
                 </p>
               </div>
@@ -86,17 +84,16 @@ export default function HowItWorksPage() {
         </div>
 
         {/* Quality Guarantee Box */}
-        <div className="mt-16 bg-stone-100 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 border border-stone-200">
-          <div className="shrink-0 bg-white p-4 rounded-full shadow-sm">
+        <div className="site-card reveal-up stagger-3 mt-12 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 border-[#d4e5de] bg-gradient-to-r from-[#f8fdfa] to-[#eef7f3]">
+          <div className="shrink-0 bg-white p-4 rounded-full shadow-sm border border-[#deebe6]">
             <CheckCircle2 size={48} className="text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold mb-2">{t("how.promiseTitle")}</h3>
-            <p className="text-gray-600 mb-6">{t("how.promiseDesc")}</p>
-            <Link
-              to="/quote"
-              className="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
-            >
+            <h3 className="text-2xl font-bold mb-2 text-[#1b2c27]">
+              {t("how.promiseTitle")}
+            </h3>
+            <p className="text-[#5f726c] mb-6">{t("how.promiseDesc")}</p>
+            <Link to="/quote" className="site-btn-primary gap-2">
               {t("how.promiseCta")} <ArrowRight size={18} />
             </Link>
           </div>

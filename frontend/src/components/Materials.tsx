@@ -5,6 +5,7 @@ import type { Filament } from "../types"; // Use the new interface name
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import { Link } from "react-router-dom";
 
 export default function Materials() {
   const { t } = useI18n();
@@ -42,32 +43,30 @@ export default function Materials() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900">
+    <div className="site-shell font-sans text-gray-900">
       <Navbar />
 
-      <header className="bg-[#133827] py-16 px-6 text-center">
-        <div className="max-w-3xl mx-auto text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {t("materials.pageTitle")}
-          </h1>
-          <p className="text-emerald-50/80 text-lg">
+      <header className="site-page-hero reveal-soft">
+        <div className="site-page-hero-card reveal-up">
+          <h1 className="site-page-hero-title">{t("materials.pageTitle")}</h1>
+          <p className="site-page-hero-subtitle">
             {t("materials.pageSubtitle")}
           </p>
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-16">
+      <main className="site-main px-4 sm:px-6 py-12 reveal-up stagger-1">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-emerald-800">
+          <div className="site-card flex flex-col items-center justify-center py-24 text-emerald-800">
             <Loader2 className="animate-spin mb-4" size={48} />
             <p className="font-medium">{t("materials.pageLoading")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filaments.map((f) => (
               <div
                 key={f.id}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col"
+                className="site-card reveal-up rounded-2xl p-6 hover:-translate-y-0.5 hover:shadow-xl transition-all flex flex-col"
               >
                 <div className="flex items-center gap-4 mb-6">
                   {/* Visual Color Bubble */}
@@ -78,31 +77,29 @@ export default function Materials() {
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 leading-tight">
+                    <h2 className="text-xl font-bold text-[#1d2c27] leading-tight">
                       {f.name}
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                        {f.material}
-                      </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="site-chip uppercase">{f.material}</span>
+                      <span className="text-xs text-[#60736d]">
                         €{f.pricePerGram}/g
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-gray-600 mb-6 flex-grow text-sm leading-relaxed">
+                <p className="text-[#5f726c] mb-6 flex-grow text-sm leading-relaxed">
                   {f.description}
                 </p>
 
                 {/* Metadata Tags */}
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-50">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-[#e5eeea]">
+                  <div className="site-chip">
                     <Database size={12} /> {f.stockQuantity}g{" "}
                     {t("materials.stock")}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                  <div className="site-chip">
                     <Tag size={12} /> {f.color}
                   </div>
                 </div>
@@ -112,20 +109,19 @@ export default function Materials() {
         )}
 
         {/* Call to Action */}
-        <div className="mt-16 bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full mb-4">
+        <div className="site-card reveal-up stagger-2 mt-14 rounded-3xl p-10 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-[#e4f5ef] text-[#0f766e] rounded-full mb-4">
             <Info size={24} />
           </div>
-          <h3 className="text-2xl font-bold mb-2">{t("materials.ctaTitle")}</h3>
-          <p className="text-gray-500 mb-8 max-w-xl mx-auto">
+          <h3 className="text-2xl font-bold mb-2 text-[#1b2c27]">
+            {t("materials.ctaTitle")}
+          </h3>
+          <p className="text-[#5f726c] mb-8 max-w-xl mx-auto">
             {t("materials.ctaDesc")}
           </p>
-          <a
-            href="/quote"
-            className="inline-flex items-center gap-2 bg-[#133827] text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-900 transition-all shadow-lg shadow-emerald-900/10"
-          >
+          <Link to="/quote" className="site-btn-primary gap-2 px-8 py-4">
             {t("materials.ctaButton")} <ArrowRight size={18} />
-          </a>
+          </Link>
         </div>
       </main>
 

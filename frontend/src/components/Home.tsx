@@ -7,14 +7,20 @@ import Footer from "./Footer";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 selection:bg-emerald-100">
+    <div className="site-shell font-sans text-gray-900 selection:bg-emerald-100">
       <Navbar />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10 space-y-16">
+      <main className="site-main px-2 sm:px-4 py-10 space-y-10">
         <Hero />
-        <HowItWorks />
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start pb-20">
-          <MaterialsSection />
-          <RecentPrints />
+        <section className="site-section p-6 sm:p-8">
+          <HowItWorks />
+        </section>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pb-12">
+          <div className="site-section p-6 sm:p-8">
+            <MaterialsSection />
+          </div>
+          <div className="site-section p-6 sm:p-8">
+            <RecentPrints />
+          </div>
         </section>
       </main>
       <Footer />

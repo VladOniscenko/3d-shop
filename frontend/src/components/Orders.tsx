@@ -68,16 +68,16 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="site-shell">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="site-main max-w-5xl px-4 sm:px-6 py-12">
         <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="site-heading text-3xl font-bold tracking-tight">
               {t("orders.title")}
             </h1>
-            <p className="text-gray-500 mt-1">{t("orders.subtitle")}</p>
+            <p className="site-subheading mt-1">{t("orders.subtitle")}</p>
           </div>
           <div className="hidden sm:block p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
             <Package size={32} className="text-emerald-600" />
