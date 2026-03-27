@@ -43,8 +43,10 @@ export function NotifyProvider({ children }: { children: ReactNode }) {
   const value = useMemo<NotifyContextValue>(
     () => ({
       notify,
-      notifySuccess: (message, durationMs) => notify("success", message, durationMs),
-      notifyError: (message, durationMs) => notify("error", message, durationMs),
+      notifySuccess: (message, durationMs) =>
+        notify("success", message, durationMs),
+      notifyError: (message, durationMs) =>
+        notify("error", message, durationMs),
       notifyInfo: (message, durationMs) => notify("info", message, durationMs),
     }),
     [notify],

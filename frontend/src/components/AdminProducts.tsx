@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
+import AdminBreadcrumb from "./AdminBreadcrumb";
 import api from "../services/api";
 import type { Product } from "../types";
 import { useNotify } from "../context/NotifyContext";
@@ -81,52 +81,65 @@ export default function AdminProducts() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Product Catalog Admin</h1>
-          <Link
-            to="/admin"
-            className="text-sm text-emerald-700 hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
+        <AdminBreadcrumb
+          title="Product Catalog Admin"
+          items={[
+            { label: "Admin", to: "/admin" },
+            { label: "Products" },
+          ]}
+        />
 
         <form
           onSubmit={addProduct}
           className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
         >
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Name"
-            className="border rounded-xl p-2"
-          />
-          <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
-            className="border rounded-xl p-2"
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="border rounded-xl p-2"
-          />
-          <input
-            type="file"
-            onChange={(e) => setFileFile(e.target.files?.[0] || null)}
-            className="border rounded-xl p-2 col-span-full sm:col-span-2"
-          />
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(parseFloat(e.target.value))}
-            required
-            placeholder="Price"
-            className="border rounded-xl p-2"
-          />
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            <span className="font-semibold">Name</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Name"
+              className="border rounded-xl p-2"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            <span className="font-semibold">Category</span>
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category"
+              className="border rounded-xl p-2"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            <span className="font-semibold">Product Image</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="border rounded-xl p-2"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-gray-700 col-span-full sm:col-span-2">
+            <span className="font-semibold">Model File</span>
+            <input
+              type="file"
+              onChange={(e) => setFileFile(e.target.files?.[0] || null)}
+              className="border rounded-xl p-2"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            <span className="font-semibold">Price</span>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(parseFloat(e.target.value))}
+              required
+              placeholder="Price"
+              className="border rounded-xl p-2"
+            />
+          </label>
           <button
             type="submit"
             className="px-4 py-2 bg-emerald-600 text-white rounded-xl"

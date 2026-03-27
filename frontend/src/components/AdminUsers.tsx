@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
+import AdminBreadcrumb from "./AdminBreadcrumb";
 import api from "../services/api";
 import type { User } from "../types";
 import { useNotify } from "../context/NotifyContext";
@@ -76,10 +77,14 @@ export default function AdminUsers() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex justify-between items-center mb-5">
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-sm text-gray-600">Total: {totalCount}</p>
-        </div>
+        <AdminBreadcrumb
+          title="User Management"
+          items={[
+            { label: "Admin", to: "/admin" },
+            { label: "Users" },
+          ]}
+          rightSlot={<p className="text-sm text-gray-600">Total: {totalCount}</p>}
+        />
 
         <div className="mb-4 flex flex-wrap gap-2">
           <input
@@ -100,28 +105,37 @@ export default function AdminUsers() {
           <div className="mb-4 p-4 bg-white border rounded-2xl shadow-sm">
             <h3 className="font-bold mb-2">Edit User</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Name"
-                className="border rounded-xl p-2"
-              />
-              <input
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="Email"
-                className="border rounded-xl p-2"
-              />
-              <select
-                value={editRole}
-                onChange={(e) =>
-                  setEditRole(e.target.value as "customer" | "admin")
-                }
-                className="border rounded-xl p-2"
-              >
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <span className="font-semibold">Name</span>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Name"
+                  className="border rounded-xl p-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <span className="font-semibold">Email</span>
+                <input
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="Email"
+                  className="border rounded-xl p-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-gray-700">
+                <span className="font-semibold">Role</span>
+                <select
+                  value={editRole}
+                  onChange={(e) =>
+                    setEditRole(e.target.value as "customer" | "admin")
+                  }
+                  className="border rounded-xl p-2"
+                >
+                  <option value="customer">Customer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
             </div>
             <div className="mt-2 flex gap-2">
               <button

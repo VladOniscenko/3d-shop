@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
+import AdminBreadcrumb from "./AdminBreadcrumb";
 import api from "../services/api";
 import type { Order } from "../types";
 
@@ -57,15 +58,13 @@ export default function AdminOrders() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
       <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold">Order Management</h1>
-          <Link
-            to="/admin"
-            className="text-sm font-semibold text-emerald-700 hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
+        <AdminBreadcrumb
+          title="Order Management"
+          items={[
+            { label: "Admin", to: "/admin" },
+            { label: "Orders" },
+          ]}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <input

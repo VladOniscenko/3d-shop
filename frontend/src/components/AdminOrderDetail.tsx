@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
+import AdminBreadcrumb from "./AdminBreadcrumb";
 import api from "../services/api";
 import type { Order } from "../types";
 import { useNotify } from "../context/NotifyContext";
@@ -24,6 +25,8 @@ export default function AdminOrderDetail() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [itemPrices, setItemPrices] = useState<{ [key: string]: number }>({});
   const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
+  const [savingDelivery, setSavingDelivery] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -141,25 +144,33 @@ export default function AdminOrderDetail() {
 
   const updateItemPrice = async (itemId: string, price: number) => {
     if (!id) return;
+    setSavingItemId(itemId);
     try {
       await api.put(`/admin/orders/${id}/items/${itemId}`, { price });
       await refresh();
+      notifySuccess("Item price updated.");
     } catch (err) {
       console.error(err);
       notifyError("Could not update item price.");
+    } finally {
+      setSavingItemId(null);
     }
   };
 
   const updateDeliveryPrice = async (price: number) => {
     if (!id) return;
+    setSavingDelivery(true);
     try {
       await api.patch(`/admin/orders/${id}/delivery-price`, {
         deliveryPrice: price,
       });
       await refresh();
+      notifySuccess("Delivery price updated.");
     } catch (err) {
       console.error(err);
       notifyError("Could not update delivery price.");
+    } finally {
+      setSavingDelivery(false);
     }
   };
 
@@ -265,15 +276,14 @@ export default function AdminOrderDetail() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">Order {order.id.slice(0, 8)}</h1>
-          <button
-            onClick={() => navigate("/admin/orders")}
-            className="text-sm text-emerald-700 hover:underline"
-          >
-            Back to orders
-          </button>
-        </div>
+        <AdminBreadcrumb
+          title={`Order ${order.id.slice(0, 8)}`}
+          items={[
+            { label: "Admin", to: "/admin" },
+            { label: "Orders", to: "/admin/orders" },
+            { label: order.id.slice(0, 8) },
+          ]}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
           <article className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
@@ -288,42 +298,60 @@ export default function AdminOrderDetail() {
             </div>
             {editingCustomer ? (
               <div className="space-y-2">
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                  className="w-full border rounded px-2 py-1"
-                />
-                <input
-                  value={addressLine1}
-                  onChange={(e) => setAddressLine1(e.target.value)}
-                  placeholder="Address Line 1"
-                  className="w-full border rounded px-2 py-1"
-                />
-                <input
-                  value={addressLine2}
-                  onChange={(e) => setAddressLine2(e.target.value)}
-                  placeholder="Address Line 2"
-                  className="w-full border rounded px-2 py-1"
-                />
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
-                  className="w-full border rounded px-2 py-1"
-                />
-                <input
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                  placeholder="Postal Code"
-                  className="w-full border rounded px-2 py-1"
-                />
-                <input
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Phone Number"
-                  className="w-full border rounded px-2 py-1"
-                />
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">Full Name</span>
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Full Name"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">Address Line 1</span>
+                  <input
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
+                    placeholder="Address Line 1"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">Address Line 2</span>
+                  <input
+                    value={addressLine2}
+                    onChange={(e) => setAddressLine2(e.target.value)}
+                    placeholder="Address Line 2"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">City</span>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="City"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">Postal Code</span>
+                  <input
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="Postal Code"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="font-semibold">Phone Number</span>
+                  <input
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Phone Number"
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </label>
                 <button
                   onClick={saveCustomerInfo}
                   className="px-3 py-1 bg-emerald-600 text-white rounded"
@@ -377,15 +405,25 @@ export default function AdminOrderDetail() {
                         value={item.id ? itemPrices[item.id] || 0 : 0}
                         onChange={(e) => {
                           if (!item.id) return;
-                          const newPrice = parseFloat(e.target.value);
+                          const newPrice = parseFloat(e.target.value) || 0;
                           setItemPrices({
                             ...itemPrices,
                             [item.id]: newPrice,
                           });
-                          updateItemPrice(item.id, newPrice);
                         }}
                         className="border rounded px-1 py-0.5 w-20"
                       />
+                      <button
+                        type="button"
+                        disabled={!item.id || savingItemId === item.id}
+                        onClick={() =>
+                          item.id &&
+                          updateItemPrice(item.id, itemPrices[item.id] || 0)
+                        }
+                        className="px-2 py-1 rounded bg-emerald-600 text-white text-xs disabled:opacity-50"
+                      >
+                        {savingItemId === item.id ? "Saving..." : "Save"}
+                      </button>
                     </div>
                     {item.fileUrl && (
                       <a
@@ -407,12 +445,19 @@ export default function AdminOrderDetail() {
                 type="number"
                 value={deliveryPrice}
                 onChange={(e) => {
-                  const newPrice = parseFloat(e.target.value);
+                  const newPrice = parseFloat(e.target.value) || 0;
                   setDeliveryPrice(newPrice);
-                  updateDeliveryPrice(newPrice);
                 }}
                 className="border rounded px-1 py-0.5 w-20"
               />
+              <button
+                type="button"
+                disabled={savingDelivery}
+                onClick={() => updateDeliveryPrice(deliveryPrice)}
+                className="px-2 py-1 rounded bg-emerald-600 text-white text-xs disabled:opacity-50"
+              >
+                {savingDelivery ? "Saving..." : "Save"}
+              </button>
             </div>
             <div className="mt-1 text-right">
               <span className="font-bold">
