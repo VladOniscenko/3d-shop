@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import {
   Shapes,
@@ -8,15 +8,13 @@ import {
   Box,
   Loader2,
   ImageIcon,
+  Check,
+  ShoppingCart,
 } from "lucide-react";
 import api from "../services/api";
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl?: string;
-}
+import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
+import type { Product } from "../types";
 
 const getCategoryDesign = (category: string) => {
   switch (category) {
@@ -56,15 +54,18 @@ const getCategoryDesign = (category: string) => {
 const categories = ["All", "Toys", "Tools", "Decor", "Tech"];
 
 export default function Gallery() {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+
   const [items, setItems] = useState<Product[]>([]);
   const [activeFilter, setActiveFilter] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [addedItemId, setAddedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGallery = async () => {
       setLoading(true);
       try {
-        // Handle "All" by sending empty string or specific param your API expects
         const categoryParam = activeFilter === "All" ? "" : activeFilter;
         const res = await api.get(`/products?category=${categoryParam}`);
         setItems(res.data);
@@ -76,6 +77,27 @@ export default function Gallery() {
     };
     fetchGallery();
   }, [activeFilter]);
+
+  const handleAddToCart = (product: Product) => {
+    // Construct the full URL if needed, or just use the relative path
+    const fullImageUrl = product.imageUrl
+      ? "http://localhost:5243" + product.imageUrl
+      : "";
+
+    addToCart({
+      fileName: product.name,
+      fileUrl: product.imageUrl || "", // The path for the backend
+      imageUrl: fullImageUrl, // The path for the frontend (REQUIRED by your type)
+      material: "PLA",
+      color: "Black",
+      count: 1,
+      price: 0,
+      notes: `Gallery Item: ${product.name}`,
+    });
+
+    setAddedItemId(product.id);
+    setTimeout(() => setAddedItemId(null), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-[#fcfdfd] flex flex-col">
@@ -93,14 +115,13 @@ export default function Gallery() {
             Print <span className="text-emerald-400">Showcase</span>
           </h1>
           <p className="text-emerald-100/70 text-xl max-w-2xl mx-auto leading-relaxed">
-            A curated collection of high-quality 3D prints delivered to our
-            community.
+            Choose a model from our collection to start your next project.
           </p>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-12 flex-grow w-full">
-        {/* Modern Filter Pill Navigation */}
+        {/* Filter Navigation */}
         <div className="flex flex-wrap justify-center gap-2 mb-16 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-fit mx-auto">
           {categories.map((category) => (
             <button
@@ -129,9 +150,10 @@ export default function Gallery() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {items.map((item) => {
                 const design = getCategoryDesign(item.category);
+                const isAdded = addedItemId === item.id;
+
                 return (
                   <div key={item.id} className="group relative flex flex-col">
-                    {/* Media Container */}
                     <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-gray-100 shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-2">
                       {item.imageUrl ? (
                         <img
@@ -152,14 +174,29 @@ export default function Gallery() {
                       )}
 
                       {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#133827]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                        <button className="bg-white text-[#133827] w-full py-3 rounded-xl font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                          Order Similar Print
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#133827]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          disabled={isAdded}
+                          className={`w-full py-3 rounded-xl font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center justify-center gap-2 ${
+                            isAdded
+                              ? "bg-emerald-500 text-white translate-y-0"
+                              : "bg-white text-[#133827] hover:bg-emerald-50 active:scale-95"
+                          }`}
+                        >
+                          {isAdded ? (
+                            <>
+                              <Check size={18} /> Added!
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart size={18} /> Add to Project
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
 
-                    {/* Meta Info */}
                     <div className="mt-5 px-1">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase">
@@ -185,13 +222,26 @@ export default function Gallery() {
                   Archive Empty
                 </h3>
                 <p className="text-gray-400 mt-2">
-                  Check back later for new {activeFilter} prints.
+                  Check back later for new prints.
                 </p>
               </div>
             )}
           </>
         )}
       </main>
+
+      {/* Floating Cart Notification (Fixed at bottom) */}
+      {addedItemId && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <button
+            onClick={() => navigate("/cart")}
+            className="bg-[#133827] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-emerald-400/30"
+          >
+            <ShoppingCart size={20} className="text-emerald-400" />
+            <span className="font-bold text-sm">View in Cart</span>
+          </button>
+        </div>
+      )}
 
       <footer className="bg-white border-t border-gray-50 py-12 text-center">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">

@@ -9,6 +9,7 @@ import HowItWorksPage from "./components/HowItWorksPage";
 import FAQ from "./components/FAQ";
 import Orders from "./components/Orders";
 import OrderDetail from "./components/OrderDetail";
+import Cart from "./components/Cart";
 
 import { Navigate } from "react-router-dom";
 
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/cart" element={<Cart />} />
 
         {/* Private Routes - Only logged-in users can see these */}
         <Route

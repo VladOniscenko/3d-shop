@@ -73,6 +73,7 @@ export interface Order {
 export interface OrderItem {
   id?: string;
   orderId?: string;
+  imageUrl: string;
   fileUrl: string;
   fileName: string;
   notes?: string;
@@ -80,4 +81,11 @@ export interface OrderItem {
   color: string;
   price: number;
   count: number;
+}
+
+export interface CartContextType {
+  cart: OrderItem[];
+  addToCart: (item: OrderItem) => void;
+  removeFromCart: (index: number) => void;
+  clearCart: () => void;
 }
