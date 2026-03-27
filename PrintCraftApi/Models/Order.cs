@@ -16,7 +16,7 @@ public class Order
     [Required] public string PhoneNumber { get; set; } = string.Empty;
 
     public string Status { get; set; } = "pending_quote";
-    public decimal TotalPrice { get; set; } = 0;
+    public decimal DeliveryPrice { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // The list of items in this order

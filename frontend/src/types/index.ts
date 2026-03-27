@@ -65,7 +65,7 @@ export interface Order {
   postalCode: string;
   phoneNumber: string;
 
-  totalPrice: number;
+  deliveryPrice?: number;
   createdAt: string; // Dates from JSON come back as strings
   items: OrderItem[]; // The list of 3D models
 }
