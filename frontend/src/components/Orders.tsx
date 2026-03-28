@@ -16,6 +16,12 @@ import api from "../services/api";
 import { Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
+import {
+  formatOrderStatusLabel,
+  getOrderStatusBadgeClass,
+  getOrderStatusTranslationKey,
+  normalizeOrderStatus,
+} from "../utils/orderStatus";
 
 export default function Orders() {
   const { t } = useI18n();
@@ -37,52 +43,9 @@ export default function Orders() {
     fetchOrders();
   }, []);
 
-  const getStatusStyle = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending_quote":
-        return "bg-amber-50 text-amber-700 border-amber-100";
-      case "quoted":
-        return "bg-sky-50 text-sky-700 border-sky-100";
-      case "pending_payment":
-        return "bg-orange-50 text-orange-700 border-orange-100";
-      case "printing":
-        return "bg-blue-50 text-blue-700 border-blue-100";
-      case "completed":
-        return "bg-emerald-50 text-emerald-700 border-emerald-100";
-      case "paid":
-        return "bg-teal-50 text-teal-700 border-teal-100";
-      case "shipped":
-        return "bg-purple-50 text-purple-700 border-purple-100";
-      default:
-        return "bg-gray-50 text-gray-600 border-gray-100";
-    }
-  };
-
   const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending_quote":
-        return t("orderStatus.pendingQuote");
-      case "quoted":
-        return t("orderStatus.quoted");
-      case "pending_payment":
-        return t("orderStatus.pendingPayment");
-      case "printing":
-        return t("orderStatus.printing");
-      case "completed":
-        return t("orderStatus.completed");
-      case "paid":
-        return t("orderStatus.paid");
-      case "shipped":
-        return t("orderStatus.shipped");
-      case "sent":
-        return t("orderStatus.sent");
-      case "delivered":
-        return t("orderStatus.delivered");
-      case "failed":
-        return t("orderStatus.failed");
-      default:
-        return status;
-    }
+    const translationKey = getOrderStatusTranslationKey(status);
+    return translationKey ? t(translationKey) : formatOrderStatusLabel(status);
   };
 
   return (
@@ -136,7 +99,7 @@ export default function Orders() {
                   {/* Status & Date */}
                   <div className="flex items-start gap-4">
                     <div
-                      className={`p-4 rounded-2xl border ${getStatusStyle(order.status)}`}
+                      className={`p-4 rounded-2xl border ${getOrderStatusBadgeClass(order.status)}`}
                     >
                       <BoxIcon status={order.status} />
                     </div>
@@ -146,7 +109,7 @@ export default function Orders() {
                           {t("orders.project")} #{order.id.slice(0, 8)}
                         </h3>
                         <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getStatusStyle(order.status)}`}
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getOrderStatusBadgeClass(order.status)}`}
                         >
                           {getStatusLabel(order.status)}
                         </span>
@@ -175,7 +138,7 @@ export default function Orders() {
                     </p>
                     {order.orderDiscountAmount &&
                       order.orderDiscountAmount > 0 &&
-                      order.status.toLowerCase() !== "pending_quote" && (
+                      normalizeOrderStatus(order.status) !== "pending_quote" && (
                         <p className="text-xs text-emerald-700 font-semibold mt-1">
                           {t("orderDetail.discount")}: -€
                           {order.orderDiscountAmount.toFixed(2)}
@@ -203,7 +166,7 @@ export default function Orders() {
 
 // Icon Logic
 function BoxIcon({ status }: { status: string }) {
-  const s = status.toLowerCase();
+  const s = normalizeOrderStatus(status);
   if (s === "printing") return <Clock size={24} />;
   if (s === "completed") return <CheckCircle size={24} />;
   if (s === "shipped") return <Truck size={24} />;

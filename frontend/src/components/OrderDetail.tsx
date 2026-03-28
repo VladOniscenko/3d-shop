@@ -21,6 +21,7 @@ import {
   buildStatusSummary,
   getReachedDate,
 } from "./order-detail/utils";
+import { normalizeOrderStatus } from "../utils/orderStatus";
 
 const EMPTY_SHIPPING_DETAILS: ShippingDetails = {
   fullName: "",
@@ -204,7 +205,7 @@ export default function OrderDetail() {
             </button>
           )}
 
-          {order.status === "quoted" && (
+          {normalizeOrderStatus(order.status) === "quoted" && (
             <button
               onClick={handleConfirmAndPay}
               disabled={isPaying}
@@ -229,6 +230,7 @@ export default function OrderDetail() {
             />
             <OrderTimeline
               statusStep={statusSummary.step}
+              currentStatus={order.status}
               reachedDate={reachedDate}
               t={t}
             />

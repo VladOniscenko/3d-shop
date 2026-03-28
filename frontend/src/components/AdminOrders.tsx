@@ -4,16 +4,14 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
+import {
+  ADMIN_ORDER_STATUS_OPTIONS,
+  formatOrderStatusLabel,
+} from "../utils/orderStatus";
 
 const STATUS_OPTIONS = [
-  "All",
-  "pending_quote",
-  "quoted",
-  "printing",
-  "completed",
-  "shipped",
-  "cancelled",
-  "paid",
+  { value: "All", label: "All" },
+  ...ADMIN_ORDER_STATUS_OPTIONS,
 ];
 const SORT_FIELDS = ["createdAt", "status", "quotedPrice"];
 
@@ -74,8 +72,8 @@ export default function AdminOrders() {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
+            <option key={s.value} value={s.value}>
+              {s.label}
             </option>
           ))}
         </select>
@@ -127,7 +125,7 @@ export default function AdminOrders() {
                   </td>
                   <td>{order.fullName}</td>
                   <td className="capitalize">
-                    {order.status.replace("_", " ")}
+                    {formatOrderStatusLabel(order.status)}
                   </td>
                   <td>
                     {order.quotedPrice

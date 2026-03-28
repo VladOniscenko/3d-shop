@@ -278,6 +278,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderStatus.delivered": "Delivered",
     "orderStatus.paid": "Paid",
     "orderStatus.failed": "Failed",
+    "orderStatus.cancelled": "Cancelled",
 
     // Orders
     "orders.title": "My Projects",
@@ -693,6 +694,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderStatus.delivered": "Afgeleverd",
     "orderStatus.paid": "Betaald",
     "orderStatus.failed": "Mislukt",
+    "orderStatus.cancelled": "Geannuleerd",
 
     // Orders
     "orders.title": "Mijn Projecten",

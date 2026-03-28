@@ -11,47 +11,14 @@ import type {
 } from "./admin-order-detail/types";
 import OrderPricingPanel from "./admin-order-detail/OrderPricingPanel";
 import OrderHistoryPanel from "./admin-order-detail/OrderHistoryPanel";
-
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "pending_quote", label: "Pending Quote" },
-  { value: "quoted", label: "Quoted" },
-  { value: "printing", label: "Printing" },
-  { value: "sent", label: "Sent" },
-  { value: "delivered", label: "Delivered" },
-  { value: "completed", label: "Completed" },
-  { value: "paid", label: "Paid" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-const POST_PAYMENT_STATUSES = new Set([
-  "paid",
-  "printing",
-  "sent",
-  "delivered",
-  "completed",
-]);
-
-const TERMINAL_STATUSES = new Set(["cancelled", "completed"]);
-
-function normalizeStatus(status?: string | null): string {
-  return (status || "").trim().toLowerCase();
-}
-
-function canTransitionStatus(
-  currentStatus: string,
-  nextStatus: string,
-  isPaid: boolean,
-) {
-  const current = normalizeStatus(currentStatus);
-  const next = normalizeStatus(nextStatus);
-
-  if (!next) return false;
-  if (current === next) return true;
-  if (TERMINAL_STATUSES.has(current)) return false;
-  if (isPaid || current === "paid") return POST_PAYMENT_STATUSES.has(next);
-  return true;
-}
+import {
+  ADMIN_ORDER_STATUS_OPTIONS,
+  canTransitionOrderStatus,
+  formatOrderStatusLabel,
+  getOrderStatusPillClass,
+  isOrderPricingLocked,
+  normalizeOrderStatus,
+} from "../utils/orderStatus";
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
@@ -247,9 +214,11 @@ export default function AdminOrderDetail() {
       await api.delete(`/admin/orders/${id}`);
       notifySuccess("Order deleted.");
       navigate("/admin/orders");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      notifyError("Could not delete order.");
+      notifyError(
+        err?.response?.data?.message || "Could not delete order."
+      );
     }
   };
 
@@ -320,26 +289,6 @@ export default function AdminOrderDetail() {
     }
   };
 
-  const statusStyle = (status: string) => {
-    const base = "admin-status-pill";
-    switch (status) {
-      case "pending_quote":
-        return `${base} bg-amber-100 text-amber-800`;
-      case "quoted":
-        return `${base} bg-sky-100 text-sky-800`;
-      case "printing":
-        return `${base} bg-indigo-100 text-indigo-800`;
-      case "completed":
-        return `${base} bg-emerald-100 text-emerald-800`;
-      case "paid":
-        return `${base} bg-teal-100 text-teal-800`;
-      case "cancelled":
-        return `${base} bg-rose-100 text-rose-800`;
-      default:
-        return `${base} bg-slate-100 text-slate-700`;
-    }
-  };
-
   if (loading) {
     return (
       <div className="admin-shell flex items-center justify-center">
@@ -375,15 +324,11 @@ export default function AdminOrderDetail() {
     0,
     subtotal + deliveryPrice - orderDiscountAmount,
   );
-  const pricingLocked =
-    !!order.isPaid ||
-    ["paid", "printing", "sent", "delivered", "completed"].includes(
-      order.status.toLowerCase(),
-    );
-  const allowedStatusOptions = STATUS_OPTIONS.filter((option) =>
-    canTransitionStatus(order.status, option.value, !!order.isPaid),
+  const pricingLocked = isOrderPricingLocked(order.status, !!order.isPaid);
+  const allowedStatusOptions = ADMIN_ORDER_STATUS_OPTIONS.filter((option) =>
+    canTransitionOrderStatus(order.status, option.value, !!order.isPaid),
   );
-  const currentStatus = normalizeStatus(order.status);
+  const currentStatus = normalizeOrderStatus(order.status);
   const hasCurrentStatusOption = allowedStatusOptions.some(
     (option) => option.value === currentStatus,
   );
@@ -392,12 +337,12 @@ export default function AdminOrderDetail() {
     : [
         {
           value: currentStatus,
-          label: currentStatus ? currentStatus.replace(/_/g, " ") : "Current",
+          label: formatOrderStatusLabel(currentStatus),
         },
         ...allowedStatusOptions,
       ];
   const isStatusUnchanged =
-    normalizeStatus(selectedStatus) === normalizeStatus(order.status);
+    normalizeOrderStatus(selectedStatus) === normalizeOrderStatus(order.status);
 
   return (
     <AdminLayout>
@@ -413,8 +358,8 @@ export default function AdminOrderDetail() {
       <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <article className="admin-panel p-4">
           <p className="text-xs uppercase text-[#6c817a]">Status</p>
-          <p className={`${statusStyle(order.status)} mt-2 w-fit`}>
-            {order.status.replace("_", " ")}
+          <p className={`${getOrderStatusPillClass(order.status)} mt-2 w-fit`}>
+            {formatOrderStatusLabel(order.status)}
           </p>
         </article>
         <article className="admin-panel p-4">

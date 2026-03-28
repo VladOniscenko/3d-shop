@@ -4,6 +4,7 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Filament, Order, Product } from "../types";
+import { formatOrderStatusLabel } from "../utils/orderStatus";
 
 interface Summary {
   totalUsers: number;
@@ -321,7 +322,7 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <p className="text-sm text-[#516760]">
-                  {order.fullName} • {order.status.replace("_", " ")}
+                  {order.fullName} • {formatOrderStatusLabel(order.status)}
                 </p>
               </Link>
             ))}
