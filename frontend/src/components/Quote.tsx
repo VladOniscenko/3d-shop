@@ -87,6 +87,23 @@ export default function Quote() {
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const addTextOnlyItem = () => {
+    const defaultMat = availableMaterials[0] || "Custom";
+    const defaultColor = availableColors[0] || "Custom";
+
+    const newItem: OrderItem = {
+      fileUrl: "",
+      fileName: "",
+      notes: "",
+      imageUrl: "",
+      material: defaultMat,
+      color: defaultColor,
+      price: 0,
+      count: 1,
+    };
+    setItems([...items, newItem]);
+  };
+
   const updateItem = (index: number, field: keyof OrderItem, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
@@ -97,6 +114,12 @@ export default function Quote() {
     e.preventDefault();
     if (items.length === 0) {
       notifyError(t("quote.noFiles"));
+      return;
+    }
+
+    // Validate each item has either a file or notes
+    if (items.some(item => !item.fileUrl && !item.notes)) {
+      notifyError("Each item must have either a file or description.");
       return;
     }
 
@@ -135,20 +158,30 @@ export default function Quote() {
                   <Package className="text-emerald-600" size={20} />
                   {t("quote.models")}
                 </h3>
-                <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center gap-2">
-                  {isUploading ? (
-                    <Loader2 className="animate-spin" size={16} />
-                  ) : (
+                <div className="flex gap-2">
+                  <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center gap-2">
+                    {isUploading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <Plus size={16} />
+                    )}
+                    {t("quote.addFile")}
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addTextOnlyItem}
+                    className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2"
+                  >
                     <Plus size={16} />
-                  )}
-                  {t("quote.addFile")}
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                  />
-                </label>
+                    Add Description
+                  </button>
+                </div>
               </div>
 
               {items.length === 0 ? (
@@ -165,7 +198,7 @@ export default function Quote() {
                     >
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-bold text-gray-800 truncate max-w-[300px]">
-                          {item.fileName}
+                          {item.fileName || "Text Description"}
                         </span>
                         <button
                           type="button"

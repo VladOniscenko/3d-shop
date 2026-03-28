@@ -80,9 +80,14 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "At least one model is required for a quote." });
         }
 
-        if (request.Items.Any(i => string.IsNullOrWhiteSpace(i.FileUrl) || i.Count <= 0))
+        if (request.Items.Any(i => i.Count <= 0))
         {
-            return BadRequest(new { message = "Each quote item must include a valid file and quantity." });
+            return BadRequest(new { message = "Each quote item must include a valid quantity." });
+        }
+
+        if (request.Items.Any(i => string.IsNullOrWhiteSpace(i.FileUrl) && string.IsNullOrWhiteSpace(i.Notes)))
+        {
+            return BadRequest(new { message = "Each quote item must include either a file or description." });
         }
 
         if (request.Items.Any(i => i.Count > 100))
@@ -113,7 +118,7 @@ public class OrdersController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 OrderId = Guid.Empty,
-                FileUrl = item.FileUrl.Trim(),
+                FileUrl = string.IsNullOrWhiteSpace(item.FileUrl) ? null : item.FileUrl.Trim(),
                 fileName = string.IsNullOrWhiteSpace(item.FileName) ? null : item.FileName.Trim(),
                 Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
                 Material = string.IsNullOrWhiteSpace(item.Material) ? "Custom" : item.Material.Trim(),
@@ -297,7 +302,7 @@ public class OrdersController : ControllerBase
 public record QuoteRequest(List<QuoteItemRequest> Items);
 
 public record QuoteItemRequest(
-    string FileUrl,
+    string? FileUrl,
     string? FileName,
     string? Notes,
     string? Material,

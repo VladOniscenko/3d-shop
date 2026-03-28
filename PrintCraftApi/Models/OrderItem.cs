@@ -4,7 +4,7 @@ public class OrderItem
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid OrderId { get; set; }
 
-    [Required] public string FileUrl { get; set; } = string.Empty;
+    public string? FileUrl { get; set; }
     public string? fileName { get; set; }
     public string? Notes { get; set; }
     public string Material { get; set; } = "PLA";
