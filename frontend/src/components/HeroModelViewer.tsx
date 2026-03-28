@@ -8,12 +8,23 @@ type HeroModelViewerProps = {
 };
 
 const HERO_MODEL_COLORS = [
-  0x45d8a5, 0x1cc6b7, 0x23a6d5, 0x7ddf6a, 0x5fd0ff, 0x49e3c3, 0xa0e05f,
+  0x45d8a5,
+  0x1cc6b7,
+  0x23a6d5,
+  0x5fd0ff,
+  0x4f86ff,
+  0xff8a65,
+  0xffb74d,
+  0xff6f91,
+  0xb388ff,
+  0xffe082,
+  0xe6ee9c,
+  0xf5f5f5,
 ];
 
 function pickRandomColor(): number {
   const idx = Math.floor(Math.random() * HERO_MODEL_COLORS.length);
-  return HERO_MODEL_COLORS[idx] ?? 0x45d8a5;
+  return HERO_MODEL_COLORS[idx] ?? 0x4f86ff;
 }
 
 function getExt(path: string): string {
@@ -69,7 +80,7 @@ export default function HeroModelViewer({ src }: HeroModelViewerProps) {
     controls.target.set(0, 0, 0);
     controls.update();
 
-    const keyLight = new THREE.DirectionalLight(0xdaf9ef, 0.75);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
     keyLight.position.set(18, 24, 14);
     scene.add(keyLight);
 
@@ -77,7 +88,7 @@ export default function HeroModelViewer({ src }: HeroModelViewerProps) {
     fillLight.position.set(-18, 12, -10);
     scene.add(fillLight);
 
-    scene.add(new THREE.AmbientLight(0x9eead7, 0.22));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.18));
 
     function fitObject(object: any): void {
       const box = new THREE.Box3().setFromObject(object);

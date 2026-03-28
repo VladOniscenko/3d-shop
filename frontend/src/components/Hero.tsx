@@ -1,26 +1,51 @@
 import { Upload, Box, Clock, Leaf } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
 
 const HeroModelViewer = lazy(() => import("./HeroModelViewer"));
 
-const heroModelModules = import.meta.glob("../assets/hero-models/*.stl", {
-  eager: true,
+const heroModelLoaders = import.meta.glob("../assets/hero-models/*.stl", {
   import: "default",
   query: "?url",
-}) as Record<string, string>;
+}) as Record<string, () => Promise<unknown>>;
 
 export default function Hero() {
   const { t } = useI18n();
   const isLoggedIn = !!localStorage.getItem("token");
   const [showViewer, setShowViewer] = useState(false);
-  const heroModelSrc = useMemo(() => {
-    const modelUrls = Object.values(heroModelModules);
-    if (modelUrls.length === 0) {
-      return "";
+  const [heroModelSrc, setHeroModelSrc] = useState("");
+
+  useEffect(() => {
+    const modelPaths = Object.keys(heroModelLoaders);
+    if (modelPaths.length === 0) {
+      setHeroModelSrc("");
+      return;
     }
-    return modelUrls[Math.floor(Math.random() * modelUrls.length)];
+
+    const selectedPath =
+      modelPaths[Math.floor(Math.random() * modelPaths.length)] ?? modelPaths[0] ?? "";
+
+    const loadModel = heroModelLoaders[selectedPath];
+    if (!loadModel) {
+      setHeroModelSrc("");
+      return;
+    }
+
+    let cancelled = false;
+    loadModel()
+      .then((resolved) => {
+        if (cancelled) return;
+        setHeroModelSrc(typeof resolved === "string" ? resolved : "");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHeroModelSrc("");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -100,7 +125,7 @@ export default function Hero() {
         <div className="absolute top-[46%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] h-[72%] bg-emerald-300/20 rounded-full blur-3xl" />
 
         <div className="relative w-full h-full max-w-[580px]">
-          {showViewer ? (
+          {showViewer && heroModelSrc ? (
             <Suspense
               fallback={
                 <div className="absolute z-30 left-1/2 -translate-x-1/2 bottom-[6%] w-[98%] h-[86%] flex items-center justify-center text-xs text-white/75">
