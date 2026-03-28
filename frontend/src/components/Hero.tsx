@@ -32,7 +32,7 @@ export default function Hero() {
           </Link>
         </div>
 
-        {/* ... The rest of your Hero code (Clock, Box, Leaf) stays exactly the same ... */}
+        {/* Feature highlights: Fast turnaround, Quality print, Professional finishing */}
         <div className="flex flex-wrap gap-6 pt-6 border-t border-white/10">
           <div className="flex items-center gap-3">
             <Clock size={24} className="text-emerald-400" />
