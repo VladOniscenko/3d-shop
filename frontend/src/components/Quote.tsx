@@ -266,7 +266,10 @@ export default function Quote() {
 
               <p className="mt-3 text-xs leading-relaxed text-[#5e7069]">
                 {t("quote.pricingDisclaimer")}{" "}
-                <Link to="/terms" className="font-semibold text-[#0f766e] hover:underline">
+                <Link
+                  to="/terms"
+                  className="font-semibold text-[#0f766e] hover:underline"
+                >
                   {t("footer.terms")}
                 </Link>
               </p>
