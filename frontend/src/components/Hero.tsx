@@ -1,8 +1,9 @@
 import { Upload, Box, Clock, Leaf } from "lucide-react";
-import { useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
-import HeroModelViewer from "./HeroModelViewer";
+
+const HeroModelViewer = lazy(() => import("./HeroModelViewer"));
 
 const heroModelModules = import.meta.glob("../assets/hero-models/*.stl", {
   eager: true,
@@ -13,12 +14,28 @@ const heroModelModules = import.meta.glob("../assets/hero-models/*.stl", {
 export default function Hero() {
   const { t } = useI18n();
   const isLoggedIn = !!localStorage.getItem("token");
+  const [showViewer, setShowViewer] = useState(false);
   const heroModelSrc = useMemo(() => {
     const modelUrls = Object.values(heroModelModules);
     if (modelUrls.length === 0) {
       return "";
     }
     return modelUrls[Math.floor(Math.random() * modelUrls.length)];
+  }, []);
+
+  useEffect(() => {
+    const win = globalThis as any;
+    const startViewer = () => setShowViewer(true);
+
+    if (typeof win.requestIdleCallback === "function") {
+      const idleId = win.requestIdleCallback(startViewer, {
+        timeout: 500,
+      });
+      return () => win.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = win.setTimeout(startViewer, 180);
+    return () => win.clearTimeout(timeoutId);
   }, []);
 
   return (
@@ -83,7 +100,19 @@ export default function Hero() {
         <div className="absolute top-[46%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] h-[72%] bg-emerald-300/20 rounded-full blur-3xl" />
 
         <div className="relative w-full h-full max-w-[580px]">
-          <HeroModelViewer src={heroModelSrc} />
+          {showViewer ? (
+            <Suspense
+              fallback={
+                <div className="absolute z-30 left-1/2 -translate-x-1/2 bottom-[6%] w-[98%] h-[86%] flex items-center justify-center text-xs text-white/75">
+                  Loading 3D model...
+                </div>
+              }
+            >
+              <HeroModelViewer src={heroModelSrc} />
+            </Suspense>
+          ) : (
+            <div className="absolute z-20 left-1/2 -translate-x-1/2 bottom-[6%] w-[98%] h-[86%]" />
+          )}
         </div>
       </div>
     </section>
