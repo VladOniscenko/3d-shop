@@ -49,75 +49,125 @@ export default function OrderPricingPanel({
       {order.items.length === 0 ? (
         <p className="admin-note">{t("admin.orderDetail.noItemsMessage")}</p>
       ) : (
-        <ul className="space-y-3">
-          {order.items.map((item) => (
-            <li
+        <div className="space-y-5">
+          {order.items.map((item, idx) => (
+            <div
               key={item.id || item.fileName}
-              className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
+              className="rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
-              <p className="font-semibold text-[#22342f]">
-                {item.fileName ?? item.fileUrl}
-              </p>
-              <p className="text-xs text-[#5c716b]">
-                {t("admin.orderDetail.materialLabel")}: {item.material},{" "}
-                {t("admin.orderDetail.colorLabel")}: {item.color},{" "}
-                {t("admin.orderDetail.qtyLabel")}: {item.count}
-              </p>
-              {item.notes && (
-                <div className="rounded bg-amber-50 p-2 border border-amber-200 mt-2">
-                  <p className="text-xs font-semibold text-amber-900 mb-1">
-                    {t("admin.orderDetail.instructionsLabel")}:
-                  </p>
-                  <p className="text-sm text-amber-800">{item.notes}</p>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="text-[#304843]">
-                  {t("admin.orderDetail.priceLabel")}: EUR
-                </span>
-                <input
-                  type="number"
-                  value={item.id ? itemPrices[item.id] || 0 : 0}
-                  disabled={!item.id || pricingLocked}
-                  onChange={(e) => {
-                    if (!item.id) return;
-                    const newPrice = parseFloat(e.target.value) || 0;
-                    setItemPrices((prev) => ({
-                      ...prev,
-                      [item.id!]: newPrice,
-                    }));
-                  }}
-                  className="admin-field w-24"
-                />
-                <button
-                  type="button"
-                  disabled={
-                    !item.id || savingItemId === item.id || pricingLocked
-                  }
-                  onClick={() =>
-                    item.id &&
-                    updateItemPrice(item.id, itemPrices[item.id] || 0)
-                  }
-                  className="admin-btn admin-btn-primary"
-                >
-                  {savingItemId === item.id
-                    ? t("admin.orderDetail.savingButton")
-                    : t("admin.orderDetail.saveButton")}
-                </button>
+              {/* Header with item number */}
+              <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
+                <h3 className="font-bold text-[#1b2b25] text-sm">
+                  {t("admin.orderDetail.itemLabel")} #{idx + 1}
+                </h3>
               </div>
-              {item.fileUrl && (
-                <a
-                  href={resolveAssetUrl(item.fileUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-semibold text-teal-700 hover:underline"
-                >
-                  {t("admin.orderDetail.downloadFile")}
-                </a>
-              )}
-            </li>
+
+              {/* Content area */}
+              <div className="p-5">
+                {/* File info */}
+                <div className="mb-4">
+                  <p className="text-xs uppercase text-[#6c817a] font-semibold mb-1">
+                    {t("admin.orderDetail.fileLabel")}
+                  </p>
+                  <p className="text-sm font-medium text-[#1b2b25] break-all">
+                    {item.fileName ?? item.fileUrl ?? "—"}
+                  </p>
+                  {item.fileUrl && (
+                    <a
+                      href={resolveAssetUrl(item.fileUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline mt-1 inline-block"
+                    >
+                      ↓ {t("admin.orderDetail.downloadFile")}
+                    </a>
+                  )}
+                </div>
+
+                {/* Specs grid */}
+                <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-[#eef4f1]">
+                  <div>
+                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                      {t("admin.orderDetail.materialLabel")}
+                    </p>
+                    <p className="text-sm font-medium text-[#22342f]">
+                      {item.material}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                      {t("admin.orderDetail.colorLabel")}
+                    </p>
+                    <p className="text-sm font-medium text-[#22342f]">
+                      {item.color}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                      {t("admin.orderDetail.qtyLabel")}
+                    </p>
+                    <p className="text-sm font-bold text-[#1b2b25]">
+                      {item.count}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                      {t("admin.orderDetail.priceLabel")}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-[#6c817a]">EUR</span>
+                      <input
+                        type="number"
+                        value={item.id ? itemPrices[item.id] || 0 : 0}
+                        disabled={!item.id || pricingLocked}
+                        onChange={(e) => {
+                          if (!item.id) return;
+                          const newPrice = parseFloat(e.target.value) || 0;
+                          setItemPrices((prev) => ({
+                            ...prev,
+                            [item.id!]: newPrice,
+                          }));
+                        }}
+                        className="admin-field w-20 h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instructions section */}
+                {item.notes && (
+                  <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
+                    <p className="text-xs font-bold uppercase text-amber-900 mb-2">
+                      {t("admin.orderDetail.instructionsLabel")}
+                    </p>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      {item.notes}
+                    </p>
+                  </div>
+                )}
+
+                {/* Save button for price */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    disabled={
+                      !item.id || savingItemId === item.id || pricingLocked
+                    }
+                    onClick={() =>
+                      item.id &&
+                      updateItemPrice(item.id, itemPrices[item.id] || 0)
+                    }
+                    className="admin-btn admin-btn-primary text-sm px-4 py-2"
+                  >
+                    {savingItemId === item.id
+                      ? t("admin.orderDetail.savingButton")
+                      : t("admin.orderDetail.saveButton")}
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       <div className="mt-3 flex items-center justify-end gap-2">
         <span className="text-[#304843]">
