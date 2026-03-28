@@ -225,29 +225,11 @@ public class OrdersController : ControllerBase
             {
                 try
                 {
-                    var normalizedPath = item.FileUrl.Replace('\\', '/');
-                    var uploadsIndex = normalizedPath.IndexOf("/uploads/", StringComparison.OrdinalIgnoreCase);
-
-                    string filePath;
-                    if (uploadsIndex >= 0)
-                    {
-                        var relativeUploadPath = normalizedPath[(uploadsIndex + 1)..]; // "uploads/<file>"
-                        filePath = Path.Combine(_env.WebRootPath, relativeUploadPath.Replace('/', Path.DirectorySeparatorChar));
-                    }
-                    else
-                    {
-                        var fileName = Path.GetFileName(normalizedPath);
-                        filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
-                    }
-
-                    if (System.IO.File.Exists(filePath))
-                    {
-                        System.IO.File.Delete(filePath);
-                    }
+                    DeleteUploadFileIfExists(item.FileUrl);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to delete file: {ex.Message}");
+                    _logger.LogWarning(ex, "Failed to delete uploaded file for order item {OrderItemId}", item.Id);
                 }
             }
         }
@@ -289,6 +271,37 @@ public class OrdersController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private void DeleteUploadFileIfExists(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return;
+        if (string.IsNullOrWhiteSpace(_env.WebRootPath)) return;
+
+        var path = rawUrl.Trim();
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absoluteUri))
+        {
+            path = absoluteUri.AbsolutePath;
+        }
+
+        var normalizedPath = path.Replace('\\', '/');
+        if (!normalizedPath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var fileName = Path.GetFileName(normalizedPath);
+        if (string.IsNullOrWhiteSpace(fileName)) return;
+        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return;
+
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads"));
+        var filePath = Path.GetFullPath(Path.Combine(uploadsRoot, fileName));
+
+        if (!filePath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return;
+
+        if (System.IO.File.Exists(filePath))
+        {
+            System.IO.File.Delete(filePath);
+        }
     }
 }
 

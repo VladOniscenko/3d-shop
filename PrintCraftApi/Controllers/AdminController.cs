@@ -297,25 +297,7 @@ public class AdminController : ControllerBase
         {
             if (!string.IsNullOrEmpty(item.FileUrl))
             {
-                var normalizedPath = item.FileUrl.Replace('\\', '/');
-                var uploadsIndex = normalizedPath.IndexOf("/uploads/", StringComparison.OrdinalIgnoreCase);
-
-                string filePath;
-                if (uploadsIndex >= 0)
-                {
-                    var relativeUploadPath = normalizedPath[(uploadsIndex + 1)..]; // "uploads/<file>"
-                    filePath = Path.Combine("wwwroot", relativeUploadPath.Replace('/', Path.DirectorySeparatorChar));
-                }
-                else
-                {
-                    var fileName = Path.GetFileName(normalizedPath);
-                    filePath = Path.Combine("wwwroot", "uploads", fileName);
-                }
-
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
+                DeleteUploadFileIfExists(item.FileUrl);
             }
         }
 
@@ -597,5 +579,35 @@ public class AdminController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private static void DeleteUploadFileIfExists(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return;
+
+        var path = rawUrl.Trim();
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absoluteUri))
+        {
+            path = absoluteUri.AbsolutePath;
+        }
+
+        var normalizedPath = path.Replace('\\', '/');
+        if (!normalizedPath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var fileName = Path.GetFileName(normalizedPath);
+        if (string.IsNullOrWhiteSpace(fileName)) return;
+        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return;
+
+        var uploadsRoot = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads"));
+        var filePath = Path.GetFullPath(Path.Combine(uploadsRoot, fileName));
+
+        if (!filePath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return;
+
+        if (System.IO.File.Exists(filePath))
+        {
+            System.IO.File.Delete(filePath);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
@@ -43,8 +44,10 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 80)
             return BadRequest(new { message = "Name must be between 2 and 80 characters." });
 
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        if (!IsValidEmail(email))
             return BadRequest(new { message = "A valid email is required." });
+
+        var normalizedEmail = email!;
 
         if (string.IsNullOrWhiteSpace(req.Password) || req.Password.Length < 8)
             return BadRequest(new { message = "Password must be at least 8 characters." });
@@ -55,7 +58,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Name = name,
-            Email = email,
+            Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             Role = "customer"
         };
@@ -69,13 +72,17 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("AuthBurst")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
+        if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
+            return Unauthorized();
+
         var normalizedEmail = req.Email.Trim().ToLowerInvariant();
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized();
 
-        var secretKey = _configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
-        var key = Encoding.ASCII.GetBytes(secretKey);
+        var key = GetJwtSigningKey();
+        var jwtIssuer = _configuration["JwtIssuer"];
+        var jwtAudience = _configuration["JwtAudience"];
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -85,6 +92,8 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role)
             }),
+            Issuer = string.IsNullOrWhiteSpace(jwtIssuer) ? null : jwtIssuer,
+            Audience = string.IsNullOrWhiteSpace(jwtAudience) ? null : jwtAudience,
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
@@ -165,8 +174,7 @@ public class AuthController : ControllerBase
 
     private string GeneratePasswordResetToken(User user)
     {
-        var secretKey = _configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
-        var key = Encoding.ASCII.GetBytes(secretKey);
+        var key = GetJwtSigningKey();
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var descriptor = new SecurityTokenDescriptor
@@ -189,8 +197,7 @@ public class AuthController : ControllerBase
 
     private Guid? ValidatePasswordResetToken(string token)
     {
-        var secretKey = _configuration["JwtSecret"] ?? "YOUR_SUPER_SECRET_KEY_MAKE_IT_LONG_12345!";
-        var key = Encoding.ASCII.GetBytes(secretKey);
+        var key = GetJwtSigningKey();
         var tokenHandler = new JwtSecurityTokenHandler();
 
         try
@@ -201,6 +208,7 @@ public class AuthController : ControllerBase
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
                 ValidateAudience = false,
+                ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromMinutes(1),
             }, out _);
 
@@ -215,6 +223,29 @@ public class AuthController : ControllerBase
         {
             return null;
         }
+    }
+
+    private static bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return false;
+        try
+        {
+            _ = new MailAddress(email);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private byte[] GetJwtSigningKey()
+    {
+        var secret = _configuration["JwtSecret"];
+        if (string.IsNullOrWhiteSpace(secret) || secret.Length < 32)
+            throw new InvalidOperationException("JwtSecret must be configured and at least 32 characters long.");
+
+        return Encoding.ASCII.GetBytes(secret);
     }
 }
 

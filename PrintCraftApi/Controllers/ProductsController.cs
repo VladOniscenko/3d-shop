@@ -397,10 +397,24 @@ public class ProductsController : ControllerBase
         if (_env.WebRootPath == null) return;
 
         var normalized = url.Trim();
-        if (!normalized.StartsWith("/", StringComparison.Ordinal)) return;
+        if (Uri.TryCreate(normalized, UriKind.Absolute, out var absoluteUri))
+        {
+            normalized = absoluteUri.AbsolutePath;
+        }
 
-        var relative = normalized.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var fullPath = Path.Combine(_env.WebRootPath, relative);
+        normalized = normalized.Replace('\\', '/');
+        if (!normalized.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
+
+        var fileName = Path.GetFileName(normalized);
+        if (string.IsNullOrWhiteSpace(fileName)) return;
+        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return;
+
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads"));
+        var fullPath = Path.GetFullPath(Path.Combine(uploadsRoot, fileName));
+
+        if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return;
+
         if (System.IO.File.Exists(fullPath))
         {
             System.IO.File.Delete(fullPath);
