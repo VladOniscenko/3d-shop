@@ -11,8 +11,8 @@ using PrintCraftApi.Data;
 namespace PrintCraftApi.Migrations
 {
     [DbContext(typeof(PrintCraftDb))]
-    [Migration("20260328210546_ConsolidateAdminAndProductFeatures")]
-    partial class ConsolidateAdminAndProductFeatures
+    [Migration("20260328211136_AddMissingOrderAndProductFields")]
+    partial class AddMissingOrderAndProductFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
