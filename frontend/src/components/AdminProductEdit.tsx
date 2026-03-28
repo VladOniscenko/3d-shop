@@ -147,7 +147,10 @@ export default function AdminProductEdit() {
       return;
     }
 
-    if (discountPercentage < DISCOUNT_MIN || discountPercentage > DISCOUNT_MAX) {
+    if (
+      discountPercentage < DISCOUNT_MIN ||
+      discountPercentage > DISCOUNT_MAX
+    ) {
       notifyError(
         `Discount must be between ${DISCOUNT_MIN} and ${DISCOUNT_MAX}.`,
       );
@@ -400,7 +403,9 @@ export default function AdminProductEdit() {
                       className="w-full h-24 object-cover rounded-md border border-[#e7efeb]"
                     />
                   </a>
-                  <p className="mt-2 text-[10px] text-[#60736d] break-all">{url}</p>
+                  <p className="mt-2 text-[10px] text-[#60736d] break-all">
+                    {url}
+                  </p>
                   <button
                     type="button"
                     className="admin-btn admin-btn-danger mt-2 w-full"

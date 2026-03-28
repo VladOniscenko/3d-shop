@@ -344,7 +344,9 @@ export default function AdminProducts() {
                             className="w-16 h-16 rounded-md object-cover border border-[#ddeae3]"
                           />
                         ) : (
-                          <span className="text-xs text-[#60736d]">No image</span>
+                          <span className="text-xs text-[#60736d]">
+                            No image
+                          </span>
                         )}
                       </td>
                       <td className="font-semibold">{product.name}</td>
@@ -357,9 +359,13 @@ export default function AdminProducts() {
                       <td>EUR {product.price.toFixed(2)}</td>
                       <td>
                         {product.isActive ? (
-                          <span className="text-emerald-700 font-semibold">Active</span>
+                          <span className="text-emerald-700 font-semibold">
+                            Active
+                          </span>
                         ) : (
-                          <span className="text-slate-600 font-semibold">Inactive</span>
+                          <span className="text-slate-600 font-semibold">
+                            Inactive
+                          </span>
                         )}
                       </td>
                       <td>
@@ -376,7 +382,9 @@ export default function AdminProducts() {
                             disabled={deletingId === product.id}
                             className="admin-btn admin-btn-danger"
                           >
-                            {deletingId === product.id ? "Deleting..." : "Delete"}
+                            {deletingId === product.id
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       </td>
