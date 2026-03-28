@@ -24,7 +24,9 @@ export default function Hero() {
     }
 
     const selectedPath =
-      modelPaths[Math.floor(Math.random() * modelPaths.length)] ?? modelPaths[0] ?? "";
+      modelPaths[Math.floor(Math.random() * modelPaths.length)] ??
+      modelPaths[0] ??
+      "";
 
     const loadModel = heroModelLoaders[selectedPath];
     if (!loadModel) {
