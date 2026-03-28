@@ -203,6 +203,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.street": "Street Address",
     "quote.city": "City",
     "quote.postalCode": "Postal Code",
+    "quote.shippingLaterNotice":
+      "Shipping details are requested after your quote is approved, when you click confirm and pay.",
 
     // Cart
     "cart.loading": "Loading cart...",
@@ -275,6 +277,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Reference ID",
     "orderDetail.confirmPay": "Confirm + Pay",
+    "orderDetail.shippingModalTitle": "Confirm Shipping Details",
+    "orderDetail.shippingModalSubtitle":
+      "We need your delivery address before continuing to payment.",
+    "orderDetail.shippingModalCheckout": "Checkout",
+    "orderDetail.shippingModalStarting": "Starting checkout...",
     "orderDetail.paymentStartFailed":
       "Could not start payment. Please try again.",
 
@@ -569,6 +576,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.street": "Straat en huisnummer",
     "quote.city": "Plaats",
     "quote.postalCode": "Postcode",
+    "quote.shippingLaterNotice":
+      "Verzendgegevens vragen we pas nadat je offerte is goedgekeurd, wanneer je op bevestigen en betalen klikt.",
 
     // Cart
     "cart.loading": "Winkelwagen laden...",
@@ -640,6 +649,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Referentie-ID",
     "orderDetail.confirmPay": "Bevestig + Betaal",
+    "orderDetail.shippingModalTitle": "Bevestig Verzendgegevens",
+    "orderDetail.shippingModalSubtitle":
+      "We hebben je afleveradres nodig voordat je verdergaat naar betalen.",
+    "orderDetail.shippingModalCheckout": "Afrekenen",
+    "orderDetail.shippingModalStarting": "Checkout starten...",
     "orderDetail.paymentStartFailed":
       "Betaling starten is niet gelukt. Probeer opnieuw.",
 

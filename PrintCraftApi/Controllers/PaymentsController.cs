@@ -63,6 +63,22 @@ public class PaymentsController : ControllerBase
         if (!order.QuotedPrice.HasValue || order.QuotedPrice.Value <= 0)
             return BadRequest(new { message = "Quoted price is missing for this order." });
 
+        var shippingValidation = ShippingInfoValidator.Validate(
+            order.FullName,
+            order.PhoneNumber,
+            order.AddressLine1,
+            order.City,
+            order.PostalCode);
+
+        if (!shippingValidation.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Shipping details are required before payment.",
+                errors = shippingValidation.Errors
+            });
+        }
+
         var frontendBaseUrl = (_configuration["FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
         var backendBaseUrl = (_configuration["BackendBaseUrl"]
             ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/');

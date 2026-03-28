@@ -4,23 +4,17 @@ import {
   Trash2,
   Plus,
   Package,
-  MapPin,
   Loader2,
   CheckCircle,
   Layers,
   Palette,
   MessageSquare,
-  Phone,
   Hash,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import type { OrderItem, Filament } from "../types";
-import {
-  normalizeShippingInfo,
-  validateShippingInfo,
-} from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
@@ -34,17 +28,6 @@ export default function Quote() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [address, setAddress] = useState({
-    fullName: "",
-    addressLine1: "",
-    city: "",
-    postalCode: "",
-    phoneNumber: "",
-  });
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -116,24 +99,11 @@ export default function Quote() {
       return;
     }
 
-    const errors = validateShippingInfo(address);
-    setValidationErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      notifyError(t("quote.invalidShipping"));
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const payload = { ...normalizeShippingInfo(address), items };
-      await api.post("/orders/quote", payload);
+      await api.post("/orders/quote", { items });
       navigate("/orders");
     } catch (err: any) {
-      const apiErrors = err?.response?.data?.errors;
-      if (apiErrors && typeof apiErrors === "object") {
-        setValidationErrors(apiErrors);
-      }
-
       const message = err?.response?.data?.message || t("quote.submitFailed");
       notifyError(message);
     } finally {
@@ -289,117 +259,9 @@ export default function Quote() {
 
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
-                <MapPin className="text-emerald-600" size={20} />
-                {t("quote.shipping")}
-              </h3>
-              <div className="space-y-4">
-                <input
-                  required
-                  placeholder={t("quote.fullName")}
-                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
-                    validationErrors.fullName
-                      ? "border-red-300 focus:ring-red-400"
-                      : "border-gray-200 focus:ring-emerald-500"
-                  }`}
-                  value={address.fullName}
-                  onChange={(e) =>
-                    setAddress({ ...address, fullName: e.target.value })
-                  }
-                />
-                {validationErrors.fullName && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {validationErrors.fullName}
-                  </p>
-                )}
-
-                <div className="relative">
-                  <Phone
-                    className="absolute left-3 top-2.5 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    required
-                    type="tel"
-                    placeholder={t("quote.phone")}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 ${
-                      validationErrors.phoneNumber
-                        ? "border-red-300 focus:ring-red-400"
-                        : "border-gray-200 focus:ring-emerald-500"
-                    }`}
-                    value={address.phoneNumber}
-                    onChange={(e) =>
-                      setAddress({ ...address, phoneNumber: e.target.value })
-                    }
-                  />
-                </div>
-                {validationErrors.phoneNumber && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {validationErrors.phoneNumber}
-                  </p>
-                )}
-
-                <input
-                  required
-                  placeholder={t("quote.street")}
-                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
-                    validationErrors.addressLine1
-                      ? "border-red-300 focus:ring-red-400"
-                      : "border-gray-200 focus:ring-emerald-500"
-                  }`}
-                  value={address.addressLine1}
-                  onChange={(e) =>
-                    setAddress({ ...address, addressLine1: e.target.value })
-                  }
-                />
-                {validationErrors.addressLine1 && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {validationErrors.addressLine1}
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <input
-                      required
-                      placeholder={t("quote.city")}
-                      className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
-                        validationErrors.city
-                          ? "border-red-300 focus:ring-red-400"
-                          : "border-gray-200 focus:ring-emerald-500"
-                      }`}
-                      value={address.city}
-                      onChange={(e) =>
-                        setAddress({ ...address, city: e.target.value })
-                      }
-                    />
-                    {validationErrors.city && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {validationErrors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      required
-                      placeholder={t("quote.postalCode")}
-                      className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
-                        validationErrors.postalCode
-                          ? "border-red-300 focus:ring-red-400"
-                          : "border-gray-200 focus:ring-emerald-500"
-                      }`}
-                      value={address.postalCode}
-                      onChange={(e) =>
-                        setAddress({ ...address, postalCode: e.target.value })
-                      }
-                    />
-                    {validationErrors.postalCode && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {validationErrors.postalCode}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm text-gray-600">
+                {t("quote.shippingLaterNotice")}
+              </p>
 
               <button
                 type="submit"

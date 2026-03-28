@@ -70,72 +70,64 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost("quote")]
-    public async Task<IActionResult> CreateQuote([FromBody] Order order)
+    public async Task<IActionResult> CreateQuote([FromBody] QuoteRequest request)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
-        var shippingValidation = ShippingInfoValidator.Validate(
-            order.FullName,
-            order.PhoneNumber,
-            order.AddressLine1,
-            order.City,
-            order.PostalCode);
-
-        if (!shippingValidation.IsValid)
-        {
-            return BadRequest(new
-            {
-                message = "Please correct shipping info and try again.",
-                errors = shippingValidation.Errors
-            });
-        }
-
-        if (order.Items == null || order.Items.Count == 0)
+        if (request.Items == null || request.Items.Count == 0)
         {
             return BadRequest(new { message = "At least one model is required for a quote." });
         }
 
-        if (order.Items.Any(i => string.IsNullOrWhiteSpace(i.FileUrl) || i.Count <= 0))
+        if (request.Items.Any(i => string.IsNullOrWhiteSpace(i.FileUrl) || i.Count <= 0))
         {
             return BadRequest(new { message = "Each quote item must include a valid file and quantity." });
         }
 
-        if (order.Items.Any(i => i.Count > 100))
+        if (request.Items.Any(i => i.Count > 100))
         {
             return BadRequest(new { message = "Item quantity cannot exceed 100 per model." });
         }
 
-        order.Id = Guid.NewGuid();
-        order.UserId = Guid.Parse(userIdStr);
-        order.CreatedAt = DateTime.UtcNow;
-        order.Status = "pending_quote";
-        order.OrderType = "quote";
-        order.IsPaid = false;
-        order.QuotedPrice = null;
-        order.QuoteMessage = null;
-        order.FullName = shippingValidation.FullName;
-        order.PhoneNumber = shippingValidation.PhoneNumber;
-        order.AddressLine1 = shippingValidation.AddressLine1;
-        order.City = shippingValidation.City;
-        order.PostalCode = shippingValidation.PostalCode;
+        var userId = Guid.Parse(userIdStr);
+        var user = await _db.Users.FindAsync(userId);
+
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Status = "pending_quote",
+            OrderType = "quote",
+            IsPaid = false,
+            QuotedPrice = null,
+            QuoteMessage = null,
+            FullName = user?.Name?.Trim() ?? string.Empty,
+            PhoneNumber = string.Empty,
+            AddressLine1 = string.Empty,
+            City = string.Empty,
+            PostalCode = string.Empty,
+            Items = request.Items.Select(item => new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = Guid.Empty,
+                FileUrl = item.FileUrl.Trim(),
+                fileName = string.IsNullOrWhiteSpace(item.FileName) ? null : item.FileName.Trim(),
+                Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
+                Material = string.IsNullOrWhiteSpace(item.Material) ? "Custom" : item.Material.Trim(),
+                Color = string.IsNullOrWhiteSpace(item.Color) ? "Custom" : item.Color.Trim(),
+                Count = item.Count,
+                Price = 0,
+            }).ToList(),
+        };
 
         if (order.Items != null)
         {
             foreach (var item in order.Items)
             {
-                item.Id = Guid.NewGuid();
                 item.OrderId = order.Id;
-                item.Material = string.IsNullOrWhiteSpace(item.Material)
-                    ? "Custom"
-                    : item.Material.Trim();
-                item.Color = string.IsNullOrWhiteSpace(item.Color)
-                    ? "Custom"
-                    : item.Color.Trim();
-                item.Notes = string.IsNullOrWhiteSpace(item.Notes)
-                    ? null
-                    : item.Notes.Trim();
-                item.Price = 0;
             }
         }
 
@@ -145,7 +137,6 @@ public class OrdersController : ControllerBase
 
         try
         {
-            var user = await _db.Users.FindAsync(order.UserId);
             if (user != null)
             {
                 await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
@@ -157,6 +148,52 @@ public class OrdersController : ControllerBase
         }
 
         return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
+    }
+
+    [HttpPut("{id:guid}/shipping")]
+    public async Task<IActionResult> SaveQuoteShipping([FromRoute] Guid id, [FromBody] SaveQuoteShippingRequest request)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
+
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+        if (order == null)
+            return NotFound(new { message = "Order not found." });
+
+        if (!string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Shipping can only be updated for quote orders." });
+
+        if (order.IsPaid)
+            return BadRequest(new { message = "Paid orders cannot be updated." });
+
+        var shippingValidation = ShippingInfoValidator.Validate(
+            request.FullName,
+            request.PhoneNumber,
+            request.AddressLine1,
+            request.City,
+            request.PostalCode);
+
+        if (!shippingValidation.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Please correct shipping info and try again.",
+                errors = shippingValidation.Errors
+            });
+        }
+
+        order.FullName = shippingValidation.FullName;
+        order.PhoneNumber = shippingValidation.PhoneNumber;
+        order.AddressLine1 = shippingValidation.AddressLine1;
+        order.City = shippingValidation.City;
+        order.PostalCode = shippingValidation.PostalCode;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(order);
     }
 
     [HttpPut("{id:guid}/cancel")]
@@ -234,3 +271,22 @@ public class OrdersController : ControllerBase
         await _db.SaveChangesAsync();
     }
 }
+
+public record QuoteRequest(List<QuoteItemRequest> Items);
+
+public record QuoteItemRequest(
+    string FileUrl,
+    string? FileName,
+    string? Notes,
+    string? Material,
+    string? Color,
+    int Count
+);
+
+public record SaveQuoteShippingRequest(
+    string FullName,
+    string PhoneNumber,
+    string AddressLine1,
+    string City,
+    string PostalCode
+);

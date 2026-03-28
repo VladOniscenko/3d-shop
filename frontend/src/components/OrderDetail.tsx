@@ -22,6 +22,10 @@ import {
 import Navbar from "./Navbar";
 import api from "../services/api";
 import type { Order } from "../types";
+import {
+  normalizeShippingInfo,
+  validateShippingInfo,
+} from "../utils/shippingValidation";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
@@ -35,12 +39,30 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [showShippingModal, setShowShippingModal] = useState(false);
+  const [shippingDetails, setShippingDetails] = useState({
+    fullName: "",
+    phoneNumber: "",
+    addressLine1: "",
+    city: "",
+    postalCode: "",
+  });
+  const [shippingErrors, setShippingErrors] = useState<Record<string, string>>(
+    {},
+  );
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
         const res = await api.get(`/orders/${id}`);
         setOrder(res.data);
+        setShippingDetails({
+          fullName: res.data?.fullName || "",
+          phoneNumber: res.data?.phoneNumber || "",
+          addressLine1: res.data?.addressLine1 || "",
+          city: res.data?.city || "",
+          postalCode: res.data?.postalCode || "",
+        });
       } catch (err) {
         console.error("Error fetching order", err);
       } finally {
@@ -71,18 +93,63 @@ export default function OrderDetail() {
   const handleConfirmAndPay = async () => {
     if (!id) return;
 
+    setShippingDetails({
+      fullName: order?.fullName || "",
+      phoneNumber: order?.phoneNumber || "",
+      addressLine1: order?.addressLine1 || "",
+      city: order?.city || "",
+      postalCode: order?.postalCode || "",
+    });
+    setShippingErrors({});
+    setShowShippingModal(true);
+  };
+
+  const handleShippingField = (
+    field: "fullName" | "phoneNumber" | "addressLine1" | "city" | "postalCode",
+    value: string,
+  ) => {
+    setShippingDetails((prev) => ({ ...prev, [field]: value }));
+    if (shippingErrors[field]) {
+      const next = { ...shippingErrors };
+      delete next[field];
+      setShippingErrors(next);
+    }
+  };
+
+  const handleSaveAddressAndCheckout = async () => {
+    if (!id) return;
+
+    const errors = validateShippingInfo(shippingDetails);
+    setShippingErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      notifyError(t("quote.invalidShipping"));
+      return;
+    }
+
     setIsPaying(true);
     try {
+      const shippingPayload = normalizeShippingInfo(shippingDetails);
+      await api.put(`/orders/${id}/shipping`, shippingPayload);
+
       const res = await api.post(`/payments/orders/${id}/create`);
       if (res.data?.checkoutUrl) {
+        setShowShippingModal(false);
         window.location.href = res.data.checkoutUrl;
         return;
       }
 
       throw new Error("No checkout URL received from server");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Quoted payment checkout error", err);
-      notifyError(t("orderDetail.paymentStartFailed"));
+
+      const apiErrors = err?.response?.data?.errors;
+      if (apiErrors && typeof apiErrors === "object") {
+        setShippingErrors(apiErrors);
+      }
+
+      notifyError(
+        err?.response?.data?.message || t("orderDetail.paymentStartFailed"),
+      );
     } finally {
       setIsPaying(false);
     }
@@ -354,10 +421,16 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <MapPin size={16} className="text-emerald-500 shrink-0" />
                   <div className="text-emerald-50/80">
-                    <p>{order.addressLine1}</p>
-                    <p>
-                      {order.city}, {order.postalCode}
-                    </p>
+                    {order.addressLine1 && order.city && order.postalCode ? (
+                      <>
+                        <p>{order.addressLine1}</p>
+                        <p>
+                          {order.city}, {order.postalCode}
+                        </p>
+                      </>
+                    ) : (
+                      <p>{t("orderDetail.pending")}</p>
+                    )}
                   </div>
                 </div>
 
@@ -411,6 +484,145 @@ export default function OrderDetail() {
           </div>
         </div>
       </main>
+
+      {showShippingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {t("orderDetail.shippingModalTitle")}
+            </h3>
+            <p className="text-sm text-gray-600 mb-5">
+              {t("orderDetail.shippingModalSubtitle")}
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <input
+                  placeholder={t("quote.fullName")}
+                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                    shippingErrors.fullName
+                      ? "border-red-300 focus:ring-red-400"
+                      : "border-gray-200 focus:ring-emerald-500"
+                  }`}
+                  value={shippingDetails.fullName}
+                  onChange={(e) =>
+                    handleShippingField("fullName", e.target.value)
+                  }
+                />
+                {shippingErrors.fullName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {shippingErrors.fullName}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="tel"
+                  placeholder={t("quote.phone")}
+                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                    shippingErrors.phoneNumber
+                      ? "border-red-300 focus:ring-red-400"
+                      : "border-gray-200 focus:ring-emerald-500"
+                  }`}
+                  value={shippingDetails.phoneNumber}
+                  onChange={(e) =>
+                    handleShippingField("phoneNumber", e.target.value)
+                  }
+                />
+                {shippingErrors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {shippingErrors.phoneNumber}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  placeholder={t("quote.street")}
+                  className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                    shippingErrors.addressLine1
+                      ? "border-red-300 focus:ring-red-400"
+                      : "border-gray-200 focus:ring-emerald-500"
+                  }`}
+                  value={shippingDetails.addressLine1}
+                  onChange={(e) =>
+                    handleShippingField("addressLine1", e.target.value)
+                  }
+                />
+                {shippingErrors.addressLine1 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {shippingErrors.addressLine1}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <input
+                    placeholder={t("quote.city")}
+                    className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                      shippingErrors.city
+                        ? "border-red-300 focus:ring-red-400"
+                        : "border-gray-200 focus:ring-emerald-500"
+                    }`}
+                    value={shippingDetails.city}
+                    onChange={(e) =>
+                      handleShippingField("city", e.target.value)
+                    }
+                  />
+                  {shippingErrors.city && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {shippingErrors.city}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    placeholder={t("quote.postalCode")}
+                    className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 ${
+                      shippingErrors.postalCode
+                        ? "border-red-300 focus:ring-red-400"
+                        : "border-gray-200 focus:ring-emerald-500"
+                    }`}
+                    value={shippingDetails.postalCode}
+                    onChange={(e) =>
+                      handleShippingField("postalCode", e.target.value)
+                    }
+                  />
+                  {shippingErrors.postalCode && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {shippingErrors.postalCode}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                disabled={isPaying}
+                onClick={() => setShowShippingModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50"
+                disabled={isPaying}
+                onClick={handleSaveAddressAndCheckout}
+              >
+                {isPaying
+                  ? t("orderDetail.shippingModalStarting")
+                  : t("orderDetail.shippingModalCheckout")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );
