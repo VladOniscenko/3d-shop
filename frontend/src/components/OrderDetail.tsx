@@ -181,17 +181,28 @@ export default function OrderDetail() {
     (item) => item.price == null || item.price <= 0,
   );
 
-  const subtotalPrice = hasMissingPrice
+  const isPendingQuote = order.status.toLowerCase() === "pending_quote";
+  const fallbackSubtotal = hasMissingPrice
     ? null
     : order.items.reduce((sum, item) => sum + item.price, 0);
 
-  const orderDiscount = Math.max(order.orderDiscountAmount ?? 0, 0);
-  const deliveryPrice = order.deliveryPrice ?? 0;
+  const subtotalPrice =
+    order.subtotalAmount != null ? order.subtotalAmount : fallbackSubtotal;
+  const orderDiscount = Math.max(
+    order.discountAmount ?? order.orderDiscountAmount ?? 0,
+    0,
+  );
+  const deliveryPrice = Math.max(order.deliveryPrice ?? 0, 0);
 
   const calculatedTotal =
     subtotalPrice == null
-      ? 0
+      ? null
       : Math.max(subtotalPrice + deliveryPrice - orderDiscount, 0);
+
+  const finalTotal =
+    order.finalTotalAmount != null
+      ? Math.max(order.finalTotalAmount, 0)
+      : calculatedTotal;
 
   const statusLabel = (() => {
     switch (order.status.toLowerCase()) {
@@ -218,10 +229,13 @@ export default function OrderDetail() {
     }
   })();
 
-  const displayTotal =
-    order.quotedPrice && order.quotedPrice > 0
-      ? order.quotedPrice
-      : calculatedTotal;
+  const displayTotal = isPendingQuote
+    ? 0
+    : finalTotal != null
+      ? finalTotal
+      : order.quotedPrice && order.quotedPrice > 0
+        ? order.quotedPrice
+        : 0;
 
   const statusStep = (() => {
     switch (order.status.toLowerCase()) {
@@ -319,7 +333,7 @@ export default function OrderDetail() {
                             {item.fileName}
                           </p>
                           {/* ITEM PRICE IF SET */}
-                          {item.price > 0 && (
+                          {!isPendingQuote && item.price > 0 && (
                             <span className="font-bold text-emerald-700">
                               €{item.price.toFixed(2)}
                             </span>
@@ -448,7 +462,7 @@ export default function OrderDetail() {
                   <div className="flex justify-between items-center text-emerald-100/70">
                     <span>{t("orderDetail.subtotal")}</span>
                     <span>
-                      {subtotalPrice != null
+                      {!isPendingQuote && subtotalPrice != null
                         ? `€${subtotalPrice.toFixed(2)}`
                         : t("orderDetail.toBeCalculated")}
                     </span>
@@ -460,13 +474,13 @@ export default function OrderDetail() {
                       <Truck size={14} /> {t("orderDetail.delivery")}
                     </span>
                     <span>
-                      {order.deliveryPrice && order.deliveryPrice > 0
-                        ? `€${order.deliveryPrice.toFixed(2)}`
+                      {!isPendingQuote && deliveryPrice > 0
+                        ? `€${deliveryPrice.toFixed(2)}`
                         : t("orderDetail.toBeCalculated")}
                     </span>
                   </div>
 
-                  {orderDiscount > 0 && (
+                  {!isPendingQuote && orderDiscount > 0 && (
                     <div className="flex justify-between items-center text-emerald-200">
                       <span className="flex items-center gap-2">
                         <Tag size={14} /> {t("orderDetail.discount")}

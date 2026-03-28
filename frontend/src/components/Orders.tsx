@@ -173,12 +173,14 @@ export default function Orders() {
                     <p className="text-xs text-gray-400 flex items-center gap-1">
                       <MapPin size={12} /> {t("orders.shippingTo")} {order.city}
                     </p>
-                    {order.orderDiscountAmount && order.orderDiscountAmount > 0 && (
-                      <p className="text-xs text-emerald-700 font-semibold mt-1">
-                        {t("orderDetail.discount")}: -€
-                        {order.orderDiscountAmount.toFixed(2)}
-                      </p>
-                    )}
+                    {order.orderDiscountAmount &&
+                      order.orderDiscountAmount > 0 &&
+                      order.status.toLowerCase() !== "pending_quote" && (
+                        <p className="text-xs text-emerald-700 font-semibold mt-1">
+                          {t("orderDetail.discount")}: -€
+                          {order.orderDiscountAmount.toFixed(2)}
+                        </p>
+                      )}
                   </div>
 
                   {/* View Button */}

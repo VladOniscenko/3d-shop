@@ -285,3 +285,108 @@ public class ProductsControllerTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
+
+public class AdminControllerPricingSyncTests
+{
+    [Fact]
+    public async Task UpdateOrderItem_RecalculatesQuotedPrice()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 5m, discount: 2m, itemPrice: 10, itemCount: 2);
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var itemId = order.Items[0].Id;
+
+        var result = await sut.UpdateOrderItem(order.Id, itemId, new AdminController.UpdateItemRequest(12));
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var updated = Assert.IsType<Order>(ok.Value);
+        Assert.Equal(27m, updated.QuotedPrice);
+    }
+
+    [Fact]
+    public async Task UpdateDeliveryPrice_RecalculatesQuotedPrice()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 4m, discount: 1m, itemPrice: 10, itemCount: 2);
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateDeliveryPrice(order.Id, new AdminController.DeliveryPriceRequest(9m));
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var updated = Assert.IsType<Order>(ok.Value);
+        Assert.Equal(28m, updated.QuotedPrice);
+    }
+
+    [Fact]
+    public async Task UpdateOrderDiscount_RecalculatesQuotedPrice()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 6m, discount: 0m, itemPrice: 8, itemCount: 3);
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateOrderDiscount(order.Id, new AdminController.OrderDiscountRequest(5m));
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var updated = Assert.IsType<Order>(ok.Value);
+        Assert.Equal(25m, updated.QuotedPrice);
+    }
+
+    [Fact]
+    public void Order_ExposesConsistentPricingBreakdownFields()
+    {
+        var order = CreateOrder(delivery: 6m, discount: 5m, itemPrice: 8, itemCount: 3);
+
+        Assert.Equal(24m, order.SubtotalAmount);
+        Assert.Equal(5m, order.DiscountAmount);
+        Assert.Equal(25m, order.FinalTotalAmount);
+    }
+
+    private static PrintCraftDb CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<PrintCraftDb>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        return new PrintCraftDb(options);
+    }
+
+    private static Order CreateOrder(decimal delivery, decimal discount, double itemPrice, int itemCount)
+    {
+        return new Order
+        {
+            FullName = "Test User",
+            AddressLine1 = "Street 1",
+            City = "City",
+            PostalCode = "1234AB",
+            PhoneNumber = "0612345678",
+            DeliveryPrice = delivery,
+            OrderDiscountAmount = discount,
+            Items =
+            [
+                new OrderItem
+                {
+                    FileUrl = "/uploads/test.stl",
+                    Price = itemPrice,
+                    Count = itemCount,
+                    Material = "PLA",
+                    Color = "Black"
+                }
+            ]
+        };
+    }
+
+    private sealed class NoopEmailService : IEmailService
+    {
+        public Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink) => Task.CompletedTask;
+        public Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId) => Task.CompletedTask;
+        public Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage) => Task.CompletedTask;
+        public Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl) => Task.CompletedTask;
+        public Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount) => Task.CompletedTask;
+    }
+}

@@ -83,6 +83,9 @@ export interface Order {
 
   deliveryPrice?: number;
   orderDiscountAmount?: number;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  finalTotalAmount?: number;
   quotedPrice?: number;
   quoteMessage?: string;
   trackingCode?: string;

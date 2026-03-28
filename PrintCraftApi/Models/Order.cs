@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PrintCraftApi.Models;
 
@@ -33,4 +34,16 @@ public class Order
     public List<OrderItem> Items { get; set; } = new();
     public List<OrderCommunication> Communications { get; set; } = new();
     public List<OrderStatusHistory> StatusHistory { get; set; } = new();
+
+    [NotMapped]
+    public decimal SubtotalAmount
+        => Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count));
+
+    [NotMapped]
+    public decimal DiscountAmount
+        => Math.Max(OrderDiscountAmount, 0m);
+
+    [NotMapped]
+    public decimal FinalTotalAmount
+        => Math.Max(SubtotalAmount + Math.Max(DeliveryPrice, 0m) - DiscountAmount, 0m);
 }

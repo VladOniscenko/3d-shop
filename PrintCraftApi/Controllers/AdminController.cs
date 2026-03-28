@@ -22,6 +22,23 @@ public class AdminController : ControllerBase
             && status.StartsWith("pending", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static decimal CalculateSubtotal(Order order)
+    {
+        return order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count));
+    }
+
+    private static void RecalculateQuotedPrice(Order order)
+    {
+        var normalizedDelivery = Math.Max(order.DeliveryPrice, 0m);
+        var normalizedDiscount = Math.Max(order.OrderDiscountAmount, 0m);
+        var subtotal = CalculateSubtotal(order);
+        var total = Math.Max(subtotal + normalizedDelivery - normalizedDiscount, 0m);
+
+        order.DeliveryPrice = normalizedDelivery;
+        order.OrderDiscountAmount = normalizedDiscount;
+        order.QuotedPrice = total > 0 ? total : null;
+    }
+
     [HttpPut("orders/{id:guid}/paid")]
     public async Task<IActionResult> MarkPaid([FromRoute] Guid id)
     {
@@ -176,9 +193,9 @@ public class AdminController : ControllerBase
         order.PostalCode = updated.PostalCode;
         order.PhoneNumber = updated.PhoneNumber;
         order.Status = updated.Status;
-        order.DeliveryPrice = updated.DeliveryPrice;
+        order.DeliveryPrice = updated.DeliveryPrice < 0 ? 0 : updated.DeliveryPrice;
         order.OrderDiscountAmount = updated.OrderDiscountAmount < 0 ? 0 : updated.OrderDiscountAmount;
-        order.QuotedPrice = updated.QuotedPrice;
+        RecalculateQuotedPrice(order);
         order.QuoteMessage = updated.QuoteMessage;
         order.TrackingCode = string.IsNullOrWhiteSpace(updated.TrackingCode)
             ? null
@@ -372,7 +389,11 @@ public class AdminController : ControllerBase
         var item = order.Items.FirstOrDefault(i => i.Id == itemId);
         if (item == null) return NotFound(new { message = "Item not found" });
 
+        if (payload.Price < 0)
+            return BadRequest(new { message = "Item price cannot be negative." });
+
         item.Price = payload.Price;
+        RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -383,10 +404,16 @@ public class AdminController : ControllerBase
     [HttpPatch("orders/{id:guid}/delivery-price")] // PATCH for partial update
     public async Task<IActionResult> UpdateDeliveryPrice([FromRoute] Guid id, [FromBody] DeliveryPriceRequest payload)
     {
-        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        if (payload.DeliveryPrice < 0)
+            return BadRequest(new { message = "Delivery price cannot be negative." });
+
         order.DeliveryPrice = payload.DeliveryPrice;
+        RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Ok(order);
@@ -395,13 +422,16 @@ public class AdminController : ControllerBase
     [HttpPatch("orders/{id:guid}/order-discount")]
     public async Task<IActionResult> UpdateOrderDiscount([FromRoute] Guid id, [FromBody] OrderDiscountRequest payload)
     {
-        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
         if (payload.OrderDiscountAmount < 0)
             return BadRequest(new { message = "Order discount cannot be negative." });
 
         order.OrderDiscountAmount = payload.OrderDiscountAmount;
+        RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Ok(order);
@@ -466,9 +496,8 @@ public class AdminController : ControllerBase
                 return Ok(new { message = "Quote requested email sent." });
 
             case "quote_confirmation":
-                var subtotal = order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count));
-                var quotePrice = subtotal + order.DeliveryPrice - Math.Max(0m, order.OrderDiscountAmount);
-                if (quotePrice < 0) quotePrice = 0;
+                RecalculateQuotedPrice(order);
+                var quotePrice = order.QuotedPrice ?? 0m;
                 if (quotePrice <= 0)
                     return BadRequest(new { message = "Quote total must be greater than zero. Set item and delivery prices first." });
 
@@ -476,7 +505,6 @@ public class AdminController : ControllerBase
                     ? DefaultQuoteConfirmationMessage
                     : payload.Message.Trim();
 
-                order.QuotedPrice = quotePrice;
                 order.QuoteMessage = quoteMessage;
                 if (!string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(order.Status, "cancelled", StringComparison.OrdinalIgnoreCase))
