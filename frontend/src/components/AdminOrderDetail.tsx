@@ -216,9 +216,7 @@ export default function AdminOrderDetail() {
       navigate("/admin/orders");
     } catch (err: any) {
       console.error(err);
-      notifyError(
-        err?.response?.data?.message || "Could not delete order."
-      );
+      notifyError(err?.response?.data?.message || "Could not delete order.");
     }
   };
 

@@ -138,7 +138,8 @@ export default function Orders() {
                     </p>
                     {order.orderDiscountAmount &&
                       order.orderDiscountAmount > 0 &&
-                      normalizeOrderStatus(order.status) !== "pending_quote" && (
+                      normalizeOrderStatus(order.status) !==
+                        "pending_quote" && (
                         <p className="text-xs text-emerald-700 font-semibold mt-1">
                           {t("orderDetail.discount")}: -€
                           {order.orderDiscountAmount.toFixed(2)}

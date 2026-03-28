@@ -1,4 +1,10 @@
-import { AlertTriangle, CheckCircle2, Clock, FileText, Truck } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Truck,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import {
   getOrderStatusTranslationKey,
@@ -32,12 +38,15 @@ export default function OrderTimeline({
     ? t(getOrderStatusTranslationKey(terminalState) || "orderDetail.status")
     : null;
 
-  const lineColor = terminalState === "failed" ? "before:bg-rose-300" : "before:bg-gray-100";
+  const lineColor =
+    terminalState === "failed" ? "before:bg-rose-300" : "before:bg-gray-100";
 
   return (
     <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
       <h3 className="font-bold text-lg mb-8">{t("orderDetail.timeline")}</h3>
-      <div className={`space-y-8 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 ${lineColor}`}>
+      <div
+        className={`space-y-8 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 ${lineColor}`}
+      >
         <TimelineItem
           icon={<FileText size={16} />}
           title={t("orderDetail.quoteRequested")}
