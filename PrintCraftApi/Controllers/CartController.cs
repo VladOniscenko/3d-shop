@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
+using PrintCraftApi.Services;
 
 namespace PrintCraftApi.Controllers;
 
@@ -132,6 +133,9 @@ public class CartController : ControllerBase
         var product = await _db.Products.FindAsync(request.ProductId);
         if (product == null) return NotFound(new { message = "Product not found" });
 
+        if (product.TrackInventory && product.StockQuantity <= 0)
+            return BadRequest(new { message = "Product is out of stock." });
+
         var material = NormalizeVariant(request.Material, "PLA");
         var color = NormalizeVariant(request.Color, "Black");
 
@@ -155,7 +159,7 @@ public class CartController : ControllerBase
             Material = material,
             Color = color,
             Count = request.Count,
-            Price = (decimal)product.Price
+            Price = ProductPricing.EffectivePrice(product.Price, product.DiscountPercentage)
         });
 
         cart.UpdatedAt = DateTime.UtcNow;
@@ -179,7 +183,7 @@ public class CartController : ControllerBase
                 Material = material,
                 Color = color,
                 Count = request.Count,
-                Price = (decimal)product.Price
+                Price = ProductPricing.EffectivePrice(product.Price, product.DiscountPercentage)
             });
 
             cart.UpdatedAt = DateTime.UtcNow;

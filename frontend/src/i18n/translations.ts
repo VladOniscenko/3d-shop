@@ -13,7 +13,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Navbar
     "nav.home": "Home",
     "nav.materials": "Materials",
-    "nav.gallery": "Gallery",
+    "nav.gallery": "Products",
     "nav.howItWorks": "How It Works",
     "nav.faq": "FAQ",
     "nav.myOrders": "My Orders",
@@ -74,7 +74,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Recent prints
     "recent.title": "Recent Work",
     "recent.subtitle": "Real projects delivered to our community",
-    "recent.viewAll": "View Full Gallery",
+    "recent.viewAll": "View Full Catalog",
     "recent.loading": "Loading Showcase",
     "recent.empty": "Portfolio update in progress...",
 
@@ -135,7 +135,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "If your item arrives damaged or with major issues, send a photo within 3 days and we will reprint and reship it.",
 
     // Gallery
-    "gallery.title": "Print Showcase",
+    "gallery.title": "Product Catalog",
     "gallery.subtitle":
       "Choose a model from our collection to start your next project.",
     "gallery.loading": "Syncing Gallery",
@@ -147,6 +147,40 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "gallery.viewInCart": "View in Cart",
     "gallery.loginFirst": "Please log in first to add items to your cart.",
     "gallery.addFailed": "Failed to add to cart. Please try again.",
+    "gallery.catalogTitle": "Product Catalog",
+    "gallery.catalogSubtitle":
+      "Explore ready-to-order prints today and filament products tomorrow.",
+    "gallery.searchPlaceholder": "Search products, categories, or types",
+    "gallery.categoryAll": "All categories",
+    "gallery.typeAll": "All types",
+    "gallery.typePrint": "3D Print",
+    "gallery.typeFilament": "Filament",
+    "gallery.typeOther": "Other",
+    "gallery.discountedOnly": "Discounted only",
+    "gallery.inStockOnly": "In stock only",
+    "gallery.itemsLabel": "items",
+    "gallery.viewDetails": "View details",
+    "gallery.stockIn": "In stock:",
+    "gallery.stockOut": "Out of stock",
+    "gallery.madeToOrder": "Made to order",
+    "gallery.noProductsTitle": "No products found",
+    "gallery.noProductsDesc": "Try adjusting filters or search keywords.",
+    "gallery.sortNewest": "Newest",
+    "gallery.sortPriceLowHigh": "Price: low to high",
+    "gallery.sortPriceHighLow": "Price: high to low",
+    "gallery.sortName": "Name",
+    "gallery.sortDiscountHigh": "Highest discount",
+
+    // Product detail
+    "productDetail.back": "Back",
+    "productDetail.notFound": "Product not found.",
+    "productDetail.backToCatalog": "Back to catalog",
+    "productDetail.noDescription": "No description available yet.",
+    "productDetail.openModelFile": "Open model file",
+    "productDetail.continueBrowsing": "Continue browsing",
+    "productDetail.added": "Product added to cart.",
+    "productDetail.unavailable": "Out of stock",
+    "productDetail.unavailableError": "This product is currently out of stock.",
 
     // Materials page
     "materials.pageTitle": "Materials Library",
@@ -378,7 +412,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Navbar
     "nav.home": "Home",
     "nav.materials": "Materialen",
-    "nav.gallery": "Galerij",
+    "nav.gallery": "Producten",
     "nav.howItWorks": "Hoe Het Werkt",
     "nav.faq": "FAQ",
     "nav.myOrders": "Mijn Orders",
@@ -441,7 +475,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Recent prints
     "recent.title": "Recent Werk",
     "recent.subtitle": "Echte projecten geleverd aan onze klanten",
-    "recent.viewAll": "Bekijk Volledige Galerij",
+    "recent.viewAll": "Bekijk Volledige Catalogus",
     "recent.loading": "Showcase laden",
     "recent.empty": "Portfolio wordt bijgewerkt...",
 
@@ -505,7 +539,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Als je item beschadigd aankomt of grote printfouten heeft, stuur binnen 3 dagen een foto en we regelen een herprint.",
 
     // Gallery
-    "gallery.title": "Print Showcase",
+    "gallery.title": "Productcatalogus",
     "gallery.subtitle":
       "Kies een model uit onze collectie om je volgende project te starten.",
     "gallery.loading": "Galerij synchroniseren",
@@ -518,6 +552,40 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "gallery.loginFirst":
       "Log eerst in om items aan je winkelwagen toe te voegen.",
     "gallery.addFailed": "Toevoegen mislukt. Probeer opnieuw.",
+    "gallery.catalogTitle": "Productcatalogus",
+    "gallery.catalogSubtitle":
+      "Ontdek direct bestelbare prints en filamentproducten voor je volgende project.",
+    "gallery.searchPlaceholder": "Zoek producten, categorieen of types",
+    "gallery.categoryAll": "Alle categorieen",
+    "gallery.typeAll": "Alle types",
+    "gallery.typePrint": "3D-print",
+    "gallery.typeFilament": "Filament",
+    "gallery.typeOther": "Overig",
+    "gallery.discountedOnly": "Alleen met korting",
+    "gallery.inStockOnly": "Alleen op voorraad",
+    "gallery.itemsLabel": "items",
+    "gallery.viewDetails": "Bekijk details",
+    "gallery.stockIn": "Op voorraad:",
+    "gallery.stockOut": "Niet op voorraad",
+    "gallery.madeToOrder": "Op bestelling",
+    "gallery.noProductsTitle": "Geen producten gevonden",
+    "gallery.noProductsDesc": "Pas filters of zoekwoorden aan.",
+    "gallery.sortNewest": "Nieuwste",
+    "gallery.sortPriceLowHigh": "Prijs: laag naar hoog",
+    "gallery.sortPriceHighLow": "Prijs: hoog naar laag",
+    "gallery.sortName": "Naam",
+    "gallery.sortDiscountHigh": "Hoogste korting",
+
+    // Product detail
+    "productDetail.back": "Terug",
+    "productDetail.notFound": "Product niet gevonden.",
+    "productDetail.backToCatalog": "Terug naar catalogus",
+    "productDetail.noDescription": "Nog geen beschrijving beschikbaar.",
+    "productDetail.openModelFile": "Open modelbestand",
+    "productDetail.continueBrowsing": "Verder kijken",
+    "productDetail.added": "Product toegevoegd aan winkelwagen.",
+    "productDetail.unavailable": "Niet op voorraad",
+    "productDetail.unavailableError": "Dit product is momenteel niet op voorraad.",
 
     // Materials page
     "materials.pageTitle": "Materialen Bibliotheek",

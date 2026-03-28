@@ -125,6 +125,12 @@ export default function SeoManager() {
         keywords: t("seo.gallery.keywords"),
         index: true,
       },
+      "/products": {
+        title: t("seo.gallery.title"),
+        description: t("seo.gallery.description"),
+        keywords: t("seo.gallery.keywords"),
+        index: true,
+      },
       "/materials": {
         title: t("seo.materials.title"),
         description: t("seo.materials.description"),
@@ -176,9 +182,13 @@ export default function SeoManager() {
     };
 
     const isOrderDetail = location.pathname.startsWith("/orders/");
+    const isProductDetail = location.pathname.startsWith("/products/");
+
     const routeSeo = isOrderDetail
       ? { ...seoByRoute["/orders"], index: false }
-      : seoByRoute[location.pathname] || defaultSeo;
+      : isProductDetail
+        ? { ...seoByRoute["/products"], index: true }
+        : seoByRoute[location.pathname] || defaultSeo;
 
     const canonicalUrl = `${window.location.origin}${location.pathname}`;
 

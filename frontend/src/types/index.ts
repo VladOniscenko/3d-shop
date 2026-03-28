@@ -40,10 +40,20 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
+  description?: string;
+  productType?: "print" | "filament" | "other";
   category: string;
   imageUrl: string;
+  images?: string[];
   fileUrl: string;
   price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  hasDiscount?: boolean;
+  isActive?: boolean;
+  trackInventory?: boolean;
+  stockQuantity?: number;
+  inStock?: boolean;
 }
 
 export interface Order {

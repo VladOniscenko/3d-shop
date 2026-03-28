@@ -11,6 +11,7 @@ public class PrintCraftDb : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Filament> Filaments => Set<Filament>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderCommunication> OrderCommunications => Set<OrderCommunication>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
@@ -25,6 +26,15 @@ public class PrintCraftDb : DbContext
         modelBuilder.Entity<Cart>()
             .HasIndex(c => c.UserId)
             .IsUnique();
+
+        modelBuilder.Entity<ProductImage>()
+            .HasOne(pi => pi.Product)
+            .WithMany(p => p.Images)
+            .HasForeignKey(pi => pi.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ProductImage>()
+            .HasIndex(pi => new { pi.ProductId, pi.SortOrder });
 
         modelBuilder.Entity<OrderCommunication>()
             .HasIndex(c => new { c.OrderId, c.SentAt });

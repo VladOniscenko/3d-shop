@@ -91,7 +91,7 @@ export default function RecentPrints() {
           </p>
         </div>
         <Link
-          to="/gallery"
+          to="/products"
           className="text-emerald-600 font-bold text-sm flex items-center gap-1 hover:underline group"
         >
           {t("recent.viewAll")}{" "}
@@ -116,16 +116,24 @@ export default function RecentPrints() {
             return (
               <Link
                 key={print.id}
-                to="/gallery"
+                to={`/products/${print.id}`}
                 className="group flex flex-col gap-4"
               >
-                <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-1">
+                <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-[#eef3f1] shadow-sm border border-gray-100 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-1">
                   {print.imageUrl ? (
-                    <img
-                      src={resolveAssetUrl(print.imageUrl)}
-                      alt={print.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    <>
+                      <img
+                        src={resolveAssetUrl(print.imageUrl)}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                      />
+                      <img
+                        src={resolveAssetUrl(print.imageUrl)}
+                        alt={print.name}
+                        className="relative z-10 w-full h-full object-contain"
+                      />
+                    </>
                   ) : (
                     <div
                       className={`w-full h-full flex items-center justify-center ${design.color}`}

@@ -5,6 +5,7 @@ import Quote from "./components/Quote";
 import Signup from "./components/Signup";
 import Materials from "./components/Materials";
 import Gallery from "./components/Gallery";
+import ProductDetail from "./components/ProductDetail";
 import HowItWorksPage from "./components/HowItWorksPage";
 import FAQ from "./components/FAQ";
 import Orders from "./components/Orders";
@@ -57,7 +58,9 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/materials" element={<Materials />} />
-        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/gallery" element={<Navigate to="/products" replace />} />
+        <Route path="/products" element={<Gallery />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />

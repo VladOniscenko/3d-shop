@@ -162,7 +162,7 @@ public class PaymentsController : ControllerBase
             if (product == null)
                 return BadRequest(new { message = $"Product {cartItem.ProductId} not found" });
 
-            decimal productPrice = (decimal)product.Price;
+            decimal productPrice = ProductPricing.EffectivePrice(product.Price, product.DiscountPercentage);
             subtotal += productPrice * cartItem.Count;
 
             orderItems.Add(new OrderItem
