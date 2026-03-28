@@ -217,27 +217,16 @@ public class OrdersController : ControllerBase
             return NotFound(new { message = "Order not found." });
 
         if (!IsPendingStatus(order.Status))
-            return BadRequest(new { message = "Only pending orders can be deleted." });
+            return BadRequest(new { message = "Only pending orders can be cancelled." });
 
-        foreach (var item in order.Items)
-        {
-            if (!string.IsNullOrEmpty(item.FileUrl))
-            {
-                try
-                {
-                    DeleteUploadFileIfExists(item.FileUrl);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete uploaded file for order item {OrderItemId}", item.Id);
-                }
-            }
-        }
+        var previousStatus = order.Status;
+        order.Status = "cancelled";
+        order.UpdatedAt = DateTime.UtcNow;
 
-        _db.Orders.Remove(order);
         await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "user", "Order cancelled by user");
 
-        return Ok(new { message = "Project removed and files deleted.", orderId = id });
+        return Ok(new { message = "Order cancelled.", orderId = id });
     }
 
     private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)

@@ -48,6 +48,10 @@ export default function Orders() {
     return translationKey ? t(translationKey) : formatOrderStatusLabel(status);
   };
 
+  const visibleOrders = orders.filter(
+    (order) => normalizeOrderStatus(order.status) !== "cancelled"
+  );
+
   return (
     <div className="site-shell">
       <Navbar />
@@ -88,9 +92,27 @@ export default function Orders() {
               {t("orders.start")}
             </Link>
           </div>
+        ) : visibleOrders.length === 0 ? (
+          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-16 text-center">
+            <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Box className="text-gray-300" size={40} />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              {t("orders.none")}
+            </h3>
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
+              {t("orders.noneDesc")}
+            </p>
+            <Link
+              to="/quote"
+              className="inline-block bg-[#133827] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#1c4d37] transition-all shadow-lg shadow-emerald-900/10"
+            >
+              {t("orders.start")}
+            </Link>
+          </div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
+            {visibleOrders.map((order) => (
               <div
                 key={order.id}
                 className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl hover:shadow-gray-200/50 transition-all group"

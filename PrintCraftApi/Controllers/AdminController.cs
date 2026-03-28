@@ -164,7 +164,8 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             var q = search.ToLower();
-            query = query.Where(o => o.FullName.ToLower().Contains(q)
+            query = query.Where(o => o.Id.ToString().ToLower().Contains(q)
+                || o.FullName.ToLower().Contains(q)
                 || o.AddressLine1.ToLower().Contains(q)
                 || o.City.ToLower().Contains(q)
                 || o.PhoneNumber.ToLower().Contains(q)

@@ -7,6 +7,7 @@ import type { Order } from "../types";
 import {
   ADMIN_ORDER_STATUS_OPTIONS,
   formatOrderStatusLabel,
+  getOrderStatusPillClass,
 } from "../utils/orderStatus";
 
 const STATUS_OPTIONS = [
@@ -124,8 +125,10 @@ export default function AdminOrders() {
                     </Link>
                   </td>
                   <td>{order.fullName}</td>
-                  <td className="capitalize">
-                    {formatOrderStatusLabel(order.status)}
+                  <td>
+                    <span className={getOrderStatusPillClass(order.status)}>
+                      {formatOrderStatusLabel(order.status)}
+                    </span>
                   </td>
                   <td>
                     {order.quotedPrice
