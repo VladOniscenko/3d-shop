@@ -300,9 +300,9 @@ export default function AdminOrderDetail() {
   if (!order) {
     return (
       <div className="admin-shell flex flex-col items-center justify-center">
-        <p>Order not found</p>
+        <p>{t("admin.order.notFoundTitle")}</p>
         <Link to="/admin/orders" className="mt-2 text-teal-700 underline">
-          Back to orders
+          {t("admin.order.notFoundLink")}
         </Link>
       </div>
     );
@@ -349,33 +349,33 @@ export default function AdminOrderDetail() {
       <AdminBreadcrumb
         title={`Order ${order.id.slice(0, 8)}`}
         items={[
-          { label: "Admin", to: "/admin" },
-          { label: "Orders", to: "/admin/orders" },
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("breadcrumb.orders"), to: "/admin/orders" },
           { label: order.id.slice(0, 8) },
         ]}
       />
 
       <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">Status</p>
+          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.statusLabel")}</p>
           <p className={`${getOrderStatusPillClass(order.status)} mt-2 w-fit`}>
             {formatOrderStatusLabel(order.status)}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">Created</p>
+          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.createdLabel")}</p>
           <p className="mt-2 text-sm text-[#2e423d]">
             {new Date(order.createdAt).toLocaleString()}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">Items</p>
+          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.itemsLabel")}</p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
             {order.items.length}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">Total</p>
+          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.totalLabel")}</p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
             EUR {totalPrice.toFixed(2)}
           </p>
@@ -386,6 +386,7 @@ export default function AdminOrderDetail() {
         <div className="space-y-5 xl:col-span-2">
           <OrderPricingPanel
             order={order}
+            t={t}
             itemPrices={itemPrices}
             setItemPrices={setItemPrices}
             savingItemId={savingItemId}
@@ -404,6 +405,7 @@ export default function AdminOrderDetail() {
           />
 
           <OrderHistoryPanel
+            t={t}
             statusHistory={statusHistory}
             communications={communications}
           />
