@@ -14,18 +14,30 @@ export default function OrderHistoryPanel({
   return (
     <>
       <article className="admin-panel p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.orderDetail.statusHistoryTitle")}</h3>
+        <h3 className="font-bold mb-2 text-[#1b2b25]">
+          {t("admin.orderDetail.statusHistoryTitle")}
+        </h3>
         {statusHistory.length === 0 ? (
-          <p className="admin-note">{t("admin.orderDetail.noStatusChangesMessage")}</p>
+          <p className="admin-note">
+            {t("admin.orderDetail.noStatusChangesMessage")}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                  <th className="py-2 pr-3">{t("admin.orderDetail.changedAtColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.fromColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.toColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.byColumn")}</th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.changedAtColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.fromColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.toColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.byColumn")}
+                  </th>
                   <th className="py-2">{t("admin.orderDetail.noteColumn")}</th>
                 </tr>
               </thead>
@@ -53,19 +65,33 @@ export default function OrderHistoryPanel({
       </article>
 
       <article className="admin-panel p-4">
-        <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.orderDetail.communicationHistoryTitle")}</h3>
+        <h3 className="font-bold mb-2 text-[#1b2b25]">
+          {t("admin.orderDetail.communicationHistoryTitle")}
+        </h3>
         {communications.length === 0 ? (
-          <p className="admin-note">{t("admin.orderDetail.noCommunicationMessage")}</p>
+          <p className="admin-note">
+            {t("admin.orderDetail.noCommunicationMessage")}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                  <th className="py-2 pr-3">{t("admin.orderDetail.sentAtColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.typeColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.channelColumn")}</th>
-                  <th className="py-2 pr-3">{t("admin.orderDetail.recipientColumn")}</th>
-                  <th className="py-2">{t("admin.orderDetail.subjectColumn")}</th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.sentAtColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.typeColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.channelColumn")}
+                  </th>
+                  <th className="py-2 pr-3">
+                    {t("admin.orderDetail.recipientColumn")}
+                  </th>
+                  <th className="py-2">
+                    {t("admin.orderDetail.subjectColumn")}
+                  </th>
                 </tr>
               </thead>
               <tbody>

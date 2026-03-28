@@ -43,7 +43,9 @@ export default function OrderPricingPanel({
 }: OrderPricingPanelProps) {
   return (
     <article className="admin-panel p-4">
-      <h2 className="font-bold mb-2 text-[#1b2b25]">{t("admin.orderDetail.modelFilesTitle")}</h2>
+      <h2 className="font-bold mb-2 text-[#1b2b25]">
+        {t("admin.orderDetail.modelFilesTitle")}
+      </h2>
       {order.items.length === 0 ? (
         <p className="admin-note">{t("admin.orderDetail.noItemsMessage")}</p>
       ) : (
@@ -57,11 +59,14 @@ export default function OrderPricingPanel({
                 {item.fileName ?? item.fileUrl}
               </p>
               <p className="text-xs text-[#5c716b]">
-                {t("admin.orderDetail.materialLabel")}: {item.material}, {t("admin.orderDetail.colorLabel")}: {item.color}, {t("admin.orderDetail.qtyLabel")}:{" "}
-                {item.count}
+                {t("admin.orderDetail.materialLabel")}: {item.material},{" "}
+                {t("admin.orderDetail.colorLabel")}: {item.color},{" "}
+                {t("admin.orderDetail.qtyLabel")}: {item.count}
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-[#304843]">{t("admin.orderDetail.priceLabel")}: EUR</span>
+                <span className="text-[#304843]">
+                  {t("admin.orderDetail.priceLabel")}: EUR
+                </span>
                 <input
                   type="number"
                   value={item.id ? itemPrices[item.id] || 0 : 0}
@@ -87,7 +92,9 @@ export default function OrderPricingPanel({
                   }
                   className="admin-btn admin-btn-primary"
                 >
-                  {savingItemId === item.id ? t("admin.orderDetail.savingButton") : t("admin.orderDetail.saveButton")}
+                  {savingItemId === item.id
+                    ? t("admin.orderDetail.savingButton")
+                    : t("admin.orderDetail.saveButton")}
                 </button>
               </div>
               {item.fileUrl && (
@@ -105,7 +112,9 @@ export default function OrderPricingPanel({
         </ul>
       )}
       <div className="mt-3 flex items-center justify-end gap-2">
-        <span className="text-[#304843]">{t("admin.orderDetail.deliveryLabel")}: EUR</span>
+        <span className="text-[#304843]">
+          {t("admin.orderDetail.deliveryLabel")}: EUR
+        </span>
         <input
           type="number"
           value={deliveryPrice}
@@ -122,11 +131,15 @@ export default function OrderPricingPanel({
           onClick={() => updateDeliveryPrice(deliveryPrice)}
           className="admin-btn admin-btn-primary"
         >
-          {savingDelivery ? t("admin.orderDetail.savingButton") : t("admin.orderDetail.saveButton")}
+          {savingDelivery
+            ? t("admin.orderDetail.savingButton")
+            : t("admin.orderDetail.saveButton")}
         </button>
       </div>
       <div className="mt-2 flex items-center justify-end gap-2">
-        <span className="text-[#304843]">{t("admin.orderDetail.orderDiscountLabel")}: EUR</span>
+        <span className="text-[#304843]">
+          {t("admin.orderDetail.orderDiscountLabel")}: EUR
+        </span>
         <input
           type="number"
           min="0"
@@ -144,7 +157,9 @@ export default function OrderPricingPanel({
           onClick={() => updateOrderDiscount(orderDiscountAmount)}
           className="admin-btn admin-btn-primary"
         >
-          {savingOrderDiscount ? t("admin.orderDetail.savingButton") : t("admin.orderDetail.saveButton")}
+          {savingOrderDiscount
+            ? t("admin.orderDetail.savingButton")
+            : t("admin.orderDetail.saveButton")}
         </button>
       </div>
       <div className="mt-1 text-right">
@@ -154,12 +169,14 @@ export default function OrderPricingPanel({
           </p>
         )}
         <p className="text-sm text-[#5f736d]">
-          {t("admin.orderDetail.subtotalLabel")}: EUR {subtotal.toFixed(2)} | {t("admin.orderDetail.deliveryLabel")}: EUR{" "}
-          {deliveryPrice.toFixed(2)}| {t("admin.orderDetail.orderDiscountLabel")}: EUR{" "}
+          {t("admin.orderDetail.subtotalLabel")}: EUR {subtotal.toFixed(2)} |{" "}
+          {t("admin.orderDetail.deliveryLabel")}: EUR {deliveryPrice.toFixed(2)}
+          | {t("admin.orderDetail.orderDiscountLabel")}: EUR{" "}
           {orderDiscountAmount.toFixed(2)}
         </p>
         <span className="font-bold">
-          {t("admin.orderDetail.totalIncludingDeliveryLabel")}: EUR {totalPrice.toFixed(2)}
+          {t("admin.orderDetail.totalIncludingDeliveryLabel")}: EUR{" "}
+          {totalPrice.toFixed(2)}
         </span>
       </div>
     </article>

@@ -357,25 +357,33 @@ export default function AdminOrderDetail() {
 
       <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.statusLabel")}</p>
+          <p className="text-xs uppercase text-[#6c817a]">
+            {t("admin.orderDetail.statusLabel")}
+          </p>
           <p className={`${getOrderStatusPillClass(order.status)} mt-2 w-fit`}>
             {formatOrderStatusLabel(order.status)}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.createdLabel")}</p>
+          <p className="text-xs uppercase text-[#6c817a]">
+            {t("admin.orderDetail.createdLabel")}
+          </p>
           <p className="mt-2 text-sm text-[#2e423d]">
             {new Date(order.createdAt).toLocaleString()}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.itemsLabel")}</p>
+          <p className="text-xs uppercase text-[#6c817a]">
+            {t("admin.orderDetail.itemsLabel")}
+          </p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
             {order.items.length}
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">{t("admin.orderDetail.totalLabel")}</p>
+          <p className="text-xs uppercase text-[#6c817a]">
+            {t("admin.orderDetail.totalLabel")}
+          </p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
             EUR {totalPrice.toFixed(2)}
           </p>
