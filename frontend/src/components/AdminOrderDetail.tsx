@@ -96,15 +96,16 @@ export default function AdminOrderDetail() {
   const updateOrderStatus = async () => {
     if (!id) return;
     try {
-      await api.put(`/admin/orders/${id}`, {
-        ...order,
+      await api.patch(`/admin/orders/${id}/status`, {
         status: selectedStatus,
       });
       await refresh();
       notifySuccess("Order status updated.");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      notifyError("Could not update order status.");
+      notifyError(
+        err?.response?.data?.message || "Could not update order status.",
+      );
     }
   };
 
@@ -229,7 +230,7 @@ export default function AdminOrderDetail() {
   const saveCustomerInfo = async () => {
     if (!id) return;
     try {
-      await api.put(`/admin/orders/${id}`, {
+      await api.patch(`/admin/orders/${id}/customer`, {
         fullName,
         addressLine1,
         addressLine2,
@@ -240,9 +241,11 @@ export default function AdminOrderDetail() {
       await refresh();
       setEditingCustomer(false);
       notifySuccess("Customer info updated.");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      notifyError("Could not update customer info.");
+      notifyError(
+        err?.response?.data?.message || "Could not update customer info.",
+      );
     }
   };
 
@@ -331,6 +334,11 @@ export default function AdminOrderDetail() {
     0,
     subtotal + deliveryPrice - orderDiscountAmount,
   );
+  const pricingLocked =
+    !!order.isPaid ||
+    ["paid", "printing", "sent", "delivered", "completed"].includes(
+      order.status.toLowerCase(),
+    );
 
   return (
     <AdminLayout>
@@ -388,6 +396,7 @@ export default function AdminOrderDetail() {
             updateOrderDiscount={updateOrderDiscount}
             subtotal={subtotal}
             totalPrice={totalPrice}
+            pricingLocked={pricingLocked}
           />
 
           <OrderHistoryPanel

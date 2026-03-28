@@ -15,11 +15,67 @@ namespace PrintCraftApi.Controllers;
 public class AdminController : ControllerBase
 {
     private const string DefaultQuoteConfirmationMessage = "Thank you for your quote request. We reviewed your files and determined the production cost based on materials, print time, and finishing. You can now confirm and pay for your quote in your personal portal.";
+    private static readonly HashSet<string> KnownStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "pending",
+        "pending_quote",
+        "quoted",
+        "pending_payment",
+        "printing",
+        "completed",
+        "paid",
+        "shipped",
+        "sent",
+        "delivered",
+        "failed",
+        "cancelled",
+    };
+
+    private static readonly HashSet<string> PostPaymentStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "paid",
+        "printing",
+        "sent",
+        "delivered",
+        "completed",
+    };
 
     private static bool IsPendingStatus(string? status)
     {
         return !string.IsNullOrWhiteSpace(status)
             && status.StartsWith("pending", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeStatus(string? status)
+        => string.IsNullOrWhiteSpace(status) ? string.Empty : status.Trim().ToLowerInvariant();
+
+    private static bool IsKnownStatus(string? status)
+        => KnownStatuses.Contains(NormalizeStatus(status));
+
+    private static bool IsPricingLocked(Order order)
+    {
+        if (order.IsPaid) return true;
+
+        var status = NormalizeStatus(order.Status);
+        return status is "paid" or "printing" or "sent" or "delivered" or "completed";
+    }
+
+    private static bool CanTransitionStatus(string? currentStatus, string? nextStatus, bool isPaid)
+    {
+        var current = NormalizeStatus(currentStatus);
+        var next = NormalizeStatus(nextStatus);
+
+        if (string.IsNullOrWhiteSpace(next)) return false;
+        if (!IsKnownStatus(next)) return false;
+        if (string.Equals(current, next, StringComparison.OrdinalIgnoreCase)) return true;
+
+        if (current is "cancelled" or "completed")
+            return false;
+
+        if (isPaid || string.Equals(current, "paid", StringComparison.OrdinalIgnoreCase))
+            return PostPaymentStatuses.Contains(next);
+
+        return true;
     }
 
     private static decimal CalculateSubtotal(Order order)
@@ -44,6 +100,9 @@ public class AdminController : ControllerBase
     {
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (!CanTransitionStatus(order.Status, "paid", order.IsPaid))
+            return BadRequest(new { message = "Paid status is not allowed from the current state." });
 
         var previousStatus = order.Status;
         order.Status = "paid";
@@ -185,6 +244,19 @@ public class AdminController : ControllerBase
         if (order == null)
             return NotFound(new { message = "Order not found" });
 
+        if (!CanTransitionStatus(order.Status, updated.Status, order.IsPaid))
+            return BadRequest(new { message = "Invalid status transition for this order." });
+
+        if (order.IsPaid && !updated.IsPaid)
+            return BadRequest(new { message = "Paid flag cannot be reverted once payment is completed." });
+
+        if (IsPricingLocked(order)
+            && (updated.DeliveryPrice != order.DeliveryPrice
+                || updated.OrderDiscountAmount != order.OrderDiscountAmount))
+        {
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
+        }
+
         var previousStatus = order.Status;
         order.FullName = updated.FullName;
         order.AddressLine1 = updated.AddressLine1;
@@ -193,9 +265,12 @@ public class AdminController : ControllerBase
         order.PostalCode = updated.PostalCode;
         order.PhoneNumber = updated.PhoneNumber;
         order.Status = updated.Status;
-        order.DeliveryPrice = updated.DeliveryPrice < 0 ? 0 : updated.DeliveryPrice;
-        order.OrderDiscountAmount = updated.OrderDiscountAmount < 0 ? 0 : updated.OrderDiscountAmount;
-        RecalculateQuotedPrice(order);
+        if (!IsPricingLocked(order))
+        {
+            order.DeliveryPrice = updated.DeliveryPrice < 0 ? 0 : updated.DeliveryPrice;
+            order.OrderDiscountAmount = updated.OrderDiscountAmount < 0 ? 0 : updated.OrderDiscountAmount;
+            RecalculateQuotedPrice(order);
+        }
         order.QuoteMessage = updated.QuoteMessage;
         order.TrackingCode = string.IsNullOrWhiteSpace(updated.TrackingCode)
             ? null
@@ -214,11 +289,54 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPatch("orders/{id:guid}/status")]
+    public async Task<IActionResult> UpdateOrderStatus([FromRoute] Guid id, [FromBody] UpdateOrderStatusRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (!CanTransitionStatus(order.Status, payload.Status, order.IsPaid))
+            return BadRequest(new { message = "Invalid status transition for this order." });
+
+        var nextStatus = NormalizeStatus(payload.Status);
+        var previousStatus = order.Status;
+        order.Status = nextStatus;
+        if (string.Equals(nextStatus, "paid", StringComparison.OrdinalIgnoreCase))
+            order.IsPaid = true;
+
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Status updated");
+
+        return Ok(order);
+    }
+
+    [HttpPatch("orders/{id:guid}/customer")]
+    public async Task<IActionResult> UpdateOrderCustomer([FromRoute] Guid id, [FromBody] UpdateOrderCustomerRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        order.FullName = payload.FullName;
+        order.AddressLine1 = payload.AddressLine1;
+        order.AddressLine2 = payload.AddressLine2;
+        order.City = payload.City;
+        order.PostalCode = payload.PostalCode;
+        order.PhoneNumber = payload.PhoneNumber;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
     [HttpPut("orders/{id:guid}/quote")]
     public async Task<IActionResult> DoQuote([FromRoute] Guid id, [FromBody] QuoteRequest payload)
     {
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
 
         var previousStatus = order.Status;
         order.QuotedPrice = payload.Price;
@@ -238,7 +356,7 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
-        if (order.Status == "cancelled" || order.Status == "completed")
+        if (!CanTransitionStatus(order.Status, "printing", order.IsPaid))
             return BadRequest(new { message = "Cannot confirm this order." });
 
         var previousStatus = order.Status;
@@ -257,6 +375,9 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        if (!CanTransitionStatus(order.Status, "sent", order.IsPaid))
+            return BadRequest(new { message = "Cannot mark this order as sent from the current status." });
+
         var previousStatus = order.Status;
         order.Status = "sent";
         order.UpdatedAt = DateTime.UtcNow;
@@ -272,6 +393,9 @@ public class AdminController : ControllerBase
     {
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (!CanTransitionStatus(order.Status, "delivered", order.IsPaid))
+            return BadRequest(new { message = "Cannot mark this order as delivered from the current status." });
 
         var previousStatus = order.Status;
         order.Status = "delivered";
@@ -368,6 +492,9 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
+
         var item = order.Items.FirstOrDefault(i => i.Id == itemId);
         if (item == null) return NotFound(new { message = "Item not found" });
 
@@ -391,6 +518,9 @@ public class AdminController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
+
         if (payload.DeliveryPrice < 0)
             return BadRequest(new { message = "Delivery price cannot be negative." });
 
@@ -408,6 +538,9 @@ public class AdminController : ControllerBase
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
 
         if (payload.OrderDiscountAmount < 0)
             return BadRequest(new { message = "Order discount cannot be negative." });
@@ -545,6 +678,14 @@ public class AdminController : ControllerBase
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
     public record OrderDiscountRequest(decimal OrderDiscountAmount);
+    public record UpdateOrderStatusRequest(string Status);
+    public record UpdateOrderCustomerRequest(
+        string FullName,
+        string AddressLine1,
+        string? AddressLine2,
+        string City,
+        string PostalCode,
+        string PhoneNumber);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
 

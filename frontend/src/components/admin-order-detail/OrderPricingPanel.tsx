@@ -18,6 +18,7 @@ interface OrderPricingPanelProps {
   updateOrderDiscount: (discount: number) => Promise<void>;
   subtotal: number;
   totalPrice: number;
+  pricingLocked: boolean;
 }
 
 export default function OrderPricingPanel({
@@ -36,6 +37,7 @@ export default function OrderPricingPanel({
   updateOrderDiscount,
   subtotal,
   totalPrice,
+  pricingLocked,
 }: OrderPricingPanelProps) {
   return (
     <article className="admin-panel p-4">
@@ -61,6 +63,7 @@ export default function OrderPricingPanel({
                 <input
                   type="number"
                   value={item.id ? itemPrices[item.id] || 0 : 0}
+                  disabled={!item.id || pricingLocked}
                   onChange={(e) => {
                     if (!item.id) return;
                     const newPrice = parseFloat(e.target.value) || 0;
@@ -73,7 +76,7 @@ export default function OrderPricingPanel({
                 />
                 <button
                   type="button"
-                  disabled={!item.id || savingItemId === item.id}
+                  disabled={!item.id || savingItemId === item.id || pricingLocked}
                   onClick={() =>
                     item.id &&
                     updateItemPrice(item.id, itemPrices[item.id] || 0)
@@ -102,6 +105,7 @@ export default function OrderPricingPanel({
         <input
           type="number"
           value={deliveryPrice}
+          disabled={pricingLocked}
           onChange={(e) => {
             const newPrice = parseFloat(e.target.value) || 0;
             setDeliveryPrice(newPrice);
@@ -110,7 +114,7 @@ export default function OrderPricingPanel({
         />
         <button
           type="button"
-          disabled={savingDelivery}
+          disabled={savingDelivery || pricingLocked}
           onClick={() => updateDeliveryPrice(deliveryPrice)}
           className="admin-btn admin-btn-primary"
         >
@@ -123,6 +127,7 @@ export default function OrderPricingPanel({
           type="number"
           min="0"
           value={orderDiscountAmount}
+          disabled={pricingLocked}
           onChange={(e) => {
             const newDiscount = parseFloat(e.target.value) || 0;
             setOrderDiscountAmount(newDiscount);
@@ -131,7 +136,7 @@ export default function OrderPricingPanel({
         />
         <button
           type="button"
-          disabled={savingOrderDiscount}
+          disabled={savingOrderDiscount || pricingLocked}
           onClick={() => updateOrderDiscount(orderDiscountAmount)}
           className="admin-btn admin-btn-primary"
         >
@@ -139,6 +144,11 @@ export default function OrderPricingPanel({
         </button>
       </div>
       <div className="mt-1 text-right">
+        {pricingLocked && (
+          <p className="text-xs text-amber-700 mb-1">
+            Pricing is locked after payment or production progress.
+          </p>
+        )}
         <p className="text-sm text-[#5f736d]">
           Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR{" "}
           {deliveryPrice.toFixed(2)}| Discount: EUR{" "}
