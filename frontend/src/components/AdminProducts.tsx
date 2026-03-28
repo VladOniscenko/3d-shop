@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
@@ -9,7 +10,6 @@ import {
   PRODUCT_TYPE_LABELS,
   PRODUCT_TYPES,
   productImages,
-  productPriceParts,
 } from "../utils/products";
 
 const PRODUCT_TYPE_OPTIONS = [
@@ -27,7 +27,7 @@ export default function AdminProducts() {
   const { notifyError, notifySuccess } = useNotify();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -41,79 +41,6 @@ export default function AdminProducts() {
   const [stockQuantity, setStockQuantity] = useState(0);
   const [isActive, setIsActive] = useState(true);
 
-  const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
-  const [descriptionEdits, setDescriptionEdits] = useState<
-    Record<string, string>
-  >({});
-  const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>(
-    {},
-  );
-  const [typeEdits, setTypeEdits] = useState<Record<string, string>>({});
-  const [priceEdits, setPriceEdits] = useState<Record<string, number>>({});
-  const [discountEdits, setDiscountEdits] = useState<Record<string, number>>(
-    {},
-  );
-  const [trackInventoryEdits, setTrackInventoryEdits] = useState<
-    Record<string, boolean>
-  >({});
-  const [stockEdits, setStockEdits] = useState<Record<string, number>>({});
-  const [isActiveEdits, setIsActiveEdits] = useState<Record<string, boolean>>(
-    {},
-  );
-  const [imagesEdits, setImagesEdits] = useState<Record<string, string>>({});
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/products?includeInactive=true");
-      const nextProducts = Array.isArray(res.data) ? res.data : [];
-      setProducts(nextProducts);
-
-      const nextNameEdits: Record<string, string> = {};
-      const nextDescriptionEdits: Record<string, string> = {};
-      const nextCategoryEdits: Record<string, string> = {};
-      const nextTypeEdits: Record<string, string> = {};
-      const nextPriceEdits: Record<string, number> = {};
-      const nextDiscountEdits: Record<string, number> = {};
-      const nextTrackInventoryEdits: Record<string, boolean> = {};
-      const nextStockEdits: Record<string, number> = {};
-      const nextIsActiveEdits: Record<string, boolean> = {};
-      const nextImagesEdits: Record<string, string> = {};
-
-      nextProducts.forEach((prod: Product) => {
-        nextNameEdits[prod.id] = prod.name;
-        nextDescriptionEdits[prod.id] = prod.description || "";
-        nextCategoryEdits[prod.id] = prod.category;
-        nextTypeEdits[prod.id] = prod.productType || PRODUCT_TYPES.PRINT;
-        nextPriceEdits[prod.id] = prod.price;
-        nextDiscountEdits[prod.id] = prod.discountPercentage || 0;
-        nextTrackInventoryEdits[prod.id] = prod.trackInventory ?? false;
-        nextStockEdits[prod.id] = prod.stockQuantity ?? 0;
-        nextIsActiveEdits[prod.id] = prod.isActive ?? true;
-        nextImagesEdits[prod.id] = productImages(prod).join("\n");
-      });
-
-      setNameEdits(nextNameEdits);
-      setDescriptionEdits(nextDescriptionEdits);
-      setCategoryEdits(nextCategoryEdits);
-      setTypeEdits(nextTypeEdits);
-      setPriceEdits(nextPriceEdits);
-      setDiscountEdits(nextDiscountEdits);
-      setTrackInventoryEdits(nextTrackInventoryEdits);
-      setStockEdits(nextStockEdits);
-      setIsActiveEdits(nextIsActiveEdits);
-      setImagesEdits(nextImagesEdits);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const getApiErrorMessage = (err: unknown, fallback: string): string => {
     const maybeMessage = (err as { response?: { data?: { message?: string } } })
       ?.response?.data?.message;
@@ -122,6 +49,23 @@ export default function AdminProducts() {
     }
     return fallback;
   };
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/products?includeInactive=true");
+      setProducts(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+      notifyError("Could not load products.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const uploadFiles = async (files: File[]): Promise<string[]> => {
     const urls: string[] = [];
@@ -188,6 +132,7 @@ export default function AdminProducts() {
         stockQuantity: trackInventory ? stockQuantity : 0,
         isActive,
       });
+
       setName("");
       setCategory("");
       setProductType(PRODUCT_TYPES.PRINT);
@@ -199,7 +144,8 @@ export default function AdminProducts() {
       setTrackInventory(false);
       setStockQuantity(0);
       setIsActive(true);
-      fetchProducts();
+
+      await fetchProducts();
       notifySuccess("Product created.");
     } catch (err) {
       console.error(err);
@@ -214,97 +160,17 @@ export default function AdminProducts() {
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Delete this product?") || !id) return;
+
+    setDeletingId(id);
     try {
       await api.delete(`/products/${id}`);
-      fetchProducts();
+      await fetchProducts();
       notifySuccess("Product deleted.");
     } catch (err) {
       console.error(err);
       notifyError("Could not delete product.");
-    }
-  };
-
-  const updateProduct = async (id: string) => {
-    const existing = products.find((prod) => prod.id === id);
-    if (!existing) {
-      notifyError("Product not found.");
-      return;
-    }
-
-    const nextName = (nameEdits[id] || "").trim();
-    const nextDescription = (descriptionEdits[id] || "").trim();
-    const nextCategory = (categoryEdits[id] || "").trim();
-    const nextType = (typeEdits[id] || PRODUCT_TYPES.PRINT).trim() as
-      | "print"
-      | "filament"
-      | "other";
-    const nextPrice = priceEdits[id] ?? 0;
-    const nextDiscount = discountEdits[id] ?? 0;
-    const nextTrackInventory = trackInventoryEdits[id] ?? false;
-    const nextStock = stockEdits[id] ?? 0;
-    const nextIsActive = isActiveEdits[id] ?? true;
-    const nextImages = (imagesEdits[id] || "")
-      .split("\n")
-      .map((url) => url.trim())
-      .filter((url) => !!url);
-
-    if (!nextName || !nextCategory) {
-      notifyError("Name and category are required.");
-      return;
-    }
-
-    if (nextPrice < 0) {
-      notifyError("Price cannot be negative.");
-      return;
-    }
-
-    if (nextDiscount < DISCOUNT_MIN || nextDiscount > DISCOUNT_MAX) {
-      notifyError(
-        `Discount must be between ${DISCOUNT_MIN} and ${DISCOUNT_MAX}.`,
-      );
-      return;
-    }
-
-    if (nextStock < STOCK_MIN) {
-      notifyError("Stock cannot be negative.");
-      return;
-    }
-
-    setSavingId(id);
-    try {
-      const payload = {
-        name: nextName,
-        description: nextDescription,
-        category: nextCategory,
-        productType: nextType,
-        imageUrl: nextImages[0] || existing.imageUrl,
-        images: nextImages,
-        fileUrl: existing.fileUrl || "",
-        price: nextPrice,
-        discountPercentage: nextDiscount,
-        trackInventory: nextTrackInventory,
-        stockQuantity: nextTrackInventory ? nextStock : 0,
-        isActive: nextIsActive,
-      };
-
-      await api.put(`/products/${id}`, payload);
-
-      setProducts((prev) =>
-        prev.map((prod) =>
-          prod.id === id
-            ? {
-                ...prod,
-                ...payload,
-              }
-            : prod,
-        ),
-      );
-      notifySuccess("Product updated.");
-    } catch (err) {
-      console.error(err);
-      notifyError("Could not update product.");
     } finally {
-      setSavingId(null);
+      setDeletingId(null);
     }
   };
 
@@ -385,7 +251,7 @@ export default function AdminProducts() {
           <input
             type="number"
             value={price}
-            onChange={(e) => setPrice(parseFloat(e.target.value))}
+            onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
             required
             placeholder="Price"
             className="admin-field"
@@ -451,216 +317,76 @@ export default function AdminProducts() {
       {loading ? (
         <p className="admin-note">Loading products...</p>
       ) : (
-        <div className="admin-panel admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Images</th>
-                <th>Price</th>
-                <th>Discount</th>
-                <th>Track</th>
-                <th>Stock</th>
-                <th>Final</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((prod) => (
-                <tr
-                  key={prod.id}
-                  className={!isActiveEdits[prod.id] ? "opacity-60" : ""}
-                >
-                  <td>
-                    <input
-                      className="admin-field"
-                      value={nameEdits[prod.id] ?? ""}
-                      onChange={(e) =>
-                        setNameEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <select
-                      className="admin-field"
-                      value={typeEdits[prod.id] ?? PRODUCT_TYPES.PRINT}
-                      onChange={(e) =>
-                        setTypeEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value,
-                        }))
-                      }
-                    >
-                      {PRODUCT_TYPE_OPTIONS.map((type) => (
-                        <option key={type} value={type}>
-                          {PRODUCT_TYPE_LABELS[type]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      className="admin-field"
-                      value={categoryEdits[prod.id] ?? ""}
-                      onChange={(e) =>
-                        setCategoryEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <textarea
-                      rows={3}
-                      className="admin-textarea"
-                      value={descriptionEdits[prod.id] ?? ""}
-                      onChange={(e) =>
-                        setDescriptionEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <textarea
-                      rows={3}
-                      className="admin-textarea"
-                      value={imagesEdits[prod.id] ?? ""}
-                      onChange={(e) =>
-                        setImagesEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value,
-                        }))
-                      }
-                      placeholder="One image URL per line"
-                    />
-                    {productImages(prod)[0] && (
-                      <a
-                        href={resolveAssetUrl(productImages(prod)[0])}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-block text-xs font-semibold text-teal-700 hover:underline"
-                      >
-                        Preview
-                      </a>
-                    )}
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={PRICE_MIN}
-                      step="0.01"
-                      className="admin-field w-32"
-                      value={priceEdits[prod.id] ?? 0}
-                      onChange={(e) =>
-                        setPriceEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: parseFloat(e.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={DISCOUNT_MIN}
-                      max={DISCOUNT_MAX}
-                      step="1"
-                      className="admin-field w-24"
-                      value={discountEdits[prod.id] ?? 0}
-                      onChange={(e) =>
-                        setDiscountEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: parseFloat(e.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <select
-                      className="admin-field"
-                      value={trackInventoryEdits[prod.id] ? "true" : "false"}
-                      onChange={(e) =>
-                        setTrackInventoryEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value === "true",
-                        }))
-                      }
-                    >
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={STOCK_MIN}
-                      step="1"
-                      className="admin-field w-24"
-                      value={stockEdits[prod.id] ?? 0}
-                      disabled={!trackInventoryEdits[prod.id]}
-                      onChange={(e) =>
-                        setStockEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: parseInt(e.target.value, 10) || 0,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td className="font-semibold text-[#1b2b25]">
-                    EUR
-                    {productPriceParts({
-                      ...prod,
-                      price: priceEdits[prod.id] ?? 0,
-                      discountPercentage: discountEdits[prod.id] ?? 0,
-                    }).current.toFixed(2)}
-                  </td>
-                  <td>
-                    <select
-                      className="admin-field"
-                      value={isActiveEdits[prod.id] ? "true" : "false"}
-                      onChange={(e) =>
-                        setIsActiveEdits((prev) => ({
-                          ...prev,
-                          [prod.id]: e.target.value === "true",
-                        }))
-                      }
-                    >
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  </td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateProduct(prod.id)}
-                        disabled={savingId === prod.id}
-                        className="admin-btn admin-btn-primary"
-                      >
-                        {savingId === prod.id ? "Saving..." : "Save"}
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(prod.id)}
-                        disabled={savingId === prod.id}
-                        className="admin-btn admin-btn-danger"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+        <div className="admin-panel p-4">
+          <div className="overflow-x-auto">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Preview</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((product) => {
+                  const thumb = productImages(product)[0];
+                  return (
+                    <tr key={product.id}>
+                      <td>
+                        {thumb ? (
+                          <img
+                            src={resolveAssetUrl(thumb)}
+                            alt={product.name}
+                            className="w-16 h-16 rounded-md object-cover border border-[#ddeae3]"
+                          />
+                        ) : (
+                          <span className="text-xs text-[#60736d]">No image</span>
+                        )}
+                      </td>
+                      <td className="font-semibold">{product.name}</td>
+                      <td>
+                        {PRODUCT_TYPE_LABELS[
+                          product.productType || PRODUCT_TYPES.PRINT
+                        ] || product.productType}
+                      </td>
+                      <td>{product.category}</td>
+                      <td>EUR {product.price.toFixed(2)}</td>
+                      <td>
+                        {product.isActive ? (
+                          <span className="text-emerald-700 font-semibold">Active</span>
+                        ) : (
+                          <span className="text-slate-600 font-semibold">Inactive</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="flex gap-2">
+                          <Link
+                            to={`/admin/products/${product.id}`}
+                            className="admin-btn admin-btn-primary"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => deleteProduct(product.id)}
+                            disabled={deletingId === product.id}
+                            className="admin-btn admin-btn-danger"
+                          >
+                            {deletingId === product.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
           {!loading && products.length === 0 && (
             <p className="admin-empty">No products found.</p>
           )}
