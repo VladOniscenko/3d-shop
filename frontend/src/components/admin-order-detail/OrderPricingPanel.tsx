@@ -63,6 +63,14 @@ export default function OrderPricingPanel({
                 {t("admin.orderDetail.colorLabel")}: {item.color},{" "}
                 {t("admin.orderDetail.qtyLabel")}: {item.count}
               </p>
+              {item.notes && (
+                <div className="rounded bg-amber-50 p-2 border border-amber-200 mt-2">
+                  <p className="text-xs font-semibold text-amber-900 mb-1">
+                    {t("admin.orderDetail.instructionsLabel")}:
+                  </p>
+                  <p className="text-sm text-amber-800">{item.notes}</p>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <span className="text-[#304843]">
                   {t("admin.orderDetail.priceLabel")}: EUR
