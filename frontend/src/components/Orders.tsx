@@ -49,7 +49,7 @@ export default function Orders() {
   };
 
   const visibleOrders = orders.filter(
-    (order) => normalizeOrderStatus(order.status) !== "cancelled"
+    (order) => normalizeOrderStatus(order.status) !== "cancelled",
   );
 
   return (
