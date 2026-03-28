@@ -86,12 +86,12 @@ export default function CheckoutPage() {
       if (!item) return;
 
       const updatedCount = field === "count" ? Number(value) : item.count;
-      let updatedMaterial = field === "material" ? String(value) : item.material;
+      let updatedMaterial =
+        field === "material" ? String(value) : item.material;
       let updatedColor = field === "color" ? String(value) : item.color;
 
       if (field === "material") {
-        updatedColor =
-          filaments.find((f) => f.material === value)?.color || "";
+        updatedColor = filaments.find((f) => f.material === value)?.color || "";
       }
 
       await updateCartItem(itemId, updatedCount, updatedMaterial, updatedColor);

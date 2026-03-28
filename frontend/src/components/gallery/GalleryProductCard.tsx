@@ -1,10 +1,4 @@
-import {
-  Box,
-  Check,
-  Layers,
-  Loader2,
-  ShoppingCart,
-} from "lucide-react";
+import { Box, Check, Layers, Loader2, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Product } from "../../types";
 import { resolveAssetUrl } from "../../utils/assetUrl";
@@ -94,7 +88,8 @@ export default function GalleryProductCard({
               </>
             ) : isAdding ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> {t("gallery.adding")}
+                <Loader2 size={18} className="animate-spin" />{" "}
+                {t("gallery.adding")}
               </>
             ) : (
               <>
@@ -111,15 +106,21 @@ export default function GalleryProductCard({
             {item.name}
           </h3>
           <div className="text-right">
-            <span className="text-[#0f766e] font-black text-lg ml-2">€{priceParts.current.toFixed(2)}</span>
+            <span className="text-[#0f766e] font-black text-lg ml-2">
+              €{priceParts.current.toFixed(2)}
+            </span>
             {priceParts.hasDiscount && (
-              <p className="text-xs text-gray-400 line-through">€{priceParts.original.toFixed(2)}</p>
+              <p className="text-xs text-gray-400 line-through">
+                €{priceParts.original.toFixed(2)}
+              </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 text-emerald-600 flex-wrap">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{item.category}</p>
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">
+            {item.category}
+          </p>
           <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
             {typeLabel(item.productType || PRODUCT_TYPES.PRINT)}
           </span>
@@ -140,7 +141,9 @@ export default function GalleryProductCard({
           </span>
         </div>
         {item.description && (
-          <p className="mt-2 text-sm text-[#60736d] line-clamp-2">{item.description}</p>
+          <p className="mt-2 text-sm text-[#60736d] line-clamp-2">
+            {item.description}
+          </p>
         )}
       </div>
     </div>

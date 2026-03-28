@@ -1,4 +1,10 @@
-import { CreditCard, Loader2, MapPin, Phone as PhoneIcon, Truck } from "lucide-react";
+import {
+  CreditCard,
+  Loader2,
+  MapPin,
+  Phone as PhoneIcon,
+  Truck,
+} from "lucide-react";
 import type { ShippingAddress } from "./types";
 
 interface CheckoutSidebarProps {
@@ -32,17 +38,25 @@ export default function CheckoutSidebar({
         </h3>
         <div className="flex justify-between text-gray-500 text-sm">
           <span>{t("cart.subtotal")}</span>
-          <span className="font-medium text-gray-900">€{subtotal.toFixed(2)}</span>
+          <span className="font-medium text-gray-900">
+            €{subtotal.toFixed(2)}
+          </span>
         </div>
         <div className="flex justify-between text-gray-500 text-sm">
           <span className="flex items-center gap-2">
             <Truck size={16} /> {t("cart.delivery")}
           </span>
-          <span className="font-medium text-gray-900">€{deliveryPrice.toFixed(2)}</span>
+          <span className="font-medium text-gray-900">
+            €{deliveryPrice.toFixed(2)}
+          </span>
         </div>
         <div className="pt-4 border-t border-gray-100 flex justify-between">
-          <span className="font-black text-gray-900 text-lg">{t("cart.total")}</span>
-          <span className="font-black text-emerald-600 text-lg">€{total.toFixed(2)}</span>
+          <span className="font-black text-gray-900 text-lg">
+            {t("cart.total")}
+          </span>
+          <span className="font-black text-emerald-600 text-lg">
+            €{total.toFixed(2)}
+          </span>
         </div>
       </div>
 
@@ -61,7 +75,10 @@ export default function CheckoutSidebar({
 
         <div>
           <div className="relative">
-            <PhoneIcon className="absolute left-3 top-3 text-gray-400" size={18} />
+            <PhoneIcon
+              className="absolute left-3 top-3 text-gray-400"
+              size={18}
+            />
             <input
               type="tel"
               placeholder={t("quote.phone")}
@@ -71,11 +88,15 @@ export default function CheckoutSidebar({
                   : "border-gray-200 focus:ring-emerald-500"
               }`}
               value={address.phoneNumber}
-              onChange={(e) => onAddressChange({ ...address, phoneNumber: e.target.value })}
+              onChange={(e) =>
+                onAddressChange({ ...address, phoneNumber: e.target.value })
+              }
             />
           </div>
           {validationErrors.phoneNumber && (
-            <p className="text-red-500 text-xs mt-1">{validationErrors.phoneNumber}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.phoneNumber}
+            </p>
           )}
         </div>
 
@@ -83,7 +104,9 @@ export default function CheckoutSidebar({
           placeholder={t("quote.street")}
           value={address.addressLine1}
           error={validationErrors.addressLine1}
-          onChange={(value) => onAddressChange({ ...address, addressLine1: value })}
+          onChange={(value) =>
+            onAddressChange({ ...address, addressLine1: value })
+          }
         />
 
         <div className="grid grid-cols-2 gap-3">
@@ -97,7 +120,9 @@ export default function CheckoutSidebar({
             placeholder={t("quote.postalCode")}
             value={address.postalCode}
             error={validationErrors.postalCode}
-            onChange={(value) => onAddressChange({ ...address, postalCode: value })}
+            onChange={(value) =>
+              onAddressChange({ ...address, postalCode: value })
+            }
           />
         </div>
       </div>

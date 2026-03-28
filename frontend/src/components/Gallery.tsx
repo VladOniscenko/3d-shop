@@ -178,7 +178,9 @@ export default function Gallery() {
       <header className="site-page-hero reveal-soft">
         <div className="site-page-hero-card reveal-up">
           <h1 className="site-page-hero-title">{t("gallery.catalogTitle")}</h1>
-          <p className="site-page-hero-subtitle">{t("gallery.catalogSubtitle")}</p>
+          <p className="site-page-hero-subtitle">
+            {t("gallery.catalogSubtitle")}
+          </p>
         </div>
       </header>
 
@@ -233,7 +235,9 @@ export default function Gallery() {
                 <h3 className="text-xl font-bold text-[#1b2c27]">
                   {t("gallery.noProductsTitle")}
                 </h3>
-                <p className="text-[#6b7f79] mt-2">{t("gallery.noProductsDesc")}</p>
+                <p className="text-[#6b7f79] mt-2">
+                  {t("gallery.noProductsDesc")}
+                </p>
               </div>
             )}
           </>

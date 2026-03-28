@@ -49,9 +49,12 @@ export default function OrderPricingPanel({
               key={item.id || item.fileName}
               className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
             >
-              <p className="font-semibold text-[#22342f]">{item.fileName ?? item.fileUrl}</p>
+              <p className="font-semibold text-[#22342f]">
+                {item.fileName ?? item.fileUrl}
+              </p>
               <p className="text-xs text-[#5c716b]">
-                Material: {item.material}, Color: {item.color}, Qty: {item.count}
+                Material: {item.material}, Color: {item.color}, Qty:{" "}
+                {item.count}
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-[#304843]">Price: EUR</span>
@@ -72,7 +75,8 @@ export default function OrderPricingPanel({
                   type="button"
                   disabled={!item.id || savingItemId === item.id}
                   onClick={() =>
-                    item.id && updateItemPrice(item.id, itemPrices[item.id] || 0)
+                    item.id &&
+                    updateItemPrice(item.id, itemPrices[item.id] || 0)
                   }
                   className="admin-btn admin-btn-primary"
                 >
@@ -136,10 +140,13 @@ export default function OrderPricingPanel({
       </div>
       <div className="mt-1 text-right">
         <p className="text-sm text-[#5f736d]">
-          Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR {deliveryPrice.toFixed(2)}
-          | Discount: EUR {orderDiscountAmount.toFixed(2)}
+          Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR{" "}
+          {deliveryPrice.toFixed(2)}| Discount: EUR{" "}
+          {orderDiscountAmount.toFixed(2)}
         </p>
-        <span className="font-bold">Total (including delivery): EUR {totalPrice.toFixed(2)}</span>
+        <span className="font-bold">
+          Total (including delivery): EUR {totalPrice.toFixed(2)}
+        </span>
       </div>
     </article>
   );

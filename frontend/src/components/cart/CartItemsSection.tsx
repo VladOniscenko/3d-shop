@@ -57,8 +57,12 @@ export default function CartItemsSection({
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h4 className="font-bold text-gray-900 text-lg">{item.productName}</h4>
-                      <p className="text-emerald-600 font-bold">€{item.price.toFixed(2)} / unit</p>
+                      <h4 className="font-bold text-gray-900 text-lg">
+                        {item.productName}
+                      </h4>
+                      <p className="text-emerald-600 font-bold">
+                        €{item.price.toFixed(2)} / unit
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -76,7 +80,9 @@ export default function CartItemsSection({
                       <select
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
                         value={item.material}
-                        onChange={(e) => onUpdate(item.id, "material", e.target.value)}
+                        onChange={(e) =>
+                          onUpdate(item.id, "material", e.target.value)
+                        }
                       >
                         {materials.map((m) => (
                           <option key={m} value={m}>
@@ -92,7 +98,9 @@ export default function CartItemsSection({
                       <select
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
                         value={item.color}
-                        onChange={(e) => onUpdate(item.id, "color", e.target.value)}
+                        onChange={(e) =>
+                          onUpdate(item.id, "color", e.target.value)
+                        }
                       >
                         {filaments
                           .filter((f) => f.material === item.material)
@@ -139,7 +147,9 @@ export default function CartItemsSection({
             <CreditCard size={24} />
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm">{t("cart.paymentOnline")}</p>
+            <p className="font-bold text-gray-900 text-sm">
+              {t("cart.paymentOnline")}
+            </p>
             <p className="text-xs text-gray-500">{t("cart.paymentOptions")}</p>
           </div>
         </div>
