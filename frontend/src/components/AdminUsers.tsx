@@ -102,10 +102,14 @@ export default function AdminUsers() {
 
       {editingUser && (
         <div className="admin-panel mb-4 p-4">
-          <h3 className="font-bold mb-2 text-[#1d2d27]">{t("admin.users.editUserSection")}</h3>
+          <h3 className="font-bold mb-2 text-[#1d2d27]">
+            {t("admin.users.editUserSection")}
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <label className="admin-label">
-              <span className="font-semibold">{t("admin.users.nameLabel")}</span>
+              <span className="font-semibold">
+                {t("admin.users.nameLabel")}
+              </span>
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -114,7 +118,9 @@ export default function AdminUsers() {
               />
             </label>
             <label className="admin-label">
-              <span className="font-semibold">{t("admin.users.emailLabel")}</span>
+              <span className="font-semibold">
+                {t("admin.users.emailLabel")}
+              </span>
               <input
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
@@ -123,7 +129,9 @@ export default function AdminUsers() {
               />
             </label>
             <label className="admin-label">
-              <span className="font-semibold">{t("admin.users.roleLabel")}</span>
+              <span className="font-semibold">
+                {t("admin.users.roleLabel")}
+              </span>
               <select
                 value={editRole}
                 onChange={(e) =>
@@ -131,7 +139,9 @@ export default function AdminUsers() {
                 }
                 className="admin-select"
               >
-                <option value="customer">{t("admin.users.roleCustomer")}</option>
+                <option value="customer">
+                  {t("admin.users.roleCustomer")}
+                </option>
                 <option value="admin">{t("admin.users.roleAdmin")}</option>
               </select>
             </label>

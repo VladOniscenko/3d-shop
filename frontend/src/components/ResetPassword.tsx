@@ -65,9 +65,7 @@ export default function ResetPassword() {
           <h1 className="site-heading text-3xl font-bold mb-2">
             {t("reset.title")}
           </h1>
-          <p className="site-subheading mb-6">
-            {t("reset.subtitle")}
-          </p>
+          <p className="site-subheading mb-6">{t("reset.subtitle")}</p>
 
           {error && (
             <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm flex items-center gap-2">

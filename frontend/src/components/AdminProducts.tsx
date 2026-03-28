@@ -198,7 +198,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.categoryLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.categoryLabel")}
+          </span>
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -207,7 +209,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.productTypeLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.productTypeLabel")}
+          </span>
           <select
             value={productType}
             onChange={(e) => setProductType(e.target.value)}
@@ -221,7 +225,9 @@ export default function AdminProducts() {
           </select>
         </label>
         <label className="admin-label col-span-full">
-          <span className="font-semibold">{t("admin.products.descriptionLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.descriptionLabel")}
+          </span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -231,7 +237,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.imagesLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.imagesLabel")}
+          </span>
           <input
             type="file"
             accept="image/*"
@@ -241,7 +249,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label col-span-full sm:col-span-2">
-          <span className="font-semibold">{t("admin.products.modelFileLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.modelFileLabel")}
+          </span>
           <input
             type="file"
             onChange={(e) => setFileFile(e.target.files?.[0] || null)}
@@ -249,7 +259,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.priceLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.priceLabel")}
+          </span>
           <input
             type="number"
             value={price}
@@ -260,7 +272,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.discountLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.discountLabel")}
+          </span>
           <input
             type="number"
             min={DISCOUNT_MIN}
@@ -275,18 +289,26 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.trackInventoryLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.trackInventoryLabel")}
+          </span>
           <select
             value={trackInventory ? "true" : "false"}
             onChange={(e) => setTrackInventory(e.target.value === "true")}
             className="admin-field"
           >
-            <option value="true">{t("admin.products.trackInventoryYes")}</option>
-            <option value="false">{t("admin.products.trackInventoryNo")}</option>
+            <option value="true">
+              {t("admin.products.trackInventoryYes")}
+            </option>
+            <option value="false">
+              {t("admin.products.trackInventoryNo")}
+            </option>
           </select>
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.stockQuantityLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.stockQuantityLabel")}
+          </span>
           <input
             type="number"
             min={STOCK_MIN}
@@ -301,7 +323,9 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.products.activeLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.activeLabel")}
+          </span>
           <select
             value={isActive ? "true" : "false"}
             onChange={(e) => setIsActive(e.target.value === "true")}

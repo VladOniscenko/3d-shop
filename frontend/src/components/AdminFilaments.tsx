@@ -253,7 +253,9 @@ export default function AdminFilaments() {
         className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 p-4"
       >
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.filaments.nameLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.nameLabel")}
+          </span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -263,7 +265,9 @@ export default function AdminFilaments() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.filaments.materialLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.materialLabel")}
+          </span>
           <input
             value={material}
             onChange={(e) => setMaterial(e.target.value)}
@@ -273,7 +277,9 @@ export default function AdminFilaments() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.filaments.colorLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.colorLabel")}
+          </span>
           <input
             value={color}
             onChange={(e) => setColor(e.target.value)}
@@ -283,7 +289,9 @@ export default function AdminFilaments() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.filaments.priceLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.priceLabel")}
+          </span>
           <input
             type="number"
             step="0.0001"
@@ -296,7 +304,9 @@ export default function AdminFilaments() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">{t("admin.filaments.stockLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.stockLabel")}
+          </span>
           <input
             type="number"
             min="0"
@@ -312,7 +322,9 @@ export default function AdminFilaments() {
         </button>
 
         <label className="admin-label col-span-full">
-          <span className="font-semibold">{t("admin.filaments.descriptionLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.filaments.descriptionLabel")}
+          </span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
