@@ -29,6 +29,12 @@ export default function TermsOfService() {
           </section>
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {t("legal.terms.pricingDisclaimerTitle")}
+            </h2>
+            <p>{t("legal.terms.pricingDisclaimerBody")}</p>
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
               {t("legal.terms.section3Title")}
             </h2>
             <p>{t("legal.terms.section3Body")}</p>

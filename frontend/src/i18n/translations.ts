@@ -239,6 +239,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.postalCode": "Postal Code",
     "quote.shippingLaterNotice":
       "Shipping details are requested after your quote is approved, when you click confirm and pay.",
+    "quote.pricingDisclaimer":
+      "Prices and quotes shown on this platform are indicative. No rights can be derived from displayed prices or quotes until explicitly confirmed by PrintCraft.",
 
     // Cart
     "cart.loading": "Loading cart...",
@@ -344,6 +346,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "legal.terms.section2Title": "Quotes and orders",
     "legal.terms.section2Body":
       "Quotes are estimates based on material, complexity, and production time. Production starts only after explicit approval and confirmed payment.",
+    "legal.terms.pricingDisclaimerTitle": "Prices and quote validity",
+    "legal.terms.pricingDisclaimerBody":
+      "Published prices, calculations, and quotes are non-binding and may contain errors or temporary mismatches. No rights can be derived from displayed prices or quotes until written confirmation by PrintCraft.",
     "legal.terms.section3Title": "Limitation of liability",
     "legal.terms.section3Body":
       "Customers are responsible for functional suitability and safety of uploaded designs. Our liability is limited to the value of the specific order where legally allowed.",
@@ -647,6 +652,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.postalCode": "Postcode",
     "quote.shippingLaterNotice":
       "Verzendgegevens vragen we pas nadat je offerte is goedgekeurd, wanneer je op bevestigen en betalen klikt.",
+    "quote.pricingDisclaimer":
+      "Prijzen en offertes op dit platform zijn indicatief. Aan getoonde prijzen of offertes kunnen geen rechten worden ontleend totdat PrintCraft deze uitdrukkelijk heeft bevestigd.",
 
     // Cart
     "cart.loading": "Winkelwagen laden...",
@@ -751,6 +758,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "legal.terms.section2Title": "Offertes en bestellingen",
     "legal.terms.section2Body":
       "Offertes zijn schattingen op basis van materiaal, complexiteit en productietijd. Productie start uitsluitend na expliciet akkoord en bevestigde betaling.",
+    "legal.terms.pricingDisclaimerTitle": "Prijs- en offertegeldigheid",
+    "legal.terms.pricingDisclaimerBody":
+      "Gepubliceerde prijzen, berekeningen en offertes zijn niet bindend en kunnen fouten of tijdelijke afwijkingen bevatten. Aan getoonde prijzen of offertes kunnen geen rechten worden ontleend totdat PrintCraft deze schriftelijk heeft bevestigd.",
     "legal.terms.section3Title": "Beperking van aansprakelijkheid",
     "legal.terms.section3Body":
       "Klanten blijven verantwoordelijk voor de functionele geschiktheid en veiligheid van aangeleverde ontwerpen. Onze aansprakelijkheid is, waar wettelijk toegestaan, beperkt tot de waarde van de betreffende bestelling.",

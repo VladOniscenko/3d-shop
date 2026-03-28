@@ -14,6 +14,7 @@ import {
 import Navbar from "./Navbar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { OrderItem, Filament } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
@@ -261,6 +262,13 @@ export default function Quote() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <p className="text-sm text-gray-600">
                 {t("quote.shippingLaterNotice")}
+              </p>
+
+              <p className="mt-3 text-xs leading-relaxed text-[#5e7069]">
+                {t("quote.pricingDisclaimer")}{" "}
+                <Link to="/terms" className="font-semibold text-[#0f766e] hover:underline">
+                  {t("footer.terms")}
+                </Link>
               </p>
 
               <button
