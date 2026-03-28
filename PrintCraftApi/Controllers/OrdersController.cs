@@ -140,6 +140,11 @@ public class OrdersController : ControllerBase
             if (user != null)
             {
                 await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
+                await LogOrderCommunicationAsync(
+                    order.Id,
+                    "quote_requested",
+                    "Quote request received",
+                    user.Email);
             }
         }
         catch (Exception ex)
@@ -266,6 +271,21 @@ public class OrdersController : ControllerBase
             ChangedAt = DateTime.UtcNow,
             ChangedBy = changedBy,
             Note = note,
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task LogOrderCommunicationAsync(Guid orderId, string type, string subject, string recipientEmail)
+    {
+        _db.OrderCommunications.Add(new OrderCommunication
+        {
+            OrderId = orderId,
+            Channel = "email",
+            CommunicationType = type,
+            Subject = subject,
+            RecipientEmail = recipientEmail,
+            SentAt = DateTime.UtcNow,
         });
 
         await _db.SaveChangesAsync();
