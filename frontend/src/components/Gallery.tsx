@@ -234,7 +234,9 @@ export default function Gallery() {
               onChange={(e) => setActiveCategory(e.target.value)}
               className="rounded-xl border border-[#d8e6df] bg-white px-3 py-2.5 text-sm"
             >
-              <option value={ALL_FILTER_VALUE}>{t("gallery.categoryAll")}</option>
+              <option value={ALL_FILTER_VALUE}>
+                {t("gallery.categoryAll")}
+              </option>
               {categories.map((category) => (
                 <option key={category} value={category}>
                   {category}

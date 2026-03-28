@@ -40,6 +40,36 @@ public class ProductPricingTests
 public class ProductsControllerTests
 {
     [Fact]
+    public async Task GetAll_ExcludesInactiveProductsByDefault()
+    {
+        await using var db = CreateDbContext();
+        db.Products.AddRange(
+            new Product { Name = "Visible", Category = "C", ProductType = "print", Price = 10, IsActive = true },
+            new Product { Name = "Hidden", Category = "C", ProductType = "print", Price = 10, IsActive = false }
+        );
+        await db.SaveChangesAsync();
+
+        var sut = CreateController(db);
+        var result = await sut.GetAll(
+            category: null,
+            productType: null,
+            q: null,
+            discountedOnly: false,
+            inStockOnly: false,
+            minPrice: null,
+            maxPrice: null,
+            sortBy: "name",
+            sortDir: "asc",
+            limit: null,
+            includeInactive: false
+        );
+
+        var list = AssertOkResponses(result);
+        Assert.Single(list);
+        Assert.Equal("Visible", list[0].Name);
+    }
+
+    [Fact]
     public async Task Create_RejectsOutOfRangeDiscounts()
     {
         await using var db = CreateDbContext();

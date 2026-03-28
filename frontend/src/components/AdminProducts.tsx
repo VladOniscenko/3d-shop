@@ -65,7 +65,7 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/products");
+      const res = await api.get("/products?includeInactive=true");
       const nextProducts = Array.isArray(res.data) ? res.data : [];
       setProducts(nextProducts);
 
@@ -409,7 +409,9 @@ export default function AdminProducts() {
             min={STOCK_MIN}
             step="1"
             value={stockQuantity}
-            onChange={(e) => setStockQuantity(parseInt(e.target.value, 10) || 0)}
+            onChange={(e) =>
+              setStockQuantity(parseInt(e.target.value, 10) || 0)
+            }
             disabled={!trackInventory}
             placeholder="0"
             className="admin-field"

@@ -53,11 +53,20 @@ public class ProductsController : ControllerBase
         [FromQuery] double? maxPrice = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDir = null,
-        [FromQuery] int? limit = null)
+        [FromQuery] int? limit = null,
+        [FromQuery] bool includeInactive = false)
     {
+        if (includeInactive && !User.IsInRole("admin"))
+            return Forbid();
+
         var query = _db.Products
             .Include(p => p.Images)
             .AsQueryable();
+
+        if (!includeInactive)
+        {
+            query = query.Where(p => p.IsActive);
+        }
 
         if (!string.IsNullOrWhiteSpace(category) && !string.Equals(category, DefaultCategoryFilter, StringComparison.OrdinalIgnoreCase) && !string.Equals(category, "All", StringComparison.OrdinalIgnoreCase))
         {
@@ -134,22 +143,29 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById([FromRoute] Guid id)
+    public async Task<IActionResult> GetById([FromRoute] Guid id, [FromQuery] bool includeInactive = false)
     {
+        if (includeInactive && !User.IsInRole("admin"))
+            return Forbid();
+
         var product = await _db.Products
             .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == id);
 
-        if (product == null)
+        if (product == null || (!includeInactive && !product.IsActive))
             return NotFound(new { message = "Product not found." });
 
         return Ok(ToResponse(product));
     }
 
     [HttpGet("categories")]
-    public async Task<IActionResult> GetCategories()
+    public async Task<IActionResult> GetCategories([FromQuery] bool includeInactive = false)
     {
+        if (includeInactive && !User.IsInRole("admin"))
+            return Forbid();
+
         var categories = await _db.Products
+            .Where(p => includeInactive || p.IsActive)
             .Where(p => !string.IsNullOrWhiteSpace(p.Category))
             .Select(p => p.Category)
             .Distinct()

@@ -585,7 +585,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "productDetail.continueBrowsing": "Verder kijken",
     "productDetail.added": "Product toegevoegd aan winkelwagen.",
     "productDetail.unavailable": "Niet op voorraad",
-    "productDetail.unavailableError": "Dit product is momenteel niet op voorraad.",
+    "productDetail.unavailableError":
+      "Dit product is momenteel niet op voorraad.",
 
     // Materials page
     "materials.pageTitle": "Materialen Bibliotheek",
