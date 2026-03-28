@@ -161,13 +161,11 @@ public sealed class MailtrapEmailService : IEmailService
 
     private async Task SendViaApiAsync(string toEmail, string subject, string body)
     {
-        var apiToken = string.IsNullOrWhiteSpace(_options.ApiToken)
-            ? Environment.GetEnvironmentVariable("MAILTRAP_API_TOKEN")
-            : _options.ApiToken;
+        var apiToken = _options.ApiToken;
 
         if (string.IsNullOrWhiteSpace(apiToken))
         {
-            throw new InvalidOperationException("Email service is not configured. Missing Mailtrap API token.");
+            throw new InvalidOperationException("Email service is not configured. Missing Email:ApiToken (set Email__ApiToken env var).");
         }
 
         var payload = new
