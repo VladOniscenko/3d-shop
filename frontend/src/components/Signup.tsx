@@ -101,7 +101,7 @@ export default function Signup() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all sm:text-sm"
-                  placeholder="Alex Maker"
+                  placeholder={t("signup.namePlaceholder")}
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function Signup() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all sm:text-sm"
-                  placeholder="you@example.com"
+                  placeholder={t("login.emailPlaceholder")}
                 />
               </div>
             </div>

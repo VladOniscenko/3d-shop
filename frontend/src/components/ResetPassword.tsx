@@ -10,8 +10,10 @@ import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import api from "../services/api";
+import { useI18n } from "../i18n/I18nContext";
 
 export default function ResetPassword() {
+  const { t } = useI18n();
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get("token") || "", [searchParams]);
 
@@ -61,10 +63,10 @@ export default function ResetPassword() {
       <main className="site-main max-w-xl px-4 sm:px-6 py-12 flex-grow">
         <section className="site-card p-7 sm:p-9">
           <h1 className="site-heading text-3xl font-bold mb-2">
-            Reset password
+            {t("reset.title")}
           </h1>
           <p className="site-subheading mb-6">
-            Create a new password for your account.
+            {t("reset.subtitle")}
           </p>
 
           {error && (
@@ -76,17 +78,17 @@ export default function ResetPassword() {
           {done ? (
             <div className="space-y-5">
               <div className="p-4 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm flex items-center gap-2">
-                <CheckCircle2 size={18} /> Password updated successfully.
+                <CheckCircle2 size={18} /> {t("reset.successMessage")}
               </div>
               <Link to="/login" className="site-btn-primary inline-flex">
-                Go to login
+                {t("reset.goToLogin")}
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block">
                 <span className="text-sm font-semibold text-[#2a403a]">
-                  New password
+                  {t("login.password")}
                 </span>
                 <div className="relative mt-1">
                   <Lock
@@ -99,14 +101,14 @@ export default function ResetPassword() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="w-full rounded-lg border border-[#d4e3dd] bg-white px-10 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="At least 8 characters"
+                    placeholder={t("reset.passwordPlaceholder")}
                   />
                 </div>
               </label>
 
               <label className="block">
                 <span className="text-sm font-semibold text-[#2a403a]">
-                  Confirm password
+                  {t("login.password")}
                 </span>
                 <div className="relative mt-1">
                   <Lock
@@ -119,7 +121,7 @@ export default function ResetPassword() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full rounded-lg border border-[#d4e3dd] bg-white px-10 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Repeat password"
+                    placeholder={t("reset.confirmPlaceholder")}
                   />
                 </div>
               </label>
@@ -133,7 +135,7 @@ export default function ResetPassword() {
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
                   <>
-                    <span>Reset password</span>
+                    <span>{t("reset.submitButton")}</span>
                     <ArrowRight size={16} />
                   </>
                 )}

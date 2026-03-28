@@ -4,10 +4,12 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Filament } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { useI18n } from "../i18n/I18nContext";
 import axios from "axios";
 
 export default function AdminFilaments() {
   const { notifyError, notifySuccess } = useNotify();
+  const { t } = useI18n();
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -251,37 +253,37 @@ export default function AdminFilaments() {
         className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8 p-4"
       >
         <label className="admin-label">
-          <span className="font-semibold">Name</span>
+          <span className="font-semibold">{t("admin.filaments.nameLabel")}</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="Name"
+            placeholder={t("admin.filaments.namePlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Material</span>
+          <span className="font-semibold">{t("admin.filaments.materialLabel")}</span>
           <input
             value={material}
             onChange={(e) => setMaterial(e.target.value)}
             required
-            placeholder="Material"
+            placeholder={t("admin.filaments.materialPlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Color</span>
+          <span className="font-semibold">{t("admin.filaments.colorLabel")}</span>
           <input
             value={color}
             onChange={(e) => setColor(e.target.value)}
             required
-            placeholder="Color"
+            placeholder={t("admin.filaments.colorPlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Price Per Gram</span>
+          <span className="font-semibold">{t("admin.filaments.priceLabel")}</span>
           <input
             type="number"
             step="0.0001"
@@ -289,32 +291,32 @@ export default function AdminFilaments() {
             value={pricePerGram}
             onChange={(e) => setPricePerGram(parseFloat(e.target.value) || 0)}
             required
-            placeholder="Price Per Gram"
+            placeholder={t("admin.filaments.pricePlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Stock Quantity</span>
+          <span className="font-semibold">{t("admin.filaments.stockLabel")}</span>
           <input
             type="number"
             min="0"
             value={stockQuantity}
             onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
             required
-            placeholder="Stock Quantity"
+            placeholder={t("admin.filaments.stockPlaceholder")}
             className="admin-field"
           />
         </label>
         <button type="submit" className="admin-btn admin-btn-primary">
-          Add Filament
+          {t("admin.filaments.addButton")}
         </button>
 
         <label className="admin-label col-span-full">
-          <span className="font-semibold">Description</span>
+          <span className="font-semibold">{t("admin.filaments.descriptionLabel")}</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description"
+            placeholder={t("admin.filaments.descriptionPlaceholder")}
             className="admin-textarea"
             rows={3}
           />
@@ -322,18 +324,18 @@ export default function AdminFilaments() {
       </form>
 
       {loading ? (
-        <p className="admin-note">Loading filaments...</p>
+        <p className="admin-note">{t("admin.filaments.loadingMessage")}</p>
       ) : (
         <div className="admin-panel admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Material</th>
-                <th>Color</th>
-                <th>Price/gram</th>
-                <th>Stock</th>
-                <th>Actions</th>
+                <th>{t("admin.filaments.tableName")}</th>
+                <th>{t("admin.filaments.tableMaterial")}</th>
+                <th>{t("admin.filaments.tableColor")}</th>
+                <th>{t("admin.filaments.tablePrice")}</th>
+                <th>{t("admin.filaments.tableStock")}</th>
+                <th>{t("admin.filaments.tableActions")}</th>
               </tr>
             </thead>
             <tbody>

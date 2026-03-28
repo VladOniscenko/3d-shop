@@ -4,6 +4,7 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
+import { useI18n } from "../i18n/I18nContext";
 import {
   ADMIN_ORDER_STATUS_OPTIONS,
   formatOrderStatusLabel,
@@ -17,6 +18,7 @@ const STATUS_OPTIONS = [
 const SORT_FIELDS = ["createdAt", "status", "quotedPrice"];
 
 export default function AdminOrders() {
+  const { t } = useI18n();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -63,7 +65,7 @@ export default function AdminOrders() {
       <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5 p-4">
         <input
           className="admin-field"
-          placeholder="Search orders..."
+          placeholder={t("admin.orders.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -98,19 +100,19 @@ export default function AdminOrders() {
       </div>
 
       {loading ? (
-        <p className="admin-note">Loading orders...</p>
+        <p className="admin-note">{t("admin.orders.loading")}</p>
       ) : orders.length === 0 ? (
-        <p className="admin-note">No matching orders.</p>
+        <p className="admin-note">{t("admin.orders.noMatches")}</p>
       ) : (
         <div className="admin-panel admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Project</th>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Quoted</th>
-                <th>Created</th>
+                <th>{t("admin.orders.columnProject")}</th>
+                <th>{t("admin.orders.columnCustomer")}</th>
+                <th>{t("admin.orders.columnStatus")}</th>
+                <th>{t("admin.orders.columnQuoted")}</th>
+                <th>{t("admin.orders.columnCreated")}</th>
               </tr>
             </thead>
             <tbody>

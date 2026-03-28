@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { useI18n } from "../i18n/I18nContext";
 import type {
   OrderCommunication,
   OrderStatusHistoryEntry,
@@ -22,6 +23,7 @@ import {
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -410,67 +412,67 @@ export default function AdminOrderDetail() {
         <div className="space-y-5">
           <article className="admin-panel p-4">
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-bold text-[#1b2b25]">Customer info</h2>
+              <h2 className="font-bold text-[#1b2b25]">{t("admin.order.customerInfoTitle")}</h2>
               <button
                 onClick={() => setEditingCustomer(!editingCustomer)}
                 className="text-sm text-teal-700 hover:underline"
               >
-                {editingCustomer ? "Cancel" : "Edit"}
+                {editingCustomer ? t("admin.order.customerCancel") : t("admin.order.customerEdit")}
               </button>
             </div>
             {editingCustomer ? (
               <div className="space-y-2">
                 <label className="admin-label">
-                  <span className="font-semibold">Full Name</span>
+                  <span className="font-semibold">{t("admin.order.fullNameLabel")}</span>
                   <input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Full Name"
+                    placeholder={t("admin.order.fullNamePlaceholder")}
                     className="admin-field"
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">Address Line 1</span>
+                  <span className="font-semibold">{t("admin.order.addressLine1Label")}</span>
                   <input
                     value={addressLine1}
                     onChange={(e) => setAddressLine1(e.target.value)}
-                    placeholder="Address Line 1"
+                    placeholder={t("admin.order.addressLine1Placeholder")}
                     className="admin-field"
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">Address Line 2</span>
+                  <span className="font-semibold">{t("admin.order.addressLine2Label")}</span>
                   <input
                     value={addressLine2}
                     onChange={(e) => setAddressLine2(e.target.value)}
-                    placeholder="Address Line 2"
+                    placeholder={t("admin.order.addressLine2Placeholder")}
                     className="admin-field"
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">City</span>
+                  <span className="font-semibold">{t("admin.order.cityLabel")}</span>
                   <input
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="City"
+                    placeholder={t("admin.order.cityPlaceholder")}
                     className="admin-field"
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">Postal Code</span>
+                  <span className="font-semibold">{t("admin.order.postalCodeLabel")}</span>
                   <input
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder="Postal Code"
+                    placeholder={t("admin.order.postalCodePlaceholder")}
                     className="admin-field"
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">Phone Number</span>
+                  <span className="font-semibold">{t("admin.order.phoneNumberLabel")}</span>
                   <input
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="Phone Number"
+                    placeholder={t("admin.order.phoneNumberPlaceholder")}
                     className="admin-field"
                   />
                 </label>
@@ -478,7 +480,7 @@ export default function AdminOrderDetail() {
                   onClick={saveCustomerInfo}
                   className="admin-btn admin-btn-primary"
                 >
-                  Save
+                  {t("admin.order.saveButton")}
                 </button>
               </div>
             ) : (
@@ -497,7 +499,7 @@ export default function AdminOrderDetail() {
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Order Actions</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.order.orderActionsTitle")}</h3>
             <div className="grid gap-2">
               <div className="flex items-center gap-2 mb-2">
                 <select
@@ -517,7 +519,7 @@ export default function AdminOrderDetail() {
                   onClick={updateOrderStatus}
                   disabled={isStatusUnchanged}
                 >
-                  Update Status
+                  {t("admin.order.updateStatusButton")}
                 </button>
               </div>
               <button
@@ -525,14 +527,13 @@ export default function AdminOrderDetail() {
                 onClick={() => setShowDeleteConfirm(true)}
                 className="admin-btn admin-btn-danger"
               >
-                Delete Order
+                {t("admin.order.deleteOrderButton")}
               </button>
               {showDeleteConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
                   <div className="admin-panel w-full max-w-sm p-6">
                     <p className="mb-4 font-semibold">
-                      Are you sure you want to delete this order? This will also
-                      delete all associated files.
+                      {t("admin.order.deleteConfirmMessage")}
                     </p>
                     <div className="flex justify-end gap-4">
                       <button
@@ -540,7 +541,7 @@ export default function AdminOrderDetail() {
                         className="admin-btn admin-btn-secondary"
                         onClick={() => setShowDeleteConfirm(false)}
                       >
-                        Cancel
+                        {t("admin.order.cancelButton")}
                       </button>
                       <button
                         type="button"
@@ -550,7 +551,7 @@ export default function AdminOrderDetail() {
                           await deleteOrder();
                         }}
                       >
-                        Yes, Delete
+                        {t("admin.order.deleteConfirmButton")}
                       </button>
                     </div>
                   </div>
@@ -560,28 +561,28 @@ export default function AdminOrderDetail() {
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Track and Trace</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.order.trackingTitle")}</h3>
             <div className="grid gap-3">
               <div>
                 <label className="block text-xs uppercase text-[#6c817a]">
-                  Tracking Code
+                  {t("admin.order.trackingCodeLabel")}
                 </label>
                 <input
                   value={trackingCode}
                   onChange={(e) => setTrackingCode(e.target.value)}
                   className="admin-field"
-                  placeholder="e.g. 3SPQ123456789"
+                  placeholder={t("admin.order.trackingCodePlaceholder")}
                 />
               </div>
               <div>
                 <label className="block text-xs uppercase text-[#6c817a]">
-                  Tracking URL (optional)
+                  {t("admin.order.trackingUrlLabel")}
                 </label>
                 <input
                   value={trackingUrl}
                   onChange={(e) => setTrackingUrl(e.target.value)}
                   className="admin-field"
-                  placeholder="https://carrier.example/track/..."
+                  placeholder={t("admin.order.trackingUrlPlaceholder")}
                 />
               </div>
               <button
@@ -590,43 +591,42 @@ export default function AdminOrderDetail() {
                 disabled={savingTracking}
                 className="admin-btn admin-btn-secondary w-fit"
               >
-                {savingTracking ? "Saving..." : "Save Tracking"}
+                {savingTracking ? t("admin.order.savingButton") : t("admin.order.saveTrackingButton")}
               </button>
             </div>
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Communication</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.order.communicationTitle")}</h3>
             <div className="grid gap-3">
               <div>
                 <label className="block text-xs uppercase text-[#6c817a]">
-                  Email Type
+                  {t("admin.order.emailTypeLabel")}
                 </label>
                 <select
                   value={emailType}
                   onChange={(e) => setEmailType(e.target.value)}
                   className="admin-select"
                 >
-                  <option value="quote_requested">Quote Requested</option>
+                  <option value="quote_requested">{t("admin.order.emailTypeQuote")}</option>
                   <option value="quote_confirmation">
-                    Quote Confirmation + Price
+                    {t("admin.order.emailTypeConfirmation")}
                   </option>
                   <option value="order_sent_tracking">
-                    Order Sent + Track and Trace
+                    {t("admin.order.emailTypeTracking")}
                   </option>
                 </select>
               </div>
 
               {emailType === "quote_confirmation" && (
                 <p className="text-sm text-[#5b706a]">
-                  Price and message are generated automatically from order item
-                  prices, delivery, and order discount.
+                  {t("admin.order.emailConfirmationNote")}
                 </p>
               )}
 
               {emailType === "order_sent_tracking" && (
                 <p className="text-sm text-[#5b706a]">
-                  Uses the saved tracking details above.
+                  {t("admin.order.emailTrackingNote")}
                 </p>
               )}
 
@@ -636,17 +636,17 @@ export default function AdminOrderDetail() {
                 disabled={sendingEmail}
                 className="admin-btn admin-btn-primary w-fit"
               >
-                {sendingEmail ? "Sending..." : "Send Email"}
+                {sendingEmail ? t("admin.order.sendingButton") : t("admin.order.sendEmailButton")}
               </button>
             </div>
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Notes</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">{t("admin.order.notesTitle")}</h3>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-[#5f736d]">
-                  Internal Notes
+                  {t("admin.order.internalNotesLabel")}
                 </label>
                 <textarea
                   value={internalNotes}
@@ -657,7 +657,7 @@ export default function AdminOrderDetail() {
               </div>
               <div>
                 <label className="block text-xs text-[#5f736d]">
-                  Customer Notes
+                  {t("admin.order.customerNotesLabel")}
                 </label>
                 <textarea
                   value={customerNotes}
@@ -670,23 +670,23 @@ export default function AdminOrderDetail() {
                 onClick={saveNotes}
                 className="admin-btn admin-btn-primary"
               >
-                Save Notes
+                {t("admin.order.saveNotesButton")}
               </button>
             </div>
           </article>
 
           <article className="admin-panel p-4">
             <h3 className="font-bold mb-2 text-[#1b2b25]">
-              Admin & Customer Messaging
+              {t("admin.order.messagingTitle")}
             </h3>
             <p className="text-sm text-[#5b706a]">
-              Quote: {order.quoteMessage || "None"}
+              {t("admin.order.quoteLabel")}: {order.quoteMessage || t("admin.order.noneValue")}
             </p>
             <p className="text-sm text-[#5b706a]">
-              Internal Notes: {order.internalNotes || "None"}
+              {t("admin.order.internalNotesLabel")}: {order.internalNotes || t("admin.order.noneValue")}
             </p>
             <p className="text-sm text-[#5b706a]">
-              Customer Notes: {order.customerNotes || "None"}
+              {t("admin.order.customerNotesLabel")}: {order.customerNotes || t("admin.order.noneValue")}
             </p>
           </article>
         </div>

@@ -3,9 +3,11 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { User } from "../types";
+import { useI18n } from "../i18n/I18nContext";
 import { useNotify } from "../context/NotifyContext";
 
 export default function AdminUsers() {
+  const { t } = useI18n();
   const { notifyError, notifySuccess } = useNotify();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
@@ -86,7 +88,7 @@ export default function AdminUsers() {
       <div className="mb-4 flex flex-wrap gap-2">
         <input
           className="admin-field w-full sm:w-auto"
-          placeholder="Search users by name/email"
+          placeholder={t("admin.users.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -100,28 +102,28 @@ export default function AdminUsers() {
 
       {editingUser && (
         <div className="admin-panel mb-4 p-4">
-          <h3 className="font-bold mb-2 text-[#1d2d27]">Edit User</h3>
+          <h3 className="font-bold mb-2 text-[#1d2d27]">{t("admin.users.editUserSection")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <label className="admin-label">
-              <span className="font-semibold">Name</span>
+              <span className="font-semibold">{t("admin.users.nameLabel")}</span>
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                placeholder="Name"
+                placeholder={t("admin.users.namePlaceholder")}
                 className="admin-field"
               />
             </label>
             <label className="admin-label">
-              <span className="font-semibold">Email</span>
+              <span className="font-semibold">{t("admin.users.emailLabel")}</span>
               <input
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="Email"
+                placeholder={t("admin.users.emailPlaceholder")}
                 className="admin-field"
               />
             </label>
             <label className="admin-label">
-              <span className="font-semibold">Role</span>
+              <span className="font-semibold">{t("admin.users.roleLabel")}</span>
               <select
                 value={editRole}
                 onChange={(e) =>
@@ -129,14 +131,14 @@ export default function AdminUsers() {
                 }
                 className="admin-select"
               >
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
+                <option value="customer">{t("admin.users.roleCustomer")}</option>
+                <option value="admin">{t("admin.users.roleAdmin")}</option>
               </select>
             </label>
           </div>
           <div className="mt-2 flex gap-2">
             <button onClick={saveEdit} className="admin-btn admin-btn-primary">
-              Save
+              {t("admin.users.saveButton")}
             </button>
             <button
               onClick={cancelEdit}
@@ -152,10 +154,10 @@ export default function AdminUsers() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Actions</th>
+              <th>{t("admin.users.columnName")}</th>
+              <th>{t("admin.users.columnEmail")}</th>
+              <th>{t("admin.users.columnRole")}</th>
+              <th>{t("admin.users.columnActions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -169,7 +171,7 @@ export default function AdminUsers() {
                     onClick={() => startEdit(user)}
                     className="admin-btn admin-btn-secondary"
                   >
-                    Edit
+                    {t("admin.products.edit")}
                   </button>
                 </td>
               </tr>

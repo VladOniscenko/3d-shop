@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Product } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { useI18n } from "../i18n/I18nContext";
 import { resolveAssetUrl } from "../utils/assetUrl";
 import {
   PRODUCT_TYPE_LABELS,
@@ -25,6 +26,7 @@ const STOCK_MIN = 0;
 
 export default function AdminProducts() {
   const { notifyError, notifySuccess } = useNotify();
+  const { t } = useI18n();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -186,26 +188,26 @@ export default function AdminProducts() {
         className="admin-panel grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 p-4"
       >
         <label className="admin-label">
-          <span className="font-semibold">Name</span>
+          <span className="font-semibold">{t("admin.products.nameLabel")}</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="Name"
+            placeholder={t("admin.products.namePlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Category</span>
+          <span className="font-semibold">{t("admin.products.categoryLabel")}</span>
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
+            placeholder={t("admin.products.categoryPlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Product Type</span>
+          <span className="font-semibold">{t("admin.products.productTypeLabel")}</span>
           <select
             value={productType}
             onChange={(e) => setProductType(e.target.value)}
@@ -219,17 +221,17 @@ export default function AdminProducts() {
           </select>
         </label>
         <label className="admin-label col-span-full">
-          <span className="font-semibold">Description</span>
+          <span className="font-semibold">{t("admin.products.descriptionLabel")}</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            placeholder="Describe the product"
+            placeholder={t("admin.products.descriptionPlaceholder")}
             className="admin-textarea"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Product Images</span>
+          <span className="font-semibold">{t("admin.products.imagesLabel")}</span>
           <input
             type="file"
             accept="image/*"
@@ -239,7 +241,7 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label col-span-full sm:col-span-2">
-          <span className="font-semibold">Model File</span>
+          <span className="font-semibold">{t("admin.products.modelFileLabel")}</span>
           <input
             type="file"
             onChange={(e) => setFileFile(e.target.files?.[0] || null)}
@@ -247,18 +249,18 @@ export default function AdminProducts() {
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Price</span>
+          <span className="font-semibold">{t("admin.products.priceLabel")}</span>
           <input
             type="number"
             value={price}
             onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
             required
-            placeholder="Price"
+            placeholder={t("admin.products.pricePlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Discount (%)</span>
+          <span className="font-semibold">{t("admin.products.discountLabel")}</span>
           <input
             type="number"
             min={DISCOUNT_MIN}
@@ -268,23 +270,23 @@ export default function AdminProducts() {
             onChange={(e) =>
               setDiscountPercentage(parseFloat(e.target.value) || 0)
             }
-            placeholder="0"
+            placeholder={t("admin.products.discountPlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Track Inventory</span>
+          <span className="font-semibold">{t("admin.products.trackInventoryLabel")}</span>
           <select
             value={trackInventory ? "true" : "false"}
             onChange={(e) => setTrackInventory(e.target.value === "true")}
             className="admin-field"
           >
-            <option value="true">Yes</option>
-            <option value="false">No</option>
+            <option value="true">{t("admin.products.trackInventoryYes")}</option>
+            <option value="false">{t("admin.products.trackInventoryNo")}</option>
           </select>
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Stock Quantity</span>
+          <span className="font-semibold">{t("admin.products.stockQuantityLabel")}</span>
           <input
             type="number"
             min={STOCK_MIN}
@@ -294,41 +296,41 @@ export default function AdminProducts() {
               setStockQuantity(parseInt(e.target.value, 10) || 0)
             }
             disabled={!trackInventory}
-            placeholder="0"
+            placeholder={t("admin.products.stockQuantityPlaceholder")}
             className="admin-field"
           />
         </label>
         <label className="admin-label">
-          <span className="font-semibold">Active</span>
+          <span className="font-semibold">{t("admin.products.activeLabel")}</span>
           <select
             value={isActive ? "true" : "false"}
             onChange={(e) => setIsActive(e.target.value === "true")}
             className="admin-field"
           >
-            <option value="true">Yes</option>
-            <option value="false">No</option>
+            <option value="true">{t("admin.products.activeYes")}</option>
+            <option value="false">{t("admin.products.activeNo")}</option>
           </select>
         </label>
         <button type="submit" className="admin-btn admin-btn-primary">
-          Add Product
+          {t("admin.products.addButton")}
         </button>
       </form>
 
       {loading ? (
-        <p className="admin-note">Loading products...</p>
+        <p className="admin-note">{t("admin.products.loadingMessage")}</p>
       ) : (
         <div className="admin-panel p-4">
           <div className="overflow-x-auto">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Preview</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>{t("admin.products.tablePreview")}</th>
+                  <th>{t("admin.products.tableName")}</th>
+                  <th>{t("admin.products.tableType")}</th>
+                  <th>{t("admin.products.tableCategory")}</th>
+                  <th>{t("admin.products.tablePrice")}</th>
+                  <th>{t("admin.products.tableStatus")}</th>
+                  <th>{t("admin.products.tableActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -396,7 +398,7 @@ export default function AdminProducts() {
           </div>
 
           {!loading && products.length === 0 && (
-            <p className="admin-empty">No products found.</p>
+            <p className="admin-empty">{t("admin.products.noProducts")}</p>
           )}
         </div>
       )}

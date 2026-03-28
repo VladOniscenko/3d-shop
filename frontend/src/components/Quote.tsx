@@ -118,7 +118,7 @@ export default function Quote() {
     }
 
     // Validate each item has either a file or notes
-    if (items.some(item => !item.fileUrl && !item.notes)) {
+    if (items.some((item) => !item.fileUrl && !item.notes)) {
       notifyError("Each item must have either a file or description.");
       return;
     }
@@ -221,7 +221,7 @@ export default function Quote() {
                             onChange={(e) =>
                               updateItem(idx, "material", e.target.value)
                             }
-                            placeholder="PLA, PETG, ABS, Nylon..."
+                            placeholder={t("quote.materialPlaceholder")}
                           />
                         </div>
 
@@ -236,7 +236,7 @@ export default function Quote() {
                             onChange={(e) =>
                               updateItem(idx, "color", e.target.value)
                             }
-                            placeholder="Black, White, Red, Transparent..."
+                            placeholder={t("quote.colorPlaceholder")}
                           />
                         </div>
 
