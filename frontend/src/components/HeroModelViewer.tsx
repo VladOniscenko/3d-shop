@@ -8,13 +8,7 @@ type HeroModelViewerProps = {
 };
 
 const HERO_MODEL_COLORS = [
-  0x45d8a5,
-  0x1cc6b7,
-  0x23a6d5,
-  0x7ddf6a,
-  0x5fd0ff,
-  0x49e3c3,
-  0xa0e05f,
+  0x45d8a5, 0x1cc6b7, 0x23a6d5, 0x7ddf6a, 0x5fd0ff, 0x49e3c3, 0xa0e05f,
 ];
 
 function pickRandomColor(): number {
