@@ -181,10 +181,17 @@ export default function OrderDetail() {
     (item) => item.price == null || item.price <= 0,
   );
 
-  const totalPrice = hasMissingPrice
-    ? 0
-    : order.items.reduce((sum, item) => sum + item.price, 0) +
-      (order.deliveryPrice ?? 0);
+  const subtotalPrice = hasMissingPrice
+    ? null
+    : order.items.reduce((sum, item) => sum + item.price, 0);
+
+  const orderDiscount = Math.max(order.orderDiscountAmount ?? 0, 0);
+  const deliveryPrice = order.deliveryPrice ?? 0;
+
+  const calculatedTotal =
+    subtotalPrice == null
+      ? 0
+      : Math.max(subtotalPrice + deliveryPrice - orderDiscount, 0);
 
   const statusLabel = (() => {
     switch (order.status.toLowerCase()) {
@@ -212,7 +219,9 @@ export default function OrderDetail() {
   })();
 
   const displayTotal =
-    order.quotedPrice && order.quotedPrice > 0 ? order.quotedPrice : totalPrice;
+    order.quotedPrice && order.quotedPrice > 0
+      ? order.quotedPrice
+      : calculatedTotal;
 
   const statusStep = (() => {
     switch (order.status.toLowerCase()) {
@@ -436,6 +445,15 @@ export default function OrderDetail() {
 
                 {/* PRICING SECTION IN SIDEBAR */}
                 <div className="pt-6 mt-2 border-t border-white/10 space-y-3">
+                  <div className="flex justify-between items-center text-emerald-100/70">
+                    <span>{t("orderDetail.subtotal")}</span>
+                    <span>
+                      {subtotalPrice != null
+                        ? `€${subtotalPrice.toFixed(2)}`
+                        : t("orderDetail.toBeCalculated")}
+                    </span>
+                  </div>
+
                   {/* Delivery Price (Assume DeliveryPrice exists in your Order model, otherwise replace with fixed value or condition) */}
                   <div className="flex justify-between items-center text-emerald-100/70">
                     <span className="flex items-center gap-2">
@@ -443,10 +461,19 @@ export default function OrderDetail() {
                     </span>
                     <span>
                       {order.deliveryPrice && order.deliveryPrice > 0
-                        ? "€" + order.deliveryPrice
+                        ? `€${order.deliveryPrice.toFixed(2)}`
                         : t("orderDetail.toBeCalculated")}
                     </span>
                   </div>
+
+                  {orderDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-200">
+                      <span className="flex items-center gap-2">
+                        <Tag size={14} /> {t("orderDetail.discount")}
+                      </span>
+                      <span>-€{orderDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center text-xl font-bold text-white pt-2">
                     <span className="flex items-center gap-2">

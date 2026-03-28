@@ -340,7 +340,10 @@ export default function AdminOrderDetail() {
       );
     }, 0) || 0;
 
-  const totalPrice = Math.max(0, subtotal + deliveryPrice - orderDiscountAmount);
+  const totalPrice = Math.max(
+    0,
+    subtotal + deliveryPrice - orderDiscountAmount,
+  );
 
   return (
     <AdminLayout>
@@ -486,7 +489,9 @@ export default function AdminOrderDetail() {
             </div>
             <div className="mt-1 text-right">
               <p className="text-sm text-[#5f736d]">
-                Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR {deliveryPrice.toFixed(2)} | Discount: EUR {orderDiscountAmount.toFixed(2)}
+                Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR{" "}
+                {deliveryPrice.toFixed(2)} | Discount: EUR{" "}
+                {orderDiscountAmount.toFixed(2)}
               </p>
               <span className="font-bold">
                 Total (including delivery): EUR {totalPrice.toFixed(2)}
