@@ -1,31 +1,22 @@
 import { useState, useEffect } from "react";
-import { useCart } from "../context/CartContext";
-import {
-  Trash2,
-  MapPin,
-  Phone as PhoneIcon,
-  Loader2,
-  Layers,
-  Palette,
-  Hash,
-  ArrowRight,
-  ShoppingCart,
-  Image as ImageIcon,
-  Truck,
-  CreditCard,
-} from "lucide-react";
-import Navbar from "./Navbar";
-import api from "../services/api";
+import { ArrowRight, Loader2, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import api from "../services/api";
+import { useCart } from "../context/CartContext";
 import type { Filament } from "../types";
+import { useI18n } from "../i18n/I18nContext";
+import { useNotify } from "../context/NotifyContext";
 import {
   normalizeShippingInfo,
   validateShippingInfo,
 } from "../utils/shippingValidation";
-import { useI18n } from "../i18n/I18nContext";
-import Footer from "./Footer";
-import { useNotify } from "../context/NotifyContext";
-import { resolveAssetUrl } from "../utils/assetUrl";
+import CartItemsSection from "./cart/CartItemsSection";
+import CheckoutSidebar from "./cart/CheckoutSidebar";
+import type { ShippingAddress } from "./cart/types";
+
+const DELIVERY_PRICE = 6.95;
 
 export default function CheckoutPage() {
   const { t } = useI18n();
@@ -37,7 +28,25 @@ export default function CheckoutPage() {
     loading: cartLoading,
     error,
   } = useCart();
+
   const [showError, setShowError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filaments, setFilaments] = useState<Filament[]>([]);
+  const [address, setAddress] = useState<ShippingAddress>({
+    fullName: "",
+    phoneNumber: "",
+    addressLine1: "",
+    city: "",
+    postalCode: "",
+  });
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
+
+  const navigate = useNavigate();
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.count, 0);
+  const total = subtotal + DELIVERY_PRICE;
+  const materials = Array.from(new Set(filaments.map((f) => f.material)));
 
   useEffect(() => {
     if (error && error.includes("Your cart was updated elsewhere")) {
@@ -46,25 +55,6 @@ export default function CheckoutPage() {
       return () => clearTimeout(timer);
     }
   }, [error]);
-  const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [filaments, setFilaments] = useState<Filament[]>([]);
-
-  const [address, setAddress] = useState({
-    fullName: "",
-    phoneNumber: "",
-    addressLine1: "",
-    city: "",
-    postalCode: "",
-  });
-
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
-
-  const DELIVERY_PRICE = 6.95;
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.count, 0);
-  const total = subtotal + DELIVERY_PRICE;
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -78,8 +68,6 @@ export default function CheckoutPage() {
     fetchFilaments();
   }, []);
 
-  const materials = Array.from(new Set(filaments.map((f) => f.material)));
-
   const handleRemoveItem = async (itemId: string) => {
     try {
       await removeFromCart(itemId);
@@ -91,18 +79,19 @@ export default function CheckoutPage() {
   const handleUpdate = async (
     itemId: string,
     field: "material" | "color" | "count",
-    value: any,
+    value: string | number,
   ) => {
     try {
       const item = cart.find((i) => i.id === itemId);
       if (!item) return;
 
-      const updatedCount = field === "count" ? value : item.count;
-      let updatedMaterial = field === "material" ? value : item.material;
-      let updatedColor = field === "color" ? value : item.color;
+      const updatedCount = field === "count" ? Number(value) : item.count;
+      let updatedMaterial = field === "material" ? String(value) : item.material;
+      let updatedColor = field === "color" ? String(value) : item.color;
 
       if (field === "material") {
-        updatedColor = filaments.find((f) => f.material === value)?.color || "";
+        updatedColor =
+          filaments.find((f) => f.material === value)?.color || "";
       }
 
       await updateCartItem(itemId, updatedCount, updatedMaterial, updatedColor);
@@ -113,7 +102,6 @@ export default function CheckoutPage() {
 
   const validateForm = (): boolean => {
     const errors = validateShippingInfo(address);
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -134,7 +122,6 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     try {
       const payload = normalizeShippingInfo(address);
-
       const res = await api.post("/payments/create", payload);
 
       if (res.data.checkoutUrl) {
@@ -207,308 +194,28 @@ export default function CheckoutPage() {
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                {t("cart.review")}
-              </h3>
-              <div className="space-y-6">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-5 bg-gray-50 rounded-2xl border border-gray-200"
-                  >
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="bg-white w-full md:w-32 h-32 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
-                        {item.imageUrl ? (
-                          <img
-                            src={resolveAssetUrl(item.imageUrl)}
-                            alt={item.productName}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <ImageIcon className="text-gray-300" size={32} />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-lg">
-                              {item.productName}
-                            </h4>
-                            <p className="text-emerald-600 font-bold">
-                              €{item.price.toFixed(2)} / unit
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="text-red-400 hover:text-red-600"
-                          >
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Layers size={12} /> {t("cart.material")}
-                            </label>
-                            <select
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
-                              value={item.material}
-                              onChange={(e) =>
-                                handleUpdate(
-                                  item.id,
-                                  "material",
-                                  e.target.value,
-                                )
-                              }
-                            >
-                              {materials.map((m) => (
-                                <option key={m} value={m}>
-                                  {m}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Palette size={12} /> {t("cart.color")}
-                            </label>
-                            <select
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
-                              value={item.color}
-                              onChange={(e) =>
-                                handleUpdate(item.id, "color", e.target.value)
-                              }
-                            >
-                              {filaments
-                                .filter((f) => f.material === item.material)
-                                .map((f) => (
-                                  <option key={f.id} value={f.color}>
-                                    {f.color}
-                                  </option>
-                                ))}
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              <Hash size={12} /> {t("cart.quantity")}
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="100"
-                              className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
-                              value={item.count}
-                              onChange={(e) =>
-                                handleUpdate(
-                                  item.id,
-                                  "count",
-                                  Math.min(100, parseInt(e.target.value) || 1),
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                {t("cart.paymentMethod")}
-              </h3>
-              <div className="p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-emerald-500 text-white">
-                  <CreditCard size={24} />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">
-                    {t("cart.paymentOnline")}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {t("cart.paymentOptions")}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <CartItemsSection
+              cart={cart}
+              filaments={filaments}
+              materials={materials}
+              t={t}
+              onRemoveItem={handleRemoveItem}
+              onUpdate={handleUpdate}
+            />
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-              <div className="mb-8 space-y-3">
-                <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-sm">
-                  {t("cart.summary")}
-                </h3>
-                <div className="flex justify-between text-gray-500 text-sm">
-                  <span>{t("cart.subtotal")}</span>
-                  <span className="font-medium text-gray-900">
-                    €{subtotal.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-gray-500 text-sm">
-                  <span className="flex items-center gap-2">
-                    <Truck size={16} /> {t("cart.delivery")}
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    €{DELIVERY_PRICE.toFixed(2)}
-                  </span>
-                </div>
-                <div className="pt-4 border-t border-gray-100 flex justify-between">
-                  <span className="font-black text-gray-900 text-lg">
-                    {t("cart.total")}
-                  </span>
-                  <span className="font-black text-emerald-600 text-lg">
-                    €{total.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              <hr className="mb-8 border-gray-100" />
-
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
-                <MapPin className="text-emerald-600" size={20} />{" "}
-                {t("cart.shipping")}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    placeholder={t("quote.fullName")}
-                    className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
-                      validationErrors.fullName
-                        ? "border-red-300 focus:ring-red-400"
-                        : "border-gray-200 focus:ring-emerald-500"
-                    }`}
-                    value={address.fullName}
-                    onChange={(e) =>
-                      setAddress({ ...address, fullName: e.target.value })
-                    }
-                  />
-                  {validationErrors.fullName && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.fullName}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="relative">
-                    <PhoneIcon
-                      className="absolute left-3 top-3 text-gray-400"
-                      size={18}
-                    />
-                    <input
-                      type="tel"
-                      placeholder={t("quote.phone")}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
-                        validationErrors.phoneNumber
-                          ? "border-red-300 focus:ring-red-400"
-                          : "border-gray-200 focus:ring-emerald-500"
-                      }`}
-                      value={address.phoneNumber}
-                      onChange={(e) =>
-                        setAddress({ ...address, phoneNumber: e.target.value })
-                      }
-                    />
-                  </div>
-                  {validationErrors.phoneNumber && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.phoneNumber}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    placeholder={t("quote.street")}
-                    className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
-                      validationErrors.addressLine1
-                        ? "border-red-300 focus:ring-red-400"
-                        : "border-gray-200 focus:ring-emerald-500"
-                    }`}
-                    value={address.addressLine1}
-                    onChange={(e) =>
-                      setAddress({ ...address, addressLine1: e.target.value })
-                    }
-                  />
-                  {validationErrors.addressLine1 && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.addressLine1}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <input
-                      type="text"
-                      placeholder={t("quote.city")}
-                      className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
-                        validationErrors.city
-                          ? "border-red-300 focus:ring-red-400"
-                          : "border-gray-200 focus:ring-emerald-500"
-                      }`}
-                      value={address.city}
-                      onChange={(e) =>
-                        setAddress({ ...address, city: e.target.value })
-                      }
-                    />
-                    {validationErrors.city && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {validationErrors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      placeholder={t("quote.postalCode")}
-                      className={`w-full px-4 py-2.5 border rounded-xl outline-none focus:ring-2 ${
-                        validationErrors.postalCode
-                          ? "border-red-300 focus:ring-red-400"
-                          : "border-gray-200 focus:ring-emerald-500"
-                      }`}
-                      value={address.postalCode}
-                      onChange={(e) =>
-                        setAddress({ ...address, postalCode: e.target.value })
-                      }
-                    />
-                    {validationErrors.postalCode && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {validationErrors.postalCode}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting || cartLoading}
-                className={`w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all ${
-                  isSubmitting || cartLoading
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-[#1c4d37]"
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    {t("cart.processing")}
-                  </>
-                ) : (
-                  <>
-                    <CreditCard size={20} />
-                    {t("cart.payMollie")}
-                  </>
-                )}
-              </button>
-            </div>
+            <CheckoutSidebar
+              subtotal={subtotal}
+              deliveryPrice={DELIVERY_PRICE}
+              total={total}
+              address={address}
+              validationErrors={validationErrors}
+              isSubmitting={isSubmitting}
+              cartLoading={cartLoading}
+              t={t}
+              onAddressChange={setAddress}
+            />
           </div>
         </form>
       </main>

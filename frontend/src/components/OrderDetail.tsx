@@ -15,10 +15,7 @@ import OrderItemsCard from "./order-detail/OrderItemsCard";
 import OrderTimeline from "./order-detail/OrderTimeline";
 import OrderSidebar from "./order-detail/OrderSidebar";
 import ShippingModal from "./order-detail/ShippingModal";
-import type {
-  ShippingDetails,
-  ShippingField,
-} from "./order-detail/types";
+import type { ShippingDetails, ShippingField } from "./order-detail/types";
 import {
   buildPriceSummary,
   buildStatusSummary,

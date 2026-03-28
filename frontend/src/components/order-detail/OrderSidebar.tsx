@@ -52,7 +52,8 @@ export default function OrderSidebar({
             <div className="flex justify-between items-center text-emerald-100/70">
               <span>{t("orderDetail.subtotal")}</span>
               <span>
-                {!priceSummary.isPendingQuote && priceSummary.subtotalPrice != null
+                {!priceSummary.isPendingQuote &&
+                priceSummary.subtotalPrice != null
                   ? `€${priceSummary.subtotalPrice.toFixed(2)}`
                   : t("orderDetail.toBeCalculated")}
               </span>
@@ -80,7 +81,8 @@ export default function OrderSidebar({
 
             <div className="flex justify-between items-center text-xl font-bold text-white pt-2">
               <span className="flex items-center gap-2">
-                <Tag size={18} className="text-emerald-400" /> {t("orderDetail.total")}
+                <Tag size={18} className="text-emerald-400" />{" "}
+                {t("orderDetail.total")}
               </span>
               <span className="text-emerald-400">
                 {priceSummary.displayTotal > 0
@@ -103,9 +105,12 @@ export default function OrderSidebar({
 
       <div className="bg-white rounded-2xl p-6 border border-gray-200">
         <h4 className="font-bold text-sm text-gray-900 mb-2 flex items-center gap-2">
-          <Calendar size={16} className="text-emerald-600" /> {t("orderDetail.referenceId")}
+          <Calendar size={16} className="text-emerald-600" />{" "}
+          {t("orderDetail.referenceId")}
         </h4>
-        <p className="text-[10px] font-mono text-gray-400 break-all">{order.id}</p>
+        <p className="text-[10px] font-mono text-gray-400 break-all">
+          {order.id}
+        </p>
       </div>
     </div>
   );

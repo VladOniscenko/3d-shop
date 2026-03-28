@@ -46,7 +46,10 @@ export function buildPriceSummary(order: Order): PriceSummary {
   };
 }
 
-export function buildStatusSummary(order: Order, t: TranslateFn): StatusSummary {
+export function buildStatusSummary(
+  order: Order,
+  t: TranslateFn,
+): StatusSummary {
   const status = order.status.toLowerCase();
 
   const label = (() => {

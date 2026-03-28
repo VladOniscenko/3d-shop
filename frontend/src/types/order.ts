@@ -1,0 +1,52 @@
+export interface Order {
+  id: string;
+  userId: string;
+  status:
+    | "pending_quote"
+    | "quoted"
+    | "pending_payment"
+    | "printing"
+    | "completed"
+    | "shipped"
+    | "sent"
+    | "delivered"
+    | "paid"
+    | "failed"
+    | "cancelled";
+  orderType: "quote" | "online";
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  postalCode: string;
+  phoneNumber: string;
+  deliveryPrice?: number;
+  orderDiscountAmount?: number;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  finalTotalAmount?: number;
+  quotedPrice?: number;
+  quoteMessage?: string;
+  trackingCode?: string;
+  trackingUrl?: string;
+  internalNotes?: string;
+  customerNotes?: string;
+  isPaid?: boolean;
+  updatedAt?: string;
+  createdAt: string;
+  items: OrderItem[];
+}
+
+export interface OrderItem {
+  id?: string;
+  orderId?: string;
+  productId?: string;
+  imageUrl: string;
+  fileUrl?: string;
+  fileName: string;
+  notes?: string;
+  material: string;
+  color: string;
+  price: number;
+  count: number;
+}

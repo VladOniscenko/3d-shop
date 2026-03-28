@@ -27,7 +27,9 @@ export default function OrderItemsCard({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
-                  <p className="font-bold text-gray-900 truncate">{item.fileName}</p>
+                  <p className="font-bold text-gray-900 truncate">
+                    {item.fileName}
+                  </p>
                   {!isPendingQuote && item.price > 0 && (
                     <span className="font-bold text-emerald-700">
                       €{item.price.toFixed(2)}
@@ -49,7 +51,8 @@ export default function OrderItemsCard({
             </div>
             {item.notes && (
               <div className="flex items-start gap-2 text-sm text-gray-500 italic bg-white/50 p-3 rounded-lg">
-                <MessageSquare size={14} className="mt-1 shrink-0" />"{item.notes}"
+                <MessageSquare size={14} className="mt-1 shrink-0" />"
+                {item.notes}"
               </div>
             )}
           </div>

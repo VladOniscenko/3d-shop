@@ -5,25 +5,12 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Order } from "../types";
 import { useNotify } from "../context/NotifyContext";
-import { resolveAssetUrl } from "../utils/assetUrl";
-
-interface OrderCommunication {
-  id: string;
-  channel: string;
-  communicationType: string;
-  subject: string;
-  recipientEmail: string;
-  sentAt: string;
-}
-
-interface OrderStatusHistoryEntry {
-  id: string;
-  previousStatus?: string | null;
-  newStatus: string;
-  changedAt: string;
-  changedBy?: string | null;
-  note?: string | null;
-}
+import type {
+  OrderCommunication,
+  OrderStatusHistoryEntry,
+} from "./admin-order-detail/types";
+import OrderPricingPanel from "./admin-order-detail/OrderPricingPanel";
+import OrderHistoryPanel from "./admin-order-detail/OrderHistoryPanel";
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
@@ -385,199 +372,28 @@ export default function AdminOrderDetail() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <div className="space-y-5 xl:col-span-2">
-          <article className="admin-panel p-4">
-            <h2 className="font-bold mb-2 text-[#1b2b25]">
-              Model files & specs
-            </h2>
-            {order.items.length === 0 ? (
-              <p className="admin-note">No items in this order.</p>
-            ) : (
-              <ul className="space-y-3">
-                {order.items.map((item) => (
-                  <li
-                    key={item.id || item.fileName}
-                    className="rounded-lg border border-[#d9e4df] bg-[#f7fcf9] p-2"
-                  >
-                    <p className="font-semibold text-[#22342f]">
-                      {item.fileName ?? item.fileUrl}
-                    </p>
-                    <p className="text-xs text-[#5c716b]">
-                      Material: {item.material}, Color: {item.color}, Qty:{" "}
-                      {item.count}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#304843]">Price: EUR</span>
-                      <input
-                        type="number"
-                        value={item.id ? itemPrices[item.id] || 0 : 0}
-                        onChange={(e) => {
-                          if (!item.id) return;
-                          const newPrice = parseFloat(e.target.value) || 0;
-                          setItemPrices({
-                            ...itemPrices,
-                            [item.id]: newPrice,
-                          });
-                        }}
-                        className="admin-field w-24"
-                      />
-                      <button
-                        type="button"
-                        disabled={!item.id || savingItemId === item.id}
-                        onClick={() =>
-                          item.id &&
-                          updateItemPrice(item.id, itemPrices[item.id] || 0)
-                        }
-                        className="admin-btn admin-btn-primary"
-                      >
-                        {savingItemId === item.id ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                    {item.fileUrl && (
-                      <a
-                        href={resolveAssetUrl(item.fileUrl)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-semibold text-teal-700 hover:underline"
-                      >
-                        Download/Preview file
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <span className="text-[#304843]">Delivery: EUR</span>
-              <input
-                type="number"
-                value={deliveryPrice}
-                onChange={(e) => {
-                  const newPrice = parseFloat(e.target.value) || 0;
-                  setDeliveryPrice(newPrice);
-                }}
-                className="admin-field w-24"
-              />
-              <button
-                type="button"
-                disabled={savingDelivery}
-                onClick={() => updateDeliveryPrice(deliveryPrice)}
-                className="admin-btn admin-btn-primary"
-              >
-                {savingDelivery ? "Saving..." : "Save"}
-              </button>
-            </div>
-            <div className="mt-2 flex items-center justify-end gap-2">
-              <span className="text-[#304843]">Order discount: EUR</span>
-              <input
-                type="number"
-                min="0"
-                value={orderDiscountAmount}
-                onChange={(e) => {
-                  const newDiscount = parseFloat(e.target.value) || 0;
-                  setOrderDiscountAmount(newDiscount);
-                }}
-                className="admin-field w-24"
-              />
-              <button
-                type="button"
-                disabled={savingOrderDiscount}
-                onClick={() => updateOrderDiscount(orderDiscountAmount)}
-                className="admin-btn admin-btn-primary"
-              >
-                {savingOrderDiscount ? "Saving..." : "Save"}
-              </button>
-            </div>
-            <div className="mt-1 text-right">
-              <p className="text-sm text-[#5f736d]">
-                Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR{" "}
-                {deliveryPrice.toFixed(2)} | Discount: EUR{" "}
-                {orderDiscountAmount.toFixed(2)}
-              </p>
-              <span className="font-bold">
-                Total (including delivery): EUR {totalPrice.toFixed(2)}
-              </span>
-            </div>
-          </article>
+          <OrderPricingPanel
+            order={order}
+            itemPrices={itemPrices}
+            setItemPrices={setItemPrices}
+            savingItemId={savingItemId}
+            updateItemPrice={updateItemPrice}
+            deliveryPrice={deliveryPrice}
+            setDeliveryPrice={setDeliveryPrice}
+            savingDelivery={savingDelivery}
+            updateDeliveryPrice={updateDeliveryPrice}
+            orderDiscountAmount={orderDiscountAmount}
+            setOrderDiscountAmount={setOrderDiscountAmount}
+            savingOrderDiscount={savingOrderDiscount}
+            updateOrderDiscount={updateOrderDiscount}
+            subtotal={subtotal}
+            totalPrice={totalPrice}
+          />
 
-          <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Status History</h3>
-            {statusHistory.length === 0 ? (
-              <p className="admin-note">No status changes recorded yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                      <th className="py-2 pr-3">Changed At</th>
-                      <th className="py-2 pr-3">From</th>
-                      <th className="py-2 pr-3">To</th>
-                      <th className="py-2 pr-3">By</th>
-                      <th className="py-2">Note</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {statusHistory.map((entry) => (
-                      <tr
-                        key={entry.id}
-                        className="border-b border-[#eef4f1] text-[#304843]"
-                      >
-                        <td className="py-2 pr-3 whitespace-nowrap">
-                          {new Date(entry.changedAt).toLocaleString()}
-                        </td>
-                        <td className="py-2 pr-3">
-                          {entry.previousStatus || "-"}
-                        </td>
-                        <td className="py-2 pr-3 font-semibold">
-                          {entry.newStatus}
-                        </td>
-                        <td className="py-2 pr-3">{entry.changedBy || "-"}</td>
-                        <td className="py-2">{entry.note || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </article>
-
-          <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">
-              Communication History
-            </h3>
-            {communications.length === 0 ? (
-              <p className="admin-note">No communication has been sent yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-[#5f736d] border-b border-[#d9e4df]">
-                      <th className="py-2 pr-3">Sent At</th>
-                      <th className="py-2 pr-3">Type</th>
-                      <th className="py-2 pr-3">Channel</th>
-                      <th className="py-2 pr-3">Recipient</th>
-                      <th className="py-2">Subject</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {communications.map((entry) => (
-                      <tr
-                        key={entry.id}
-                        className="border-b border-[#eef4f1] text-[#304843]"
-                      >
-                        <td className="py-2 pr-3 whitespace-nowrap">
-                          {new Date(entry.sentAt).toLocaleString()}
-                        </td>
-                        <td className="py-2 pr-3">{entry.communicationType}</td>
-                        <td className="py-2 pr-3">{entry.channel}</td>
-                        <td className="py-2 pr-3">{entry.recipientEmail}</td>
-                        <td className="py-2">{entry.subject}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </article>
+          <OrderHistoryPanel
+            statusHistory={statusHistory}
+            communications={communications}
+          />
         </div>
 
         <div className="space-y-5">
