@@ -82,6 +82,7 @@ export interface Order {
   phoneNumber: string;
 
   deliveryPrice?: number;
+  orderDiscountAmount?: number;
   quotedPrice?: number;
   quoteMessage?: string;
   trackingCode?: string;

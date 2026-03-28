@@ -18,6 +18,7 @@ public class Order
     public string Status { get; set; } = "pending_quote";
     public string OrderType { get; set; } = "quote"; // "quote" or "online"
     public decimal DeliveryPrice { get; set; } = 6.95m;
+    public decimal OrderDiscountAmount { get; set; } = 0m;
     public decimal? QuotedPrice { get; set; }
     public string? QuoteMessage { get; set; }
     public string? TrackingCode { get; set; }

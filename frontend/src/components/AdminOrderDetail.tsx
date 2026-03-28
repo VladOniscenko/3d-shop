@@ -42,8 +42,10 @@ export default function AdminOrderDetail() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [itemPrices, setItemPrices] = useState<{ [key: string]: number }>({});
   const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [orderDiscountAmount, setOrderDiscountAmount] = useState(0);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
   const [savingDelivery, setSavingDelivery] = useState(false);
+  const [savingOrderDiscount, setSavingOrderDiscount] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailType, setEmailType] = useState("quote_requested");
   const [trackingCode, setTrackingCode] = useState("");
@@ -78,6 +80,7 @@ export default function AdminOrderDetail() {
 
       setItemPrices(prices);
       setDeliveryPrice(data.deliveryPrice || 0);
+      setOrderDiscountAmount(data.orderDiscountAmount || 0);
       setSelectedStatus(data.status || "pending");
       setTrackingCode(data.trackingCode || "");
       setTrackingUrl(data.trackingUrl || "");
@@ -184,6 +187,28 @@ export default function AdminOrderDetail() {
       notifyError("Could not update delivery price.");
     } finally {
       setSavingDelivery(false);
+    }
+  };
+
+  const updateOrderDiscount = async (discount: number) => {
+    if (!id) return;
+    if (discount < 0) {
+      notifyError("Order discount cannot be negative.");
+      return;
+    }
+
+    setSavingOrderDiscount(true);
+    try {
+      await api.patch(`/admin/orders/${id}/order-discount`, {
+        orderDiscountAmount: discount,
+      });
+      await refresh();
+      notifySuccess("Order discount updated.");
+    } catch (err) {
+      console.error(err);
+      notifyError("Could not update order discount.");
+    } finally {
+      setSavingOrderDiscount(false);
     }
   };
 
@@ -303,8 +328,8 @@ export default function AdminOrderDetail() {
     );
   }
 
-  const totalPrice =
-    (order.items.reduce((sum, item) => {
+  const subtotal =
+    order.items.reduce((sum, item) => {
       const key = item.id ?? "";
       return (
         sum +
@@ -313,7 +338,9 @@ export default function AdminOrderDetail() {
           : item.price || 0) *
           (item.count ?? 1)
       );
-    }, 0) || 0) + deliveryPrice;
+    }, 0) || 0;
+
+  const totalPrice = Math.max(0, subtotal + deliveryPrice - orderDiscountAmount);
 
   return (
     <AdminLayout>
@@ -436,7 +463,31 @@ export default function AdminOrderDetail() {
                 {savingDelivery ? "Saving..." : "Save"}
               </button>
             </div>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <span className="text-[#304843]">Order discount: EUR</span>
+              <input
+                type="number"
+                min="0"
+                value={orderDiscountAmount}
+                onChange={(e) => {
+                  const newDiscount = parseFloat(e.target.value) || 0;
+                  setOrderDiscountAmount(newDiscount);
+                }}
+                className="admin-field w-24"
+              />
+              <button
+                type="button"
+                disabled={savingOrderDiscount}
+                onClick={() => updateOrderDiscount(orderDiscountAmount)}
+                className="admin-btn admin-btn-primary"
+              >
+                {savingOrderDiscount ? "Saving..." : "Save"}
+              </button>
+            </div>
             <div className="mt-1 text-right">
+              <p className="text-sm text-[#5f736d]">
+                Subtotal: EUR {subtotal.toFixed(2)} | Delivery: EUR {deliveryPrice.toFixed(2)} | Discount: EUR {orderDiscountAmount.toFixed(2)}
+              </p>
               <span className="font-bold">
                 Total (including delivery): EUR {totalPrice.toFixed(2)}
               </span>
@@ -739,7 +790,7 @@ export default function AdminOrderDetail() {
               {emailType === "quote_confirmation" && (
                 <p className="text-sm text-[#5b706a]">
                   Price and message are generated automatically from order item
-                  prices and delivery.
+                  prices, delivery, and order discount.
                 </p>
               )}
 

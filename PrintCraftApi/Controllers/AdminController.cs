@@ -177,6 +177,7 @@ public class AdminController : ControllerBase
         order.PhoneNumber = updated.PhoneNumber;
         order.Status = updated.Status;
         order.DeliveryPrice = updated.DeliveryPrice;
+        order.OrderDiscountAmount = updated.OrderDiscountAmount < 0 ? 0 : updated.OrderDiscountAmount;
         order.QuotedPrice = updated.QuotedPrice;
         order.QuoteMessage = updated.QuoteMessage;
         order.TrackingCode = string.IsNullOrWhiteSpace(updated.TrackingCode)
@@ -391,6 +392,21 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPatch("orders/{id:guid}/order-discount")]
+    public async Task<IActionResult> UpdateOrderDiscount([FromRoute] Guid id, [FromBody] OrderDiscountRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (payload.OrderDiscountAmount < 0)
+            return BadRequest(new { message = "Order discount cannot be negative." });
+
+        order.OrderDiscountAmount = payload.OrderDiscountAmount;
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
     [HttpPatch("orders/{id:guid}/tracking")]
     public async Task<IActionResult> UpdateTracking([FromRoute] Guid id, [FromBody] TrackingRequest payload)
     {
@@ -450,7 +466,9 @@ public class AdminController : ControllerBase
                 return Ok(new { message = "Quote requested email sent." });
 
             case "quote_confirmation":
-                var quotePrice = order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+                var subtotal = order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count));
+                var quotePrice = subtotal + order.DeliveryPrice - Math.Max(0m, order.OrderDiscountAmount);
+                if (quotePrice < 0) quotePrice = 0;
                 if (quotePrice <= 0)
                     return BadRequest(new { message = "Quote total must be greater than zero. Set item and delivery prices first." });
 
@@ -516,6 +534,7 @@ public class AdminController : ControllerBase
     public record NotesRequest(string? InternalNotes, string? CustomerNotes);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
+    public record OrderDiscountRequest(decimal OrderDiscountAmount);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
 
