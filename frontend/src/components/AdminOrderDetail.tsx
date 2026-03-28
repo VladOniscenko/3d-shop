@@ -12,6 +12,47 @@ import type {
 import OrderPricingPanel from "./admin-order-detail/OrderPricingPanel";
 import OrderHistoryPanel from "./admin-order-detail/OrderHistoryPanel";
 
+const STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "pending_quote", label: "Pending Quote" },
+  { value: "quoted", label: "Quoted" },
+  { value: "printing", label: "Printing" },
+  { value: "sent", label: "Sent" },
+  { value: "delivered", label: "Delivered" },
+  { value: "completed", label: "Completed" },
+  { value: "paid", label: "Paid" },
+  { value: "cancelled", label: "Cancelled" },
+] as const;
+
+const POST_PAYMENT_STATUSES = new Set([
+  "paid",
+  "printing",
+  "sent",
+  "delivered",
+  "completed",
+]);
+
+const TERMINAL_STATUSES = new Set(["cancelled", "completed"]);
+
+function normalizeStatus(status?: string | null): string {
+  return (status || "").trim().toLowerCase();
+}
+
+function canTransitionStatus(
+  currentStatus: string,
+  nextStatus: string,
+  isPaid: boolean,
+) {
+  const current = normalizeStatus(currentStatus);
+  const next = normalizeStatus(nextStatus);
+
+  if (!next) return false;
+  if (current === next) return true;
+  if (TERMINAL_STATUSES.has(current)) return false;
+  if (isPaid || current === "paid") return POST_PAYMENT_STATUSES.has(next);
+  return true;
+}
+
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams<{ id: string }>();
@@ -339,6 +380,24 @@ export default function AdminOrderDetail() {
     ["paid", "printing", "sent", "delivered", "completed"].includes(
       order.status.toLowerCase(),
     );
+  const allowedStatusOptions = STATUS_OPTIONS.filter((option) =>
+    canTransitionStatus(order.status, option.value, !!order.isPaid),
+  );
+  const currentStatus = normalizeStatus(order.status);
+  const hasCurrentStatusOption = allowedStatusOptions.some(
+    (option) => option.value === currentStatus,
+  );
+  const statusOptionsForSelect = hasCurrentStatusOption
+    ? allowedStatusOptions
+    : [
+        {
+          value: currentStatus,
+          label: currentStatus ? currentStatus.replace(/_/g, " ") : "Current",
+        },
+        ...allowedStatusOptions,
+      ];
+  const isStatusUnchanged =
+    normalizeStatus(selectedStatus) === normalizeStatus(order.status);
 
   return (
     <AdminLayout>
@@ -503,19 +562,17 @@ export default function AdminOrderDetail() {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="admin-select"
                 >
-                  <option value="pending_quote">Pending Quote</option>
-                  <option value="quoted">Quoted</option>
-                  <option value="printing">Printing</option>
-                  <option value="sent">Sent</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="paid">Paid</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="pending">Pending</option>
+                  {statusOptionsForSelect.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
                 <button
                   type="button"
                   className="admin-btn admin-btn-primary"
                   onClick={updateOrderStatus}
+                  disabled={isStatusUnchanged}
                 >
                   Update Status
                 </button>

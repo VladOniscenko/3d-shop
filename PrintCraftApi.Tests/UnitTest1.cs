@@ -371,6 +371,70 @@ public class AdminControllerPricingSyncTests
     }
 
     [Fact]
+    public async Task UpdateOrderStatus_CancelledOrder_CannotTransition()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 6m, discount: 0m, itemPrice: 8, itemCount: 3);
+        order.Status = "cancelled";
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest("pending_quote"));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task UpdateOrderStatus_CompletedOrder_CannotTransition()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 6m, discount: 0m, itemPrice: 8, itemCount: 3);
+        order.Status = "completed";
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest("delivered"));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task UpdateDeliveryPrice_PaidOrder_IsRejected()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 6m, discount: 0m, itemPrice: 8, itemCount: 3);
+        order.Status = "paid";
+        order.IsPaid = true;
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateDeliveryPrice(order.Id, new AdminController.DeliveryPriceRequest(12m));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task UpdateOrderItem_PrintingOrder_IsRejected()
+    {
+        await using var db = CreateDbContext();
+        var order = CreateOrder(delivery: 6m, discount: 0m, itemPrice: 8, itemCount: 3);
+        order.Status = "printing";
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var sut = new AdminController(db, new NoopEmailService());
+        var result = await sut.UpdateOrderItem(
+            order.Id,
+            order.Items[0].Id,
+            new AdminController.UpdateItemRequest(11));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
     public void Order_ExposesConsistentPricingBreakdownFields()
     {
         var order = CreateOrder(delivery: 6m, discount: 5m, itemPrice: 8, itemCount: 3);

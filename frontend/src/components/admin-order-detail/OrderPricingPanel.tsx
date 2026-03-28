@@ -76,7 +76,9 @@ export default function OrderPricingPanel({
                 />
                 <button
                   type="button"
-                  disabled={!item.id || savingItemId === item.id || pricingLocked}
+                  disabled={
+                    !item.id || savingItemId === item.id || pricingLocked
+                  }
                   onClick={() =>
                     item.id &&
                     updateItemPrice(item.id, itemPrices[item.id] || 0)
