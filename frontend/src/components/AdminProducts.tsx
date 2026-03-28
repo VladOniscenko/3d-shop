@@ -114,6 +114,15 @@ export default function AdminProducts() {
     fetchProducts();
   }, []);
 
+  const getApiErrorMessage = (err: unknown, fallback: string): string => {
+    const maybeMessage = (err as { response?: { data?: { message?: string } } })
+      ?.response?.data?.message;
+    if (typeof maybeMessage === "string" && maybeMessage.trim().length > 0) {
+      return maybeMessage;
+    }
+    return fallback;
+  };
+
   const uploadFiles = async (files: File[]): Promise<string[]> => {
     const urls: string[] = [];
     for (const file of files) {
@@ -129,8 +138,6 @@ export default function AdminProducts() {
 
   const addProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    let imageUrls: string[] = [];
-    let fileUrl = "";
 
     if (price < PRICE_MIN) {
       notifyError("Price cannot be negative.");
@@ -152,18 +159,21 @@ export default function AdminProducts() {
       return;
     }
 
-    if (imageFiles.length > 0) {
-      imageUrls = await uploadFiles(imageFiles);
-    }
-
-    if (fileFile) {
-      const formData = new FormData();
-      formData.append("file", fileFile);
-      const res = await api.post("/upload", formData);
-      fileUrl = res.data.url;
-    }
-
     try {
+      let imageUrls: string[] = [];
+      let fileUrl = "";
+
+      if (imageFiles.length > 0) {
+        imageUrls = await uploadFiles(imageFiles);
+      }
+
+      if (fileFile) {
+        const formData = new FormData();
+        formData.append("file", fileFile);
+        const res = await api.post("/upload", formData);
+        fileUrl = res.data.url;
+      }
+
       await api.post("/products", {
         name,
         category,
@@ -193,7 +203,12 @@ export default function AdminProducts() {
       notifySuccess("Product created.");
     } catch (err) {
       console.error(err);
-      notifyError("Could not create product. Ensure you are admin.");
+      notifyError(
+        getApiErrorMessage(
+          err,
+          "Could not create product. Ensure you are admin.",
+        ),
+      );
     }
   };
 

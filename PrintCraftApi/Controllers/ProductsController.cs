@@ -257,7 +257,6 @@ public class ProductsController : ControllerBase
         var imageUrls = BuildNormalizedImageList(request.ImageUrl, request.Images);
 
         var existing = await _db.Products
-            .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (existing == null) return NotFound();
 
@@ -273,16 +272,36 @@ public class ProductsController : ControllerBase
         existing.TrackInventory = request.TrackInventory;
         existing.StockQuantity = request.TrackInventory ? request.StockQuantity : 0;
 
-        _db.ProductImages.RemoveRange(existing.Images);
-        existing.Images = imageUrls.Select((url, index) => new ProductImage
+        try
         {
-            ProductId = existing.Id,
-            Url = url,
-            SortOrder = index,
-        }).ToList();
+            await _db.ProductImages
+                .Where(pi => pi.ProductId == existing.Id)
+                .ExecuteDeleteAsync();
 
-        await _db.SaveChangesAsync();
-        return Ok(ToResponse(existing));
+            var replacementImages = imageUrls.Select((url, index) => new ProductImage
+            {
+                ProductId = existing.Id,
+                Url = url,
+                SortOrder = index,
+            }).ToList();
+
+            if (replacementImages.Count > 0)
+            {
+                _db.ProductImages.AddRange(replacementImages);
+            }
+
+            await _db.SaveChangesAsync();
+
+            var refreshed = await _db.Products
+                .Include(p => p.Images)
+                .FirstAsync(p => p.Id == existing.Id);
+
+            return Ok(ToResponse(refreshed));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "Product was changed by another request. Reload and try again." });
+        }
     }
 
     [HttpDelete("{id:guid}")]
