@@ -5,7 +5,7 @@
 namespace PrintCraftApi.Migrations
 {
     /// <inheritdoc />
-    public partial class AdminCol114123 : Migration
+    public partial class ConsolidateAdminAndProductFeatures : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
