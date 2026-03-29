@@ -331,7 +331,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Do not start production before payment is confirmed.",
     "admin.order.actionFlow.quoted.steps.repriceIfChanged":
       "If changes are requested, move back to Pending Quote and reprice.",
-    "admin.order.actionFlow.expiredQuote.title": "Quote expired, request refresh",
+    "admin.order.actionFlow.expiredQuote.title":
+      "Quote expired, request refresh",
     "admin.order.actionFlow.expiredQuote.steps.noFulfillment":
       "Do not print or ship while quote is expired.",
     "admin.order.actionFlow.expiredQuote.steps.requestRefresh":
@@ -1308,7 +1309,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Betaalpoging aanwezig",
     "admin.order.actionFlow.checks.paidPaymentConfirmed":
       "Betaalde betaling bevestigd",
-    "admin.order.actionFlow.checks.trackingCodeAdded": "Track & trace toegevoegd",
+    "admin.order.actionFlow.checks.trackingCodeAdded":
+      "Track & trace toegevoegd",
     "admin.order.actionFlow.pendingQuote.title":
       "Bereid de offerte voor voordat de klant bevestigt",
     "admin.order.actionFlow.pendingQuote.steps.reviewModels":
@@ -1391,7 +1393,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Er mag geen fulfillmentactie worden uitgevoerd.",
     "admin.order.actionFlow.cancelled.steps.documentReason":
       "Leg annuleringsreden vast in notities.",
-    "admin.order.actionFlow.default.title": "Controleer order voor volgende actie",
+    "admin.order.actionFlow.default.title":
+      "Controleer order voor volgende actie",
     "admin.order.actionFlow.default.steps.checkDetails":
       "Controleer orderdetails, prijzen en betaalgeschiedenis.",
     "admin.order.actionFlow.default.steps.selectAfterChecks":
