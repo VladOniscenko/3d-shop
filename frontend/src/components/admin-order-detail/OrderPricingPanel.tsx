@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { Order } from "../../types";
+import type { Order, QuotePromotionSettings } from "../../types";
 import { resolveAssetUrl } from "../../utils/assetUrl";
 import { CURRENCY_CODE, formatCurrencyAmount } from "../../utils/currency";
 
@@ -21,6 +21,9 @@ interface OrderPricingPanelProps {
   subtotal: number;
   totalPrice: number;
   pricingLocked: boolean;
+  quotePromotionSettings?: QuotePromotionSettings | null;
+  applyingQuotePromotion?: boolean;
+  onApplyQuotePromotion?: () => Promise<void>;
 }
 
 export default function OrderPricingPanel({
@@ -41,6 +44,9 @@ export default function OrderPricingPanel({
   subtotal,
   totalPrice,
   pricingLocked,
+  quotePromotionSettings,
+  applyingQuotePromotion,
+  onApplyQuotePromotion,
 }: OrderPricingPanelProps) {
   return (
     <article className="admin-panel p-4">
@@ -249,6 +255,32 @@ export default function OrderPricingPanel({
           </div>
         </div>
       </div>
+
+      {order.orderType === "quote" && quotePromotionSettings?.isEnabled ? (
+        <div className="mt-4 rounded-xl border border-[#d9e4df] bg-[#f7fbf9] overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
+            <h3 className="font-bold text-[#1b2b25] text-sm">
+              {t("admin.orderDetail.promotionTitle")}
+            </h3>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-[#2e423d]">
+              {quotePromotionSettings.ruleSummary ||
+                t("admin.orderDetail.promotionNoRule")}
+            </p>
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary mt-3"
+              onClick={() => onApplyQuotePromotion?.()}
+              disabled={pricingLocked || applyingQuotePromotion || !onApplyQuotePromotion}
+            >
+              {applyingQuotePromotion
+                ? t("admin.orderDetail.promotionApplying")
+                : t("admin.orderDetail.promotionApplyButton")}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Order Summary Section */}
       <div className="mt-5 rounded-xl border border-[#1b2b25] bg-gradient-to-b from-[#1b2b25] to-[#2a3d37] overflow-hidden shadow-md">
