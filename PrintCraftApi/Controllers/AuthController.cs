@@ -135,7 +135,7 @@ public class AuthController : ControllerBase
             try
             {
                 var token = GeneratePasswordResetToken(user);
-                var frontendBaseUrl = _configuration["FrontendBaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
+                var frontendBaseUrl = GetRequiredConfig("FrontendBaseUrl").TrimEnd('/');
                 var resetLink = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(token)}";
                 await _emailService.SendResetPasswordEmailAsync(user.Email, user.Name, resetLink);
             }
@@ -246,6 +246,15 @@ public class AuthController : ControllerBase
             throw new InvalidOperationException("JwtSecret must be configured and at least 32 characters long.");
 
         return Encoding.ASCII.GetBytes(secret);
+    }
+
+    private string GetRequiredConfig(string key)
+    {
+        var value = _configuration[key];
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"{key} must be configured via environment variables.");
+
+        return value;
     }
 }
 

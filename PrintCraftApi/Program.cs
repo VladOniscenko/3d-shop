@@ -20,6 +20,17 @@ if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("ConnectionStrings__DefaultConnection must be configured via environment variables.");
 }
+
+if (string.IsNullOrWhiteSpace(builder.Configuration["FrontendBaseUrl"]))
+{
+    throw new InvalidOperationException("FrontendBaseUrl must be configured via environment variables.");
+}
+
+if (string.IsNullOrWhiteSpace(builder.Configuration["BackendBaseUrl"]))
+{
+    throw new InvalidOperationException("BackendBaseUrl must be configured via environment variables.");
+}
+
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionString));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();

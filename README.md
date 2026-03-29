@@ -219,9 +219,12 @@ POSTGRES_DB=printcraft
 POSTGRES_USER=replace-me
 POSTGRES_PASSWORD=replace-me
 ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=printcraft;Username=replace-me;Password=replace-me
+FrontendBaseUrl=http://localhost:5173
+BackendBaseUrl=http://localhost:5001
 JwtSecret=replace-with-very-strong-dev-secret-min-32-chars
 JwtIssuer=printcraft-api
 JwtAudience=printcraft-client
+MollieKey=replace-me
 Email__ApiToken=replace-me
 Email__Username=replace-me
 Email__Password=replace-me

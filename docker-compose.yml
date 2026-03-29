@@ -26,11 +26,12 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      FrontendBaseUrl: ${FrontendBaseUrl}
-      BackendBaseUrl: ${BackendBaseUrl}
+      FrontendBaseUrl: ${FrontendBaseUrl:?FrontendBaseUrl is required}
+      BackendBaseUrl: ${BackendBaseUrl:?BackendBaseUrl is required}
       JwtSecret: ${JwtSecret}
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
+      MollieKey: ${MollieKey}
       Email__ApiToken: ${Email__ApiToken}
       Email__Username: ${Email__Username}
       Email__Password: ${Email__Password}

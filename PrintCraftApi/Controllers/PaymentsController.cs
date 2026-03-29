@@ -34,7 +34,7 @@ public class PaymentsController : ControllerBase
         _configuration = configuration;
         _emailService = emailService;
         _logger = logger;
-        var mollieKey = configuration["MollieKey"] ?? "";
+        var mollieKey = GetRequiredConfig("MollieKey");
         _paymentClient = new PaymentClient(mollieKey);
     }
 
@@ -79,9 +79,8 @@ public class PaymentsController : ControllerBase
             });
         }
 
-        var frontendBaseUrl = (_configuration["FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
-        var backendBaseUrl = (_configuration["BackendBaseUrl"]
-            ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/');
+        var frontendBaseUrl = GetRequiredConfig("FrontendBaseUrl").TrimEnd('/');
+        var backendBaseUrl = GetRequiredConfig("BackendBaseUrl").TrimEnd('/');
 
         var paymentRequest = new PaymentRequest
         {
@@ -202,8 +201,8 @@ public class PaymentsController : ControllerBase
         {
             Amount = new Amount(Currency.EUR, finalTotal.ToString("F2")),
             Description = $"Order #{newOrder.Id.ToString().Substring(0, 8)}",
-            RedirectUrl = $"{(_configuration["FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/')}/orders/{newOrder.Id}?payment=return",
-            WebhookUrl = $"{(_configuration["BackendBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/')}/api/payments/webhook",
+            RedirectUrl = $"{GetRequiredConfig("FrontendBaseUrl").TrimEnd('/')}/orders/{newOrder.Id}?payment=return",
+            WebhookUrl = $"{GetRequiredConfig("BackendBaseUrl").TrimEnd('/')}/api/payments/webhook",
             Metadata = newOrder.Id.ToString()
         };
 
@@ -307,6 +306,15 @@ public class PaymentsController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private string GetRequiredConfig(string key)
+    {
+        var value = _configuration[key];
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"{key} must be configured via environment variables.");
+
+        return value;
     }
 }
 
