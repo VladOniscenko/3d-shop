@@ -31,7 +31,7 @@ services:
       JwtSecret: ${JwtSecret}
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
-      MollieKey: ${MollieKey}
+      MollieKey: ${MollieKey:?MollieKey is required}
       Email__ApiToken: ${Email__ApiToken}
       Email__Username: ${Email__Username}
       Email__Password: ${Email__Password}

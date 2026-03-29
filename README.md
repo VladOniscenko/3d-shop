@@ -91,21 +91,21 @@ A full-stack e-commerce platform for 3D printing services. Browse products, cust
 
 ### Development Mode
 
-**Terminal 1 — Backend API** (runs on `http://localhost:5243`)
+**Terminal 1 — Backend API** (runs on `ASPNETCORE_URLS` from `.env`)
 
 ```bash
 cd PrintCraftApi
 dotnet run
 ```
 
-**Terminal 2 — Frontend** (runs on `http://localhost:5173`)
+**Terminal 2 — Frontend** (dev server URL from your frontend setup)
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open the frontend URL configured for your environment.
 
 ### Docker (Full Stack)
 
@@ -121,9 +121,9 @@ docker compose up --build
 
 Services:
 
-- Frontend: `http://localhost:5173`
-- API: `http://localhost:5001`
-- PostgreSQL: `localhost:5432` (`printcraft` / `printcraft`)
+- Frontend: `FrontendBaseUrl`
+- API: `BackendBaseUrl`
+- PostgreSQL: connection from `ConnectionStrings__DefaultConnection`
 
 Stop services:
 
@@ -209,7 +209,7 @@ Create `.env` files (if needed):
 **Frontend** — `.env.local`
 
 ```
-VITE_API_URL=http://localhost:5001
+VITE_API_URL=<your-api-base-url>
 ```
 
 **Backend** — root `.env`
@@ -218,13 +218,15 @@ VITE_API_URL=http://localhost:5001
 POSTGRES_DB=printcraft
 POSTGRES_USER=replace-me
 POSTGRES_PASSWORD=replace-me
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=printcraft;Username=replace-me;Password=replace-me
-FrontendBaseUrl=http://localhost:5173
-BackendBaseUrl=http://localhost:5001
+ConnectionStrings__DefaultConnection=Host=<db-host>;Port=<db-port>;Database=<db-name>;Username=<db-user>;Password=<db-password>
+FrontendBaseUrl=<frontend-base-url>
+BackendBaseUrl=<backend-base-url>
+ASPNETCORE_URLS=<backend-listen-url>
 JwtSecret=replace-with-very-strong-dev-secret-min-32-chars
 JwtIssuer=printcraft-api
 JwtAudience=printcraft-client
 MollieKey=replace-me
+VITE_DEV_API_ORIGIN=<dev-api-origin>
 Email__ApiToken=replace-me
 Email__Username=replace-me
 Email__Password=replace-me

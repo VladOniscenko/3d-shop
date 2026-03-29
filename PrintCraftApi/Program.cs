@@ -31,6 +31,8 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["BackendBaseUrl"]))
     throw new InvalidOperationException("BackendBaseUrl must be configured via environment variables.");
 }
 
+var frontendBaseUrl = builder.Configuration["FrontendBaseUrl"]!.TrimEnd('/');
+
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionString));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
@@ -95,7 +97,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddCors(opt => opt.AddPolicy("AllowReact", p => p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddCors(opt => opt.AddPolicy("AllowReact", p => p.WithOrigins(frontendBaseUrl).AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
