@@ -872,9 +872,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.models": "Your 3D Models",
     "quote.addFile": "Add File",
     "quote.noFiles": "No files added yet.",
+    "quote.allowedFilesInline":
+      "Allowed files: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
     "quote.shipping": "Shipping Info",
     "quote.submit": "Submit Quote Request",
     "quote.secure": "Safe & Secure 3D Printing",
+    "quote.uploadUnsupportedType": "Unsupported file type.",
     "quote.uploadFailed": "Upload failed. Please try again.",
     "quote.invalidShipping": "Please fix shipping info before submitting.",
     "quote.submitFailed": "Failed to submit quote. Check your connection.",
@@ -1967,9 +1970,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.models": "Jouw 3D Modellen",
     "quote.addFile": "Bestand Toevoegen",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
+    "quote.allowedFilesInline":
+      "Toegestane bestanden: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
     "quote.shipping": "Verzendgegevens",
     "quote.submit": "Offerte Aanvraag Versturen",
     "quote.secure": "Veilig & Betrouwbaar 3D Printen",
+    "quote.uploadUnsupportedType": "Niet-ondersteund bestandstype.",
     "quote.uploadFailed": "Upload mislukt. Probeer opnieuw.",
     "quote.invalidShipping":
       "Controleer je verzendgegevens voordat je verzendt.",

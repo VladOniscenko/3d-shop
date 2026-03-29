@@ -20,6 +20,9 @@ import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
 
+const ALLOWED_UPLOAD_ACCEPT =
+  ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
+
 export default function Quote() {
   const { t } = useI18n();
   const { notifyError } = useNotify();
@@ -76,10 +79,24 @@ export default function Quote() {
         count: 1,
       };
       setItems([...items, newItem]);
-    } catch (err) {
-      notifyError(t("quote.uploadFailed"));
+    } catch (err: any) {
+      const backendMessage = err?.response?.data?.message;
+      const isUnsupportedType =
+        typeof backendMessage === "string" &&
+        /unsupported file type|unsupported content type/i.test(backendMessage);
+
+      if (isUnsupportedType) {
+        notifyError(
+          `${t("quote.uploadUnsupportedType")} ${t("quote.allowedFilesInline")}`,
+        );
+      } else if (backendMessage) {
+        notifyError(backendMessage);
+      } else {
+        notifyError(t("quote.uploadFailed"));
+      }
     } finally {
       setIsUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -168,6 +185,7 @@ export default function Quote() {
                     {t("quote.addFile")}
                     <input
                       type="file"
+                      accept={ALLOWED_UPLOAD_ACCEPT}
                       className="hidden"
                       onChange={handleFileUpload}
                       disabled={isUploading}
@@ -183,6 +201,9 @@ export default function Quote() {
                   </button>
                 </div>
               </div>
+              <p className="mb-4 text-xs text-[#5f736d]">
+                {t("quote.allowedFilesInline")}
+              </p>
 
               {items.length === 0 ? (
                 <div className="border-2 border-dashed border-gray-200 rounded-xl py-12 text-center">
