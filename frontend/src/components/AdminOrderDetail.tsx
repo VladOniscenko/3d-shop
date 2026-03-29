@@ -393,7 +393,7 @@ export default function AdminOrderDetail() {
         ]}
       />
 
-      <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
         <article className="admin-panel p-4">
           <p className="text-xs uppercase text-[#6c817a]">
             {t("admin.orderDetail.statusLabel")}
@@ -424,6 +424,12 @@ export default function AdminOrderDetail() {
           </p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
             EUR {totalPrice.toFixed(2)}
+          </p>
+        </article>
+        <article className="admin-panel p-4">
+          <p className="text-xs uppercase text-[#6c817a]">Quote Expires</p>
+          <p className="mt-2 text-sm text-[#2e423d]">
+            {hasQuoteExpiry ? quoteExpiresAt.toLocaleString() : "-"}
           </p>
         </article>
       </section>
