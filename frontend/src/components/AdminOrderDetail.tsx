@@ -352,6 +352,11 @@ export default function AdminOrderDetail() {
       ];
   const isStatusUnchanged =
     normalizeOrderStatus(selectedStatus) === normalizeOrderStatus(order.status);
+  const quoteExpiresAt = order.quoteExpiresAt
+    ? new Date(order.quoteExpiresAt)
+    : null;
+  const hasQuoteExpiry =
+    quoteExpiresAt instanceof Date && !Number.isNaN(quoteExpiresAt.getTime());
   const normalizedPaymentSearch = paymentSearch.trim().toLowerCase();
   const filteredPayments = payments.filter((payment) => {
     const statusMatch =
@@ -659,6 +664,25 @@ export default function AdminOrderDetail() {
                   : t("admin.order.saveTrackingButton")}
               </button>
             </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Quote Validity</h3>
+            {hasQuoteExpiry ? (
+              <p className="text-sm text-[#2e423d]">
+                Expires on {quoteExpiresAt.toLocaleString()}
+              </p>
+            ) : (
+              <p className="text-sm text-[#5b706a]">
+                No quote expiry date recorded.
+              </p>
+            )}
+            {normalizeOrderStatus(order.status) === "expired_quote" && (
+              <p className="mt-2 text-sm text-rose-700">
+                Quote expired after 7 days. Set status to Pending Quote for a
+                refreshed quote cycle.
+              </p>
+            )}
           </article>
 
           <article className="admin-panel p-4">

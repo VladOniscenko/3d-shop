@@ -104,6 +104,34 @@ export default function OrderDetail() {
     setShowShippingModal(true);
   };
 
+  const refreshOrderData = async () => {
+    if (!id) return;
+
+    const [orderRes, paymentRes] = await Promise.all([
+      api.get(`/orders/${id}`),
+      api.get(`/orders/${id}/payments`),
+    ]);
+
+    setOrder(orderRes.data);
+    setShippingDetails(getShippingDetailsFromOrder(orderRes.data));
+    setPayments(Array.isArray(paymentRes.data) ? paymentRes.data : []);
+  };
+
+  const handleRequestNewQuote = async () => {
+    if (!id) return;
+
+    try {
+      await api.post(`/orders/${id}/request-new-quote`);
+      await refreshOrderData();
+      notifySuccess(t("orderDetail.newQuoteRequested"));
+    } catch (err: any) {
+      console.error("New quote request failed", err);
+      notifyError(
+        err?.response?.data?.message || t("orderDetail.newQuoteRequestFailed"),
+      );
+    }
+  };
+
   const handleShippingField = (field: ShippingField, value: string) => {
     setShippingDetails((prev) => ({ ...prev, [field]: value }));
     if (shippingErrors[field]) {
@@ -178,6 +206,14 @@ export default function OrderDetail() {
   const statusSummary = buildStatusSummary(order, t);
   const reachedDate = getReachedDate(order);
   const paymentAttempts = payments.length > 0 ? payments : order.payments || [];
+  const normalizedStatus = normalizeOrderStatus(order.status);
+  const quoteExpiresAt = order.quoteExpiresAt
+    ? new Date(order.quoteExpiresAt)
+    : null;
+  const showQuoteExpiryNotice =
+    normalizedStatus === "quoted" &&
+    quoteExpiresAt instanceof Date &&
+    !Number.isNaN(quoteExpiresAt.getTime());
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -211,7 +247,7 @@ export default function OrderDetail() {
             </button>
           )}
 
-          {normalizeOrderStatus(order.status) === "quoted" && (
+          {normalizedStatus === "quoted" && (
             <button
               onClick={handleConfirmAndPay}
               disabled={isPaying}
@@ -225,7 +261,28 @@ export default function OrderDetail() {
               {t("orderDetail.confirmPay")}
             </button>
           )}
+
+          {normalizedStatus === "expired_quote" && (
+            <button
+              onClick={handleRequestNewQuote}
+              className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 border border-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+            >
+              {t("orderDetail.requestNewQuote")}
+            </button>
+          )}
         </div>
+
+        {showQuoteExpiryNotice && (
+          <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {t("orderDetail.quoteExpiresOn")} {quoteExpiresAt.toLocaleString()}
+          </p>
+        )}
+
+        {normalizedStatus === "expired_quote" && (
+          <p className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {t("orderDetail.quoteExpiredInfo")}
+          </p>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">

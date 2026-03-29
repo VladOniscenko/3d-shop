@@ -22,6 +22,8 @@ public class Order
     public decimal OrderDiscountAmount { get; set; } = 0m;
     public decimal? QuotedPrice { get; set; }
     public string? QuoteMessage { get; set; }
+    public DateTime? QuoteConfirmedAt { get; set; }
+    public DateTime? QuoteExpiresAt { get; set; }
     public string? TrackingCode { get; set; }
     public string? TrackingUrl { get; set; }
     public string? InternalNotes { get; set; }

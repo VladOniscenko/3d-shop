@@ -20,6 +20,7 @@ public class AdminController : ControllerBase
         "pending",
         "pending_quote",
         "quoted",
+        "expired_quote",
         "pending_payment",
         "printing",
         "completed",
@@ -297,6 +298,8 @@ public class AdminController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
+        await RefreshQuoteStatusesAsync(results, "system");
+
         return Ok(new { results, totalCount, page, pageSize });
     }
 
@@ -307,6 +310,9 @@ public class AdminController : ControllerBase
             .Include(o => o.Items)
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order != null)
+            await RefreshQuoteStatusesAsync(new[] { order }, "system");
 
         return order == null ? NotFound(new { message = "Order not found" }) : Ok(order);
     }
@@ -381,6 +387,15 @@ public class AdminController : ControllerBase
         order.PostalCode = updated.PostalCode;
         order.PhoneNumber = updated.PhoneNumber;
         order.Status = updated.Status;
+        if (string.Equals(NormalizeStatus(order.Status), "quoted", StringComparison.OrdinalIgnoreCase))
+        {
+            QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
+        }
+        else if (string.Equals(NormalizeStatus(order.Status), "pending_quote", StringComparison.OrdinalIgnoreCase))
+        {
+            QuoteLifecycle.ClearQuoteWindow(order);
+        }
+
         if (!IsPricingLocked(order))
         {
             order.DeliveryPrice = updated.DeliveryPrice < 0 ? 0 : updated.DeliveryPrice;
@@ -417,6 +432,15 @@ public class AdminController : ControllerBase
         var nextStatus = NormalizeStatus(payload.Status);
         var previousStatus = order.Status;
         order.Status = nextStatus;
+        if (string.Equals(nextStatus, "quoted", StringComparison.OrdinalIgnoreCase))
+        {
+            QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
+        }
+        else if (string.Equals(nextStatus, "pending_quote", StringComparison.OrdinalIgnoreCase))
+        {
+            QuoteLifecycle.ClearQuoteWindow(order);
+        }
+
         if (string.Equals(nextStatus, "paid", StringComparison.OrdinalIgnoreCase))
             order.IsPaid = true;
 
@@ -458,6 +482,7 @@ public class AdminController : ControllerBase
         order.QuotedPrice = payload.Price;
         order.QuoteMessage = payload.Message;
         order.Status = "quoted";
+        QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -742,6 +767,7 @@ public class AdminController : ControllerBase
                 {
                     var previousStatus = order.Status;
                     order.Status = "quoted";
+                    QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
                     await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Quote confirmation email sent");
                 }
                 order.UpdatedAt = DateTime.UtcNow;
@@ -804,6 +830,46 @@ public class AdminController : ControllerBase
         string PhoneNumber);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
+
+    private async Task RefreshQuoteStatusesAsync(IEnumerable<Order> orders, string changedBy)
+    {
+        var transitions = new List<(Guid OrderId, string PreviousStatus, string NewStatus, string Note)>();
+        var changed = false;
+
+        foreach (var order in orders)
+        {
+            var previousStatus = order.Status;
+            var result = QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
+            if (!result.HasChanges)
+                continue;
+
+            changed = true;
+
+            if (result.StatusChanged)
+            {
+                transitions.Add((
+                    order.Id,
+                    previousStatus,
+                    order.Status,
+                    "Quote expired after 7 days without payment"));
+            }
+        }
+
+        if (!changed)
+            return;
+
+        await _db.SaveChangesAsync();
+
+        foreach (var transition in transitions)
+        {
+            await LogStatusHistoryAsync(
+                transition.OrderId,
+                transition.PreviousStatus,
+                transition.NewStatus,
+                changedBy,
+                transition.Note);
+        }
+    }
 
     private async Task LogOrderCommunicationAsync(Guid orderId, string type, string subject, string recipientEmail)
     {

@@ -2,6 +2,7 @@ export const ADMIN_ORDER_STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "pending_quote", label: "Pending Quote" },
   { value: "quoted", label: "Quoted" },
+  { value: "expired_quote", label: "Expired Quote" },
   { value: "pending_payment", label: "Pending Payment" },
   { value: "printing", label: "Printing" },
   { value: "sent", label: "Sent" },
@@ -54,6 +55,8 @@ export function getOrderStatusPillClass(status: string): string {
       return `${base} bg-amber-100 text-amber-800`;
     case "quoted":
       return `${base} bg-sky-100 text-sky-800`;
+    case "expired_quote":
+      return `${base} bg-rose-100 text-rose-800`;
     case "printing":
       return `${base} bg-indigo-100 text-indigo-800`;
     case "completed":
@@ -75,6 +78,8 @@ export function getOrderStatusBadgeClass(status: string): string {
       return "bg-amber-50 text-amber-700 border-amber-100";
     case "quoted":
       return "bg-sky-50 text-sky-700 border-sky-100";
+    case "expired_quote":
+      return "bg-rose-50 text-rose-700 border-rose-100";
     case "pending_payment":
       return "bg-orange-50 text-orange-700 border-orange-100";
     case "printing":
@@ -101,6 +106,8 @@ export function getOrderStatusTranslationKey(status: string): string | null {
       return "orderStatus.pendingQuote";
     case "quoted":
       return "orderStatus.quoted";
+    case "expired_quote":
+      return "orderStatus.expiredQuote";
     case "pending_payment":
       return "orderStatus.pendingPayment";
     case "printing":
@@ -132,6 +139,7 @@ export function getOrderStatusTimelineStep(status: string): number {
       return 1;
     case "quoted":
     case "pending_payment":
+    case "expired_quote":
     case "failed":
       return 2;
     case "paid":

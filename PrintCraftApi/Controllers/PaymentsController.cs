@@ -59,6 +59,26 @@ public class PaymentsController : ControllerBase
         if (order == null)
             return NotFound(new { message = "Order not found" });
 
+        var statusBeforeLifecycle = order.Status;
+        var lifecycle = QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
+        if (lifecycle.HasChanges)
+        {
+            await _db.SaveChangesAsync();
+
+            if (lifecycle.StatusChanged)
+            {
+                await LogStatusHistoryAsync(
+                    order.Id,
+                    statusBeforeLifecycle,
+                    order.Status,
+                    "system",
+                    "Quote expired after 7 days without payment");
+            }
+        }
+
+        if (string.Equals(order.Status, "expired_quote", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Quote has expired. Request a new quote to continue." });
+
         if (!string.Equals(order.Status, "quoted", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "Only quoted orders can be paid." });
@@ -329,6 +349,9 @@ public class PaymentsController : ControllerBase
                         : "failed";
                     order.IsPaid = false;
                     order.UpdatedAt = DateTime.UtcNow;
+
+                    if (string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
+                        QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
                 }
 
                 await _db.SaveChangesAsync();
@@ -521,6 +544,10 @@ public class PaymentsController : ControllerBase
                 ? "quoted"
                 : "failed";
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
+                QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
+
             await _db.SaveChangesAsync();
             await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Legacy metadata payment cancelled or expired");
         }

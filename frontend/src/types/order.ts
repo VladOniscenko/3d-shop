@@ -4,6 +4,7 @@ export interface Order {
   status:
     | "pending_quote"
     | "quoted"
+    | "expired_quote"
     | "pending_payment"
     | "printing"
     | "completed"
@@ -27,6 +28,8 @@ export interface Order {
   finalTotalAmount?: number;
   quotedPrice?: number;
   quoteMessage?: string;
+  quoteConfirmedAt?: string;
+  quoteExpiresAt?: string;
   trackingCode?: string;
   trackingUrl?: string;
   internalNotes?: string;

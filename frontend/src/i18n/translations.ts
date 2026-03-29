@@ -563,6 +563,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Order statuses
     "orderStatus.pendingQuote": "Pending Quote",
     "orderStatus.quoted": "Quoted",
+    "orderStatus.expiredQuote": "Expired Quote",
     "orderStatus.pendingPayment": "Pending Payment",
     "orderStatus.printing": "Printing",
     "orderStatus.completed": "Completed",
@@ -609,6 +610,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Reference ID",
     "orderDetail.confirmPay": "Confirm + Pay",
+    "orderDetail.requestNewQuote": "Request New Quote",
+    "orderDetail.newQuoteRequested": "New quote request sent.",
+    "orderDetail.newQuoteRequestFailed": "Could not request a new quote.",
+    "orderDetail.quoteExpiresOn": "Quote expires on",
+    "orderDetail.quoteExpiredInfo":
+      "This quote has expired after 7 days. Request a new quote to continue.",
     "orderDetail.shippingModalTitle": "Confirm Shipping Details",
     "orderDetail.shippingModalSubtitle":
       "We need your delivery address before continuing to payment.",
@@ -1272,6 +1279,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Order statuses
     "orderStatus.pendingQuote": "Offerte in behandeling",
     "orderStatus.quoted": "Geoffreerd",
+    "orderStatus.expiredQuote": "Offerte verlopen",
     "orderStatus.pendingPayment": "In afwachting van betaling",
     "orderStatus.printing": "In productie",
     "orderStatus.completed": "Afgerond",
@@ -1317,6 +1325,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Referentie-ID",
     "orderDetail.confirmPay": "Bevestig + Betaal",
+    "orderDetail.requestNewQuote": "Vraag Nieuwe Offerte Aan",
+    "orderDetail.newQuoteRequested": "Nieuwe offerteaanvraag verstuurd.",
+    "orderDetail.newQuoteRequestFailed":
+      "Nieuwe offerte aanvragen is niet gelukt.",
+    "orderDetail.quoteExpiresOn": "Offerte verloopt op",
+    "orderDetail.quoteExpiredInfo":
+      "Deze offerte is na 7 dagen verlopen. Vraag een nieuwe offerte aan om verder te gaan.",
     "orderDetail.shippingModalTitle": "Bevestig Verzendgegevens",
     "orderDetail.shippingModalSubtitle":
       "We hebben je afleveradres nodig voordat je verdergaat naar betalen.",

@@ -58,6 +58,8 @@ public class OrdersController : ControllerBase
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
+        await RefreshQuoteStatusesAsync(orders, "system");
+
         return Ok(orders);
     }
 
@@ -76,6 +78,9 @@ public class OrdersController : ControllerBase
             .Include(o => o.Items)
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+        if (order != null)
+            await RefreshQuoteStatusesAsync(new[] { order }, "system");
 
         return order != null ? Ok(order) : NotFound(new { message = "Order not found or access denied." });
     }
@@ -284,6 +289,98 @@ public class OrdersController : ControllerBase
         await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "user", "Order cancelled by user");
 
         return Ok(new { message = "Order cancelled.", orderId = id });
+    }
+
+    [HttpPost("{id:guid}/request-new-quote")]
+    public async Task<IActionResult> RequestNewQuote([FromRoute] Guid id)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+        if (order == null)
+            return NotFound(new { message = "Order not found." });
+
+        if (!string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Only quote orders can request a new quote." });
+
+        if (order.IsPaid)
+            return BadRequest(new { message = "Paid orders cannot request a new quote." });
+
+        var statusBeforeLifecycle = order.Status;
+        var lifecycle = QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
+        if (lifecycle.HasChanges)
+        {
+            await _db.SaveChangesAsync();
+            if (lifecycle.StatusChanged)
+            {
+                await LogStatusHistoryAsync(
+                    order.Id,
+                    statusBeforeLifecycle,
+                    order.Status,
+                    "system",
+                    "Quote expired after 7 days without payment");
+            }
+        }
+
+        if (!string.Equals(order.Status, "expired_quote", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "A new quote can be requested only after the previous quote expires." });
+
+        var previousStatus = order.Status;
+        order.Status = "pending_quote";
+        order.QuotedPrice = null;
+        order.QuoteMessage = null;
+        QuoteLifecycle.ClearQuoteWindow(order);
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "customer", "Customer requested a new quote after expiration");
+
+        return Ok(order);
+    }
+
+    private async Task RefreshQuoteStatusesAsync(IEnumerable<Order> orders, string changedBy)
+    {
+        var transitions = new List<(Guid OrderId, string PreviousStatus, string NewStatus, string Note)>();
+        var changed = false;
+
+        foreach (var order in orders)
+        {
+            var previousStatus = order.Status;
+            var result = QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
+            if (!result.HasChanges)
+                continue;
+
+            changed = true;
+
+            if (result.StatusChanged)
+            {
+                transitions.Add((
+                    order.Id,
+                    previousStatus,
+                    order.Status,
+                    "Quote expired after 7 days without payment"));
+            }
+        }
+
+        if (!changed)
+            return;
+
+        await _db.SaveChangesAsync();
+
+        foreach (var transition in transitions)
+        {
+            await LogStatusHistoryAsync(
+                transition.OrderId,
+                transition.PreviousStatus,
+                transition.NewStatus,
+                changedBy,
+                transition.Note);
+        }
     }
 
     private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)
