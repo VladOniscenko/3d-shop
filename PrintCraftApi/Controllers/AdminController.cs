@@ -41,6 +41,12 @@ public class AdminController : ControllerBase
         "completed",
     };
 
+    private static readonly HashSet<string> AllowedNoteVisibilities = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "internal",
+        "customer",
+    };
+
     private static bool IsPendingStatus(string? status)
     {
         return !string.IsNullOrWhiteSpace(status)
@@ -52,6 +58,12 @@ public class AdminController : ControllerBase
 
     private static bool IsKnownStatus(string? status)
         => KnownStatuses.Contains(NormalizeStatus(status));
+
+    private static string NormalizeNoteVisibility(string? visibility)
+        => string.IsNullOrWhiteSpace(visibility) ? "internal" : visibility.Trim().ToLowerInvariant();
+
+    private static bool IsAllowedNoteVisibility(string? visibility)
+        => AllowedNoteVisibilities.Contains(NormalizeNoteVisibility(visibility));
 
     private static bool IsPricingLocked(Order order)
     {
@@ -309,6 +321,7 @@ public class AdminController : ControllerBase
         var order = await _db.Orders
             .Include(o => o.Items)
             .Include(o => o.Payments)
+            .Include(o => o.Notes)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order != null)
@@ -343,6 +356,32 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         return Ok(entries);
+    }
+
+    [HttpGet("orders/{id:guid}/notes")]
+    public async Task<IActionResult> GetOrderNotes([FromRoute] Guid id, [FromQuery] string? visibility)
+    {
+        var exists = await _db.Orders.AnyAsync(o => o.Id == id);
+        if (!exists) return NotFound(new { message = "Order not found" });
+
+        var normalizedVisibility = NormalizeNoteVisibility(visibility);
+        var query = _db.OrderNotes
+            .Where(n => n.OrderId == id)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(visibility))
+        {
+            if (!IsAllowedNoteVisibility(normalizedVisibility))
+                return BadRequest(new { message = "Visibility must be one of: internal, customer." });
+
+            query = query.Where(n => n.Visibility.ToLower() == normalizedVisibility);
+        }
+
+        var notes = await query
+            .OrderByDescending(n => n.CreatedAt)
+            .ToListAsync();
+
+        return Ok(notes);
     }
 
     [HttpGet("orders/{id:guid}/payments")]
@@ -717,16 +756,79 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
-        order.InternalNotes = string.IsNullOrWhiteSpace(payload.InternalNotes)
-            ? null
-            : payload.InternalNotes.Trim();
-        order.CustomerNotes = string.IsNullOrWhiteSpace(payload.CustomerNotes)
-            ? null
-            : payload.CustomerNotes.Trim();
+        if (!string.IsNullOrWhiteSpace(payload.InternalNotes))
+        {
+            _db.OrderNotes.Add(new OrderNote
+            {
+                OrderId = order.Id,
+                Content = payload.InternalNotes.Trim(),
+                Visibility = "internal",
+                CreatedBy = "admin",
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(payload.CustomerNotes))
+        {
+            _db.OrderNotes.Add(new OrderNote
+            {
+                OrderId = order.Id,
+                Content = payload.CustomerNotes.Trim(),
+                Visibility = "customer",
+                CreatedBy = "admin",
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
         return Ok(order);
+    }
+
+    [HttpPost("orders/{id:guid}/notes")]
+    public async Task<IActionResult> AddOrderNote([FromRoute] Guid id, [FromBody] CreateOrderNoteRequest payload)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (string.IsNullOrWhiteSpace(payload.Content))
+            return BadRequest(new { message = "Note content is required." });
+
+        var visibility = NormalizeNoteVisibility(payload.Visibility);
+        if (!IsAllowedNoteVisibility(visibility))
+            return BadRequest(new { message = "Visibility must be one of: internal, customer." });
+
+        var note = new OrderNote
+        {
+            OrderId = id,
+            Content = payload.Content.Trim(),
+            Visibility = visibility,
+            CreatedBy = "admin",
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        _db.OrderNotes.Add(note);
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(note);
+    }
+
+    [HttpDelete("orders/{id:guid}/notes/{noteId:guid}")]
+    public async Task<IActionResult> DeleteOrderNote([FromRoute] Guid id, [FromRoute] Guid noteId)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        var note = await _db.OrderNotes.FirstOrDefaultAsync(n => n.Id == noteId && n.OrderId == id);
+        if (note == null) return NotFound(new { message = "Note not found" });
+
+        _db.OrderNotes.Remove(note);
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return NoContent();
     }
 
     [HttpPost("orders/{id:guid}/email")]
@@ -817,6 +919,7 @@ public class AdminController : ControllerBase
 
     public record AdminQuoteRequest(decimal Price, string Message);
     public record NotesRequest(string? InternalNotes, string? CustomerNotes);
+    public record CreateOrderNoteRequest(string Content, string Visibility);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
     public record OrderDiscountRequest(decimal OrderDiscountAmount);

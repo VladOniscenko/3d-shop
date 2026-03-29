@@ -34,11 +34,21 @@ export interface Order {
   trackingUrl?: string;
   internalNotes?: string;
   customerNotes?: string;
+  notes?: OrderNote[];
   isPaid?: boolean;
   updatedAt?: string;
   createdAt: string;
   items: OrderItem[];
   payments?: PaymentAttempt[];
+}
+
+export interface OrderNote {
+  id: string;
+  orderId?: string;
+  content: string;
+  visibility: "internal" | "customer";
+  createdBy?: string;
+  createdAt: string;
 }
 
 export interface PaymentAttempt {

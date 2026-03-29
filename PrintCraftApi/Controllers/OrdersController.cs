@@ -55,12 +55,13 @@ public class OrdersController : ControllerBase
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
             .Include(o => o.Payments)
+            .Include(o => o.Notes)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
         await RefreshQuoteStatusesAsync(orders, "system");
 
-        return Ok(orders);
+        return Ok(orders.Select(MapOrderForCustomer));
     }
 
     [HttpGet("{id:guid}")]
@@ -77,12 +78,13 @@ public class OrdersController : ControllerBase
         var order = await _db.Orders
             .Include(o => o.Items)
             .Include(o => o.Payments)
+            .Include(o => o.Notes)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
 
         if (order != null)
             await RefreshQuoteStatusesAsync(new[] { order }, "system");
 
-        return order != null ? Ok(order) : NotFound(new { message = "Order not found or access denied." });
+        return order != null ? Ok(MapOrderForCustomer(order)) : NotFound(new { message = "Order not found or access denied." });
     }
 
     [HttpGet("{id:guid}/payments")]
@@ -208,7 +210,7 @@ public class OrdersController : ControllerBase
             _logger.LogError(ex, "Failed sending quote-requested email for order {OrderId}", order.Id);
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
+        return CreatedAtAction(nameof(GetById), new { id = order.Id }, MapOrderForCustomer(order));
     }
 
     [HttpPut("{id:guid}/shipping")]
@@ -257,7 +259,7 @@ public class OrdersController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        return Ok(order);
+        return Ok(MapOrderForCustomer(order));
     }
 
     [HttpPut("{id:guid}/cancel")]
@@ -340,7 +342,7 @@ public class OrdersController : ControllerBase
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "customer", "Customer requested a new quote after expiration");
 
-        return Ok(order);
+        return Ok(MapOrderForCustomer(order));
     }
 
     private async Task RefreshQuoteStatusesAsync(IEnumerable<Order> orders, string changedBy)
@@ -414,6 +416,73 @@ public class OrdersController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private object MapOrderForCustomer(Order order)
+    {
+        var noteItems = new List<object>();
+
+        if (order.Notes != null)
+        {
+            noteItems.AddRange(order.Notes
+                .Where(n => string.Equals(n.Visibility, "customer", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(n => n.CreatedAt)
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Content,
+                    n.Visibility,
+                    n.CreatedBy,
+                    n.CreatedAt,
+                }));
+        }
+
+        // Backward-compatibility for older orders that only used the single CustomerNotes field.
+        if (string.IsNullOrWhiteSpace(order.CustomerNotes) == false
+            && noteItems.Count == 0)
+        {
+            noteItems.Add(new
+            {
+                Id = Guid.Empty,
+                Content = order.CustomerNotes,
+                Visibility = "customer",
+                CreatedBy = "admin",
+                CreatedAt = order.UpdatedAt,
+            });
+        }
+
+        return new
+        {
+            order.Id,
+            order.UserId,
+            order.Status,
+            order.OrderType,
+            order.FullName,
+            order.AddressLine1,
+            order.AddressLine2,
+            order.City,
+            order.PostalCode,
+            order.PhoneNumber,
+            order.DeliveryPrice,
+            order.OrderDiscountAmount,
+            order.SubtotalAmount,
+            order.DiscountAmount,
+            order.FinalTotalAmount,
+            order.QuotedPrice,
+            order.QuoteMessage,
+            order.QuoteConfirmedAt,
+            order.QuoteExpiresAt,
+            order.TrackingCode,
+            order.TrackingUrl,
+            CustomerNotes = order.CustomerNotes,
+            InternalNotes = (string?)null,
+            order.IsPaid,
+            order.UpdatedAt,
+            order.CreatedAt,
+            order.Items,
+            order.Payments,
+            Notes = noteItems,
+        };
     }
 
     private void DeleteUploadFileIfExists(string? rawUrl)

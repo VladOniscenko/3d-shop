@@ -214,6 +214,14 @@ export default function OrderDetail() {
     normalizedStatus === "quoted" &&
     quoteExpiresAt instanceof Date &&
     !Number.isNaN(quoteExpiresAt.getTime());
+  const customerNotes = Array.isArray(order.notes)
+    ? order.notes
+        .filter((note) => note.visibility === "customer")
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+    : [];
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -297,6 +305,29 @@ export default function OrderDetail() {
               reachedDate={reachedDate}
               t={t}
             />
+
+            {customerNotes.length > 0 && (
+              <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h3 className="text-sm font-black uppercase tracking-wide text-gray-900 mb-3">
+                  {t("orderDetail.customerNotesTitle")}
+                </h3>
+                <div className="space-y-3">
+                  {customerNotes.map((note) => (
+                    <article
+                      key={note.id || `${note.createdAt}-${note.content}`}
+                      className="rounded-xl border border-gray-100 bg-gray-50 p-3"
+                    >
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(note.createdAt).toLocaleString()}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           <OrderSidebar

@@ -3,7 +3,12 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
-import type { Order, PaymentAttempt, QuotePromotionSettings } from "../types";
+import type {
+  Order,
+  OrderNote,
+  PaymentAttempt,
+  QuotePromotionSettings,
+} from "../types";
 import { useNotify } from "../context/NotifyContext";
 import { useI18n } from "../i18n/I18nContext";
 import type {
@@ -29,8 +34,11 @@ export default function AdminOrderDetail() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [internalNotes, setInternalNotes] = useState("");
-  const [customerNotes, setCustomerNotes] = useState("");
+  const [internalNoteInput, setInternalNoteInput] = useState("");
+  const [customerNoteInput, setCustomerNoteInput] = useState("");
+  const [addingInternalNote, setAddingInternalNote] = useState(false);
+  const [addingCustomerNote, setAddingCustomerNote] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState(false);
   const [fullName, setFullName] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
@@ -90,8 +98,6 @@ export default function AdminOrderDetail() {
       setSelectedStatus(data.status || "pending");
       setTrackingCode(data.trackingCode || "");
       setTrackingUrl(data.trackingUrl || "");
-      setInternalNotes(data.internalNotes || "");
-      setCustomerNotes(data.customerNotes || "");
     };
 
     const getOrder = async () => {
@@ -240,18 +246,60 @@ export default function AdminOrderDetail() {
     }
   };
 
-  const saveNotes = async () => {
+  const addNote = async (visibility: "internal" | "customer") => {
     if (!id) return;
+
+    const content =
+      visibility === "internal" ? internalNoteInput : customerNoteInput;
+
+    if (!content.trim()) {
+      notifyError(t("admin.order.noteContentRequired"));
+      return;
+    }
+
+    if (visibility === "internal") {
+      setAddingInternalNote(true);
+    } else {
+      setAddingCustomerNote(true);
+    }
+
     try {
-      await api.put(`/admin/orders/${id}/notes`, {
-        internalNotes,
-        customerNotes,
+      await api.post(`/admin/orders/${id}/notes`, {
+        content: content.trim(),
+        visibility,
       });
       await refresh();
-      notifySuccess(t("admin.order.notesSaved"));
+      if (visibility === "internal") {
+        setInternalNoteInput("");
+      } else {
+        setCustomerNoteInput("");
+      }
+      notifySuccess(t("admin.order.noteAdded"));
     } catch (err) {
       console.error(err);
-      notifyError(t("admin.order.notesSaveFailed"));
+      notifyError(t("admin.order.noteAddFailed"));
+    } finally {
+      if (visibility === "internal") {
+        setAddingInternalNote(false);
+      } else {
+        setAddingCustomerNote(false);
+      }
+    }
+  };
+
+  const deleteNote = async (noteId: string) => {
+    if (!id) return;
+
+    setDeletingNoteId(noteId);
+    try {
+      await api.delete(`/admin/orders/${id}/notes/${noteId}`);
+      await refresh();
+      notifySuccess(t("admin.order.noteDeleted"));
+    } catch (err) {
+      console.error(err);
+      notifyError(t("admin.order.noteDeleteFailed"));
+    } finally {
+      setDeletingNoteId(null);
     }
   };
 
@@ -422,6 +470,23 @@ export default function AdminOrderDetail() {
     order.phoneNumber,
   ].every((value) => String(value || "").trim().length > 0);
   const hasQuoteMessage = String(order.quoteMessage || "").trim().length > 0;
+  const allOrderNotes = Array.isArray(order.notes) ? order.notes : [];
+  const internalNotes = allOrderNotes
+    .filter((note) => note.visibility === "internal")
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  const customerNotes = allOrderNotes
+    .filter((note) => note.visibility === "customer")
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  const hasLegacyInternalNote =
+    internalNotes.length === 0 && String(order.internalNotes || "").trim().length > 0;
+  const hasLegacyCustomerNote =
+    customerNotes.length === 0 && String(order.customerNotes || "").trim().length > 0;
   const hasTrackingInfo =
     String(trackingCode || order.trackingCode || "").trim().length > 0;
   const hasPaymentAttempts = payments.length > 0;
@@ -853,33 +918,122 @@ export default function AdminOrderDetail() {
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-[#5f736d]">
+                <label className="block text-xs font-semibold text-[#5f736d]">
                   {t("admin.order.internalNotesLabel")}
                 </label>
                 <textarea
-                  value={internalNotes}
-                  onChange={(e) => setInternalNotes(e.target.value)}
+                  value={internalNoteInput}
+                  onChange={(e) => setInternalNoteInput(e.target.value)}
                   rows={3}
                   className="admin-textarea"
+                  placeholder={t("admin.order.internalNotesPlaceholder")}
                 />
+                <button
+                  type="button"
+                  onClick={() => addNote("internal")}
+                  disabled={addingInternalNote}
+                  className="admin-btn admin-btn-secondary mt-2"
+                >
+                  {addingInternalNote
+                    ? t("admin.order.savingButton")
+                    : t("admin.order.addInternalNoteButton")}
+                </button>
               </div>
+
+              {internalNotes.length === 0 ? (
+                <p className="text-xs text-[#5f736d]">
+                  {hasLegacyInternalNote
+                    ? order.internalNotes
+                    : t("admin.order.noInternalNotes")}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {internalNotes.map((note: OrderNote) => (
+                    <div
+                      key={note.id}
+                      className="rounded-lg border border-[#dce7e2] bg-[#f7fbf9] p-3"
+                    >
+                      <p className="text-sm text-[#2e423d] whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-xs text-[#6c817a]">
+                          {new Date(note.createdAt).toLocaleString()}
+                        </p>
+                        {note.id !== "00000000-0000-0000-0000-000000000000" && (
+                          <button
+                            type="button"
+                            onClick={() => deleteNote(note.id)}
+                            disabled={deletingNoteId === note.id}
+                            className="text-xs text-rose-700 hover:underline disabled:opacity-60"
+                          >
+                            {t("admin.order.deleteNoteButton")}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs text-[#5f736d]">
+                <label className="block text-xs font-semibold text-[#5f736d]">
                   {t("admin.order.customerNotesLabel")}
                 </label>
                 <textarea
-                  value={customerNotes}
-                  onChange={(e) => setCustomerNotes(e.target.value)}
+                  value={customerNoteInput}
+                  onChange={(e) => setCustomerNoteInput(e.target.value)}
                   rows={3}
                   className="admin-textarea"
+                  placeholder={t("admin.order.customerNotesPlaceholder")}
                 />
+                <button
+                  type="button"
+                  onClick={() => addNote("customer")}
+                  disabled={addingCustomerNote}
+                  className="admin-btn admin-btn-primary mt-2"
+                >
+                  {addingCustomerNote
+                    ? t("admin.order.savingButton")
+                    : t("admin.order.addCustomerNoteButton")}
+                </button>
               </div>
-              <button
-                onClick={saveNotes}
-                className="admin-btn admin-btn-primary"
-              >
-                {t("admin.order.saveNotesButton")}
-              </button>
+
+              {customerNotes.length === 0 ? (
+                <p className="text-xs text-[#5f736d]">
+                  {hasLegacyCustomerNote
+                    ? order.customerNotes
+                    : t("admin.order.noCustomerNotes")}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {customerNotes.map((note: OrderNote) => (
+                    <div
+                      key={note.id}
+                      className="rounded-lg border border-[#dce7e2] bg-[#f7fbf9] p-3"
+                    >
+                      <p className="text-sm text-[#2e423d] whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-xs text-[#6c817a]">
+                          {new Date(note.createdAt).toLocaleString()}
+                        </p>
+                        {note.id !== "00000000-0000-0000-0000-000000000000" && (
+                          <button
+                            type="button"
+                            onClick={() => deleteNote(note.id)}
+                            disabled={deletingNoteId === note.id}
+                            className="text-xs text-rose-700 hover:underline disabled:opacity-60"
+                          >
+                            {t("admin.order.deleteNoteButton")}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </article>
 
@@ -991,11 +1145,15 @@ export default function AdminOrderDetail() {
             </p>
             <p className="text-sm text-[#5b706a]">
               {t("admin.order.internalNotesLabel")}:{" "}
-              {order.internalNotes || t("admin.order.noneValue")}
+              {internalNotes.length > 0
+                ? internalNotes[0].content
+                : order.internalNotes || t("admin.order.noneValue")}
             </p>
             <p className="text-sm text-[#5b706a]">
               {t("admin.order.customerNotesLabel")}:{" "}
-              {order.customerNotes || t("admin.order.noneValue")}
+              {customerNotes.length > 0
+                ? customerNotes[0].content
+                : order.customerNotes || t("admin.order.noneValue")}
             </p>
           </article>
         </div>

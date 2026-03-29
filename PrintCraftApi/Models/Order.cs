@@ -36,6 +36,7 @@ public class Order
     public List<OrderItem> Items { get; set; } = new();
     public List<Payment> Payments { get; set; } = new();
     public List<OrderCommunication> Communications { get; set; } = new();
+    public List<OrderNote> Notes { get; set; } = new();
     public List<OrderStatusHistory> StatusHistory { get; set; } = new();
 
     [NotMapped]
