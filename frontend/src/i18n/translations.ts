@@ -1037,10 +1037,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "By submitting files, you confirm that you own or are authorized to use them and that they do not violate laws or third-party rights.",
     "legal.terms.section2Title": "Quotes and orders",
     "legal.terms.section2Body":
-      "Quotes are estimates based on material, complexity, and production time. Production starts only after explicit approval and confirmed payment.",
+      "Quotes are customized estimates based on model size, quantity, material choice, print complexity, and finishing requirements. Production starts only after explicit approval and confirmed payment.",
     "legal.terms.pricingDisclaimerTitle": "Prices and quote validity",
     "legal.terms.pricingDisclaimerBody":
-      "Published prices, calculations, and quotes are non-binding and may contain errors or temporary mismatches. No rights can be derived from displayed prices or quotes until written confirmation by PrintCraft.",
+      "Indicative prices shown on the website are guidance only. Final pricing may differ per request because size, quantity, geometry, support usage, post-processing, and delivery method can change actual cost. Displayed prices and draft quotes are non-binding; rights only arise after written quote confirmation by PrintCraft.",
     "legal.terms.section3Title": "Limitation of liability",
     "legal.terms.section3Body":
       "Customers are responsible for functional suitability and safety of uploaded designs. Our liability is limited to the value of the specific order where legally allowed.",
@@ -1053,7 +1053,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "If an item arrives damaged or has major production defects, contact us within 3 days with photos. We will assess and offer a reprint or refund where appropriate.",
     "legal.refunds.section2Title": "Custom-made products",
     "legal.refunds.section2Body":
-      "Because items are custom-made from your files, approved designs are generally non-refundable unless there is a clear manufacturing error.",
+      "Because each print is produced on request and often unique in size and quantity, approved custom orders are generally non-refundable unless there is a clear manufacturing error.",
     "legal.refunds.section3Title": "Cancellation",
     "legal.refunds.section3Body":
       "Quotes can be canceled before production starts. Once production has started, cancellation is usually no longer possible.",
@@ -1063,10 +1063,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "legal.shipping.title": "Shipping Policy",
     "legal.shipping.section1Title": "Processing time",
     "legal.shipping.section1Body":
-      "Most orders are produced and prepared for shipment within 2 to 5 business days, depending on queue, complexity, and material availability.",
+      "Most orders are produced and prepared for shipment within 2 to 5 business days, depending on queue, complexity, material availability, and ordered quantity.",
     "legal.shipping.section2Title": "Delivery area",
     "legal.shipping.section2Body":
-      "We deliver across the Netherlands. Shipping fees are shown during checkout.",
+      "We deliver across the Netherlands. For fixed-price checkout products, shipping fees are shown at checkout. For quote-based orders, delivery costs are included or specified in the quote and may vary by package size, weight, quantity, and destination.",
     "legal.shipping.section3Title": "Tracking",
     "legal.shipping.section3Body":
       "When available, tracking details are shared after dispatch so you can follow delivery progress.",
@@ -2148,10 +2148,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Door bestanden aan te leveren bevestig je dat je eigenaar bent van die bestanden of bevoegd bent om ze te gebruiken, en dat ze geen wet of rechten van derden schenden.",
     "legal.terms.section2Title": "Offertes en bestellingen",
     "legal.terms.section2Body":
-      "Offertes zijn schattingen op basis van materiaal, complexiteit en productietijd. Productie start uitsluitend na expliciet akkoord en bevestigde betaling.",
+      "Offertes zijn maatwerkramingen op basis van modelgrootte, aantallen, materiaalkeuze, printcomplexiteit en eventuele afwerking. Productie start uitsluitend na expliciet akkoord en bevestigde betaling.",
     "legal.terms.pricingDisclaimerTitle": "Prijs- en offertegeldigheid",
     "legal.terms.pricingDisclaimerBody":
-      "Gepubliceerde prijzen, berekeningen en offertes zijn niet bindend en kunnen fouten of tijdelijke afwijkingen bevatten. Aan getoonde prijzen of offertes kunnen geen rechten worden ontleend totdat PrintCraft deze schriftelijk heeft bevestigd.",
+      "Getoonde richtprijzen op de website zijn indicatief. De definitieve prijs kan per aanvraag afwijken doordat grootte, aantallen, geometrie, supportgebruik, nabewerking en verzendmethode de werkelijke kostprijs beïnvloeden. Getoonde prijzen en conceptoffertes zijn niet bindend; rechten ontstaan pas na schriftelijke offertebevestiging door PrintCraft.",
     "legal.terms.section3Title": "Beperking van aansprakelijkheid",
     "legal.terms.section3Body":
       "Klanten blijven verantwoordelijk voor de functionele geschiktheid en veiligheid van aangeleverde ontwerpen. Onze aansprakelijkheid is, waar wettelijk toegestaan, beperkt tot de waarde van de betreffende bestelling.",
@@ -2164,7 +2164,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Als een item beschadigd aankomt of ernstige productiefouten bevat, neem dan binnen 3 dagen contact op met foto's. We beoordelen het en bieden waar passend een herprint of terugbetaling.",
     "legal.refunds.section2Title": "Maatwerkproducten",
     "legal.refunds.section2Body":
-      "Omdat items op maat worden gemaakt op basis van jouw bestanden, zijn goedgekeurde ontwerpen in principe niet restitueerbaar, behalve bij aantoonbare productiefouten.",
+      "Omdat iedere print op aanvraag wordt gemaakt en vaak uniek is in formaat en aantallen, zijn goedgekeurde maatwerkbestellingen in principe niet restitueerbaar, behalve bij aantoonbare productiefouten.",
     "legal.refunds.section3Title": "Annulering",
     "legal.refunds.section3Body":
       "Een offerte kun je annuleren voordat productie start. Zodra productie is begonnen, is annuleren doorgaans niet meer mogelijk.",
@@ -2174,10 +2174,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "legal.shipping.title": "Verzendbeleid",
     "legal.shipping.section1Title": "Verwerkingstijd",
     "legal.shipping.section1Body":
-      "De meeste bestellingen worden binnen 2 tot 5 werkdagen geproduceerd en verzendklaar gemaakt, afhankelijk van drukte, complexiteit en materiaalbeschikbaarheid.",
+      "De meeste bestellingen worden binnen 2 tot 5 werkdagen geproduceerd en verzendklaar gemaakt, afhankelijk van drukte, complexiteit, materiaalbeschikbaarheid en bestelde aantallen.",
     "legal.shipping.section2Title": "Leveringsgebied",
     "legal.shipping.section2Body":
-      "We leveren door heel Nederland. Verzendkosten worden tijdens checkout getoond.",
+      "We leveren door heel Nederland. Voor producten met vaste checkout-prijs worden verzendkosten tijdens checkout getoond. Voor offertebestellingen worden bezorgkosten opgenomen of gespecificeerd in de offerte en kunnen deze afwijken op basis van pakketgrootte, gewicht, aantallen en bestemming.",
     "legal.shipping.section3Title": "Track & trace",
     "legal.shipping.section3Body":
       "Wanneer beschikbaar delen we na verzending track & trace-gegevens zodat je de levering kunt volgen.",
