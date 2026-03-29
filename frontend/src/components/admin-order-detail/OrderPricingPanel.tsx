@@ -49,6 +49,8 @@ export default function OrderPricingPanel({
   applyingQuotePromotion,
   onApplyQuotePromotion,
 }: OrderPricingPanelProps) {
+  const isCancelledOrder = (order.status || "").toLowerCase() === "cancelled";
+
   return (
     <article className="admin-panel p-4">
       <h2 className="font-bold mb-2 text-[#1b2b25]">
@@ -80,24 +82,29 @@ export default function OrderPricingPanel({
                   <p className="text-sm font-medium text-[#1b2b25] break-all">
                     {item.fileName ?? item.fileUrl ?? "—"}
                   </p>
-                  {item.fileUrl && (
-                    <div className="mt-1 flex items-center gap-3">
-                      <a
-                        href={resolveAssetUrl(item.fileUrl)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline inline-block"
-                      >
-                        ↓ {t("admin.orderDetail.downloadFile")}
-                      </a>
-                      <Link
-                        to={`/admin/orders/${order.id}/models/${idx}`}
-                        className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
-                      >
-                        {t("admin.orderDetail.viewModel")}
-                      </Link>
-                    </div>
-                  )}
+                  {item.fileUrl &&
+                    (isCancelledOrder ? (
+                      <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                        {t("admin.orderDetail.filesRemovedDueCancellation")}
+                      </p>
+                    ) : (
+                      <div className="mt-1 flex items-center gap-3">
+                        <a
+                          href={resolveAssetUrl(item.fileUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline inline-block"
+                        >
+                          ↓ {t("admin.orderDetail.downloadFile")}
+                        </a>
+                        <Link
+                          to={`/admin/orders/${order.id}/models/${idx}`}
+                          className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+                        >
+                          {t("admin.orderDetail.viewModel")}
+                        </Link>
+                      </div>
+                    ))}
                 </div>
 
                 {/* Specs grid */}

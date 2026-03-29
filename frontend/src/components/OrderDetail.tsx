@@ -240,44 +240,46 @@ export default function OrderDetail() {
             {t("orderDetail.back")}
           </button>
 
-          {priceSummary.isPendingQuote && (
-            <button
-              onClick={handleDeleteQuote}
-              disabled={isCancelling}
-              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
-            >
-              {isCancelling ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <XCircle size={18} />
-              )}
-              {t("orderDetail.deleteQuote")}
-            </button>
-          )}
+          <div className="md:ml-auto flex flex-wrap items-center justify-end gap-3">
+            {(priceSummary.isPendingQuote || normalizedStatus === "quoted") && (
+              <button
+                onClick={handleDeleteQuote}
+                disabled={isCancelling}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+              >
+                {isCancelling ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <XCircle size={18} />
+                )}
+                {t("orderDetail.deleteQuote")}
+              </button>
+            )}
 
-          {normalizedStatus === "quoted" && (
-            <button
-              onClick={handleConfirmAndPay}
-              disabled={isPaying}
-              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 border border-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50"
-            >
-              {isPaying ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <CheckCircle2 size={18} />
-              )}
-              {t("orderDetail.confirmPay")}
-            </button>
-          )}
+            {normalizedStatus === "quoted" && (
+              <button
+                onClick={handleConfirmAndPay}
+                disabled={isPaying}
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 border border-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50"
+              >
+                {isPaying ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <CheckCircle2 size={18} />
+                )}
+                {t("orderDetail.confirmPay")}
+              </button>
+            )}
 
-          {normalizedStatus === "expired_quote" && (
-            <button
-              onClick={handleRequestNewQuote}
-              className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 border border-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-sm"
-            >
-              {t("orderDetail.requestNewQuote")}
-            </button>
-          )}
+            {normalizedStatus === "expired_quote" && (
+              <button
+                onClick={handleRequestNewQuote}
+                className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 border border-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-sm"
+              >
+                {t("orderDetail.requestNewQuote")}
+              </button>
+            )}
+          </div>
         </div>
 
         {showQuoteExpiryNotice && (

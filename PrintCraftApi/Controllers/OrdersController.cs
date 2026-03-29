@@ -41,6 +41,12 @@ public class OrdersController : ControllerBase
             && status.StartsWith("pending", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool CanCustomerCancelOrder(string? status)
+    {
+        if (IsPendingStatus(status)) return true;
+        return string.Equals(status, "quoted", StringComparison.OrdinalIgnoreCase);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -281,8 +287,8 @@ public class OrdersController : ControllerBase
         if (order == null)
             return NotFound(new { message = "Order not found." });
 
-        if (!IsPendingStatus(order.Status))
-            return BadRequest(new { message = "Only pending orders can be cancelled." });
+        if (!CanCustomerCancelOrder(order.Status))
+            return BadRequest(new { message = "Only pending or quoted orders can be cancelled." });
 
         var previousStatus = order.Status;
         order.Status = "cancelled";

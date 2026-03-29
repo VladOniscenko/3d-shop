@@ -640,6 +640,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.instructionsLabel": "Instructions",
     "admin.orderDetail.downloadFile": "Download/Preview file",
     "admin.orderDetail.viewModel": "View 3D model",
+    "admin.orderDetail.filesRemovedDueCancellation":
+      "Files were removed due to cancellation.",
     "admin.orderDetail.deliveryLabel": "Delivery",
     "admin.orderDetail.orderDiscountLabel": "Order discount",
     "admin.orderDetail.savingButton": "Saving...",
@@ -1004,6 +1006,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.deleteQuote": "Delete Quote",
     "orderDetail.modelsInProject": "3D Models in this Project",
     "orderDetail.viewModel": "View 3D",
+    "orderDetail.filesRemovedDueCancellation":
+      "Files were removed due to cancellation.",
     "orderDetail.timeline": "Project Timeline",
     "orderDetail.quoteRequested": "Quote Requested",
     "orderDetail.printing": "Printing",
@@ -1780,6 +1784,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.instructionsLabel": "Instructies",
     "admin.orderDetail.downloadFile": "Bestand Downloaden/Bekijken",
     "admin.orderDetail.viewModel": "Bekijk 3D-model",
+    "admin.orderDetail.filesRemovedDueCancellation":
+      "In verband met annulering zijn bestanden verwijderd.",
     "admin.orderDetail.deliveryLabel": "Levering",
     "admin.orderDetail.orderDiscountLabel": "Order korting",
     "admin.orderDetail.savingButton": "Bezig met opslaan...",
@@ -2148,6 +2154,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.deleteQuote": "Offerte Verwijderen",
     "orderDetail.modelsInProject": "3D Modellen in dit Project",
     "orderDetail.viewModel": "Bekijk 3D",
+    "orderDetail.filesRemovedDueCancellation":
+      "In verband met annulering zijn bestanden verwijderd.",
     "orderDetail.timeline": "Project Tijdlijn",
     "orderDetail.quoteRequested": "Offerte Aangevraagd",
     "orderDetail.printing": "Printen",

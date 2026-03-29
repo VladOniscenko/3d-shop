@@ -11,6 +11,8 @@ export default function OrderItemsCard({
   isPendingQuote,
   t,
 }: OrderItemsCardProps) {
+  const isCancelledOrder = (order.status || "").toLowerCase() === "cancelled";
+
   return (
     <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -33,12 +35,18 @@ export default function OrderItemsCard({
                   </p>
                   <div className="flex items-center gap-2">
                     {item.fileUrl ? (
-                      <Link
-                        to={`/orders/${order.id}/models/${idx}`}
-                        className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-100 hover:bg-teal-100"
-                      >
-                        {t("orderDetail.viewModel")}
-                      </Link>
+                      isCancelledOrder ? (
+                        <span className="text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                          {t("orderDetail.filesRemovedDueCancellation")}
+                        </span>
+                      ) : (
+                        <Link
+                          to={`/orders/${order.id}/models/${idx}`}
+                          className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-100 hover:bg-teal-100"
+                        >
+                          {t("orderDetail.viewModel")}
+                        </Link>
+                      )
                     ) : null}
                     {!isPendingQuote && item.price > 0 && (
                       <span className="font-bold text-emerald-700">
