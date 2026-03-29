@@ -116,7 +116,9 @@ export default function OrderPricingPanel({
                       {t("admin.orderDetail.priceLabel")}
                     </p>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-[#6c817a]">{CURRENCY_CODE}</span>
+                      <span className="text-xs text-[#6c817a]">
+                        {CURRENCY_CODE}
+                      </span>
                       <input
                         type="number"
                         value={item.id ? itemPrices[item.id] || 0 : 0}
@@ -261,19 +263,25 @@ export default function OrderPricingPanel({
               <span className="text-sm">
                 {t("admin.orderDetail.subtotalLabel")}:
               </span>
-              <span className="font-semibold">{formatCurrencyAmount(subtotal)}</span>
+              <span className="font-semibold">
+                {formatCurrencyAmount(subtotal)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">
                 {t("admin.orderDetail.deliveryLabel")}:
               </span>
-              <span className="font-semibold">{formatCurrencyAmount(deliveryPrice)}</span>
+              <span className="font-semibold">
+                {formatCurrencyAmount(deliveryPrice)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">
                 {t("admin.orderDetail.orderDiscountLabel")}:
               </span>
-              <span className="font-semibold">{formatCurrencyAmount(orderDiscountAmount)}</span>
+              <span className="font-semibold">
+                {formatCurrencyAmount(orderDiscountAmount)}
+              </span>
             </div>
             <div className="border-t border-white/20 my-3 pt-3 flex justify-between items-center">
               <span className="text-base font-bold">

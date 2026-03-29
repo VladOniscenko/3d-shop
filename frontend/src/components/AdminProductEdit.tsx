@@ -380,8 +380,8 @@ export default function AdminProductEdit() {
             <span className="font-semibold">
               {t("admin.products.finalPrice")}
             </span>
-              <div className="admin-field flex items-center font-bold text-[#1b2b25]">
-                {formatCurrencyAmount(finalPrice)}
+            <div className="admin-field flex items-center font-bold text-[#1b2b25]">
+              {formatCurrencyAmount(finalPrice)}
             </div>
           </div>
         </div>

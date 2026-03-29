@@ -1,4 +1,5 @@
-const rawCurrencyCode = (import.meta.env.VITE_CURRENCY_CODE as string | undefined) || "EUR";
+const rawCurrencyCode =
+  (import.meta.env.VITE_CURRENCY_CODE as string | undefined) || "EUR";
 
 export const CURRENCY_CODE = (() => {
   const normalized = rawCurrencyCode.trim().toUpperCase();
