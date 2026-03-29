@@ -35,15 +35,18 @@ public sealed class MailtrapEmailService : IEmailService
     private readonly EmailOptions _options;
     private readonly HttpClient _httpClient;
     private readonly ILogger<MailtrapEmailService> _logger;
+    private readonly string _currencyCode;
 
     public MailtrapEmailService(
         HttpClient httpClient,
         IOptions<EmailOptions> options,
+        IConfiguration configuration,
         ILogger<MailtrapEmailService> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _logger = logger;
+        _currencyCode = NormalizeCurrencyCode(configuration["CurrencyCode"]);
     }
 
     public Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink)
@@ -94,7 +97,7 @@ public sealed class MailtrapEmailService : IEmailService
 
             Your quote is ready.
             Reference: {orderId}
-            Total quote: EUR {price:F2}
+            Total quote: {_currencyCode} {price:F2}
 
             Message from our team:
             {safeMessage}
@@ -138,7 +141,7 @@ public sealed class MailtrapEmailService : IEmailService
 
             We received your payment for your order.
             Reference: {orderId}
-            Paid amount: EUR {amount:F2}
+            Paid amount: {_currencyCode} {amount:F2}
 
             Your order is now confirmed and will move into production.
 
@@ -240,5 +243,11 @@ public sealed class MailtrapEmailService : IEmailService
 
         await client.SendMailAsync(message);
         _logger.LogInformation("Email sent via SMTP. Subject: {Subject}, To: {To}", subject, toEmail);
+    }
+
+    private static string NormalizeCurrencyCode(string? currencyCode)
+    {
+        var normalized = (currencyCode ?? "EUR").Trim().ToUpperInvariant();
+        return normalized.Length == 3 ? normalized : "EUR";
     }
 }

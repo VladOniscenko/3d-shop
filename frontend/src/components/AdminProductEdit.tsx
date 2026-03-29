@@ -13,6 +13,7 @@ import {
   productImages,
   productPriceParts,
 } from "../utils/products";
+import { formatCurrencyAmount } from "../utils/currency";
 
 const PRODUCT_TYPE_OPTIONS = [
   PRODUCT_TYPES.PRINT,
@@ -243,7 +244,9 @@ export default function AdminProductEdit() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.nameLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.nameLabel")}
+            </span>
             <input
               className="admin-field"
               value={name}
@@ -252,7 +255,9 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.categoryLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.categoryLabel")}
+            </span>
             <input
               className="admin-field"
               value={category}
@@ -261,7 +266,9 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.productTypeLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.productTypeLabel")}
+            </span>
             <select
               className="admin-field"
               value={productType}
@@ -276,7 +283,9 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.activeLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.activeLabel")}
+            </span>
             <select
               className="admin-field"
               value={isActive ? "true" : "false"}
@@ -288,7 +297,9 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">{t("admin.products.descriptionLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.descriptionLabel")}
+            </span>
             <textarea
               rows={4}
               className="admin-textarea"
@@ -300,7 +311,9 @@ export default function AdminProductEdit() {
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.priceLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.priceLabel")}
+            </span>
             <input
               type="number"
               min="0"
@@ -312,7 +325,9 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.discountLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.discountLabel")}
+            </span>
             <input
               type="number"
               min={DISCOUNT_MIN}
@@ -327,19 +342,27 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.trackInventoryLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.trackInventoryLabel")}
+            </span>
             <select
               className="admin-field"
               value={trackInventory ? "true" : "false"}
               onChange={(e) => setTrackInventory(e.target.value === "true")}
             >
-              <option value="true">{t("admin.products.trackInventoryYes")}</option>
-              <option value="false">{t("admin.products.trackInventoryNo")}</option>
+              <option value="true">
+                {t("admin.products.trackInventoryYes")}
+              </option>
+              <option value="false">
+                {t("admin.products.trackInventoryNo")}
+              </option>
             </select>
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.products.stockQuantityLabel")}</span>
+            <span className="font-semibold">
+              {t("admin.products.stockQuantityLabel")}
+            </span>
             <input
               type="number"
               min={STOCK_MIN}
@@ -354,15 +377,19 @@ export default function AdminProductEdit() {
           </label>
 
           <div className="admin-label">
-            <span className="font-semibold">{t("admin.products.finalPrice")}</span>
-            <div className="admin-field flex items-center font-bold text-[#1b2b25]">
-              EUR {finalPrice.toFixed(2)}
+            <span className="font-semibold">
+              {t("admin.products.finalPrice")}
+            </span>
+              <div className="admin-field flex items-center font-bold text-[#1b2b25]">
+                {formatCurrencyAmount(finalPrice)}
             </div>
           </div>
         </div>
 
         <div className="mt-4 admin-label">
-          <span className="font-semibold">{t("admin.products.imagesUrlLabel")}</span>
+          <span className="font-semibold">
+            {t("admin.products.imagesUrlLabel")}
+          </span>
 
           <div className="flex gap-2">
             <input
@@ -430,7 +457,9 @@ export default function AdminProductEdit() {
             disabled={saving}
             className="admin-btn admin-btn-primary"
           >
-            {saving ? t("admin.order.savingButton") : t("admin.productEdit.saveProduct")}
+            {saving
+              ? t("admin.order.savingButton")
+              : t("admin.productEdit.saveProduct")}
           </button>
           <Link to="/admin/products" className="admin-btn">
             {t("admin.order.cancelButton")}

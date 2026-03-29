@@ -20,6 +20,7 @@ import {
   isOrderPricingLocked,
   normalizeOrderStatus,
 } from "../utils/orderStatus";
+import { formatCurrencyAmount } from "../utils/currency";
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
@@ -227,7 +228,9 @@ export default function AdminOrderDetail() {
       navigate("/admin/orders");
     } catch (err: any) {
       console.error(err);
-      notifyError(err?.response?.data?.message || t("admin.order.deleteFailed"));
+      notifyError(
+        err?.response?.data?.message || t("admin.order.deleteFailed"),
+      );
     }
   };
 
@@ -455,7 +458,7 @@ export default function AdminOrderDetail() {
             {t("admin.orderDetail.totalLabel")}
           </p>
           <p className="mt-2 text-xl font-semibold text-[#1b2b25]">
-            EUR {totalPrice.toFixed(2)}
+            {formatCurrencyAmount(totalPrice)}
           </p>
         </article>
         <article className="admin-panel p-4">
@@ -630,7 +633,10 @@ export default function AdminOrderDetail() {
                     key={check.label}
                     className={`text-xs ${check.ok ? "text-emerald-700" : "text-amber-700"}`}
                   >
-                    {check.ok ? t("admin.order.checkOk") : t("admin.order.checkTodo")} - {check.label}
+                    {check.ok
+                      ? t("admin.order.checkOk")
+                      : t("admin.order.checkTodo")}{" "}
+                    - {check.label}
                   </p>
                 ))}
               </div>
@@ -866,10 +872,18 @@ export default function AdminOrderDetail() {
               >
                 <option value="all">{t("admin.payments.status.all")}</option>
                 <option value="paid">{t("admin.payments.status.paid")}</option>
-                <option value="failed">{t("admin.payments.status.failed")}</option>
-                <option value="expired">{t("admin.payments.status.expired")}</option>
-                <option value="canceled">{t("admin.payments.status.canceled")}</option>
-                <option value="pending">{t("admin.payments.status.pending")}</option>
+                <option value="failed">
+                  {t("admin.payments.status.failed")}
+                </option>
+                <option value="expired">
+                  {t("admin.payments.status.expired")}
+                </option>
+                <option value="canceled">
+                  {t("admin.payments.status.canceled")}
+                </option>
+                <option value="pending">
+                  {t("admin.payments.status.pending")}
+                </option>
                 <option value="open">{t("admin.payments.status.open")}</option>
               </select>
               <input
@@ -909,20 +923,22 @@ export default function AdminOrderDetail() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-[#2e423d]">
-                      {payment.currency}{" "}
-                      {Number(payment.amount || 0).toFixed(2)}
+                      {`${payment.currency || ""} ${Number(payment.amount || 0).toFixed(2)}`.trim()}
                     </p>
                     <p className="text-xs text-[#6c817a] mt-1">
-                      {t("admin.order.webhookAttempts")}: {payment.webhookAttemptCount || 0}
+                      {t("admin.order.webhookAttempts")}:{" "}
+                      {payment.webhookAttemptCount || 0}
                     </p>
                     {payment.providerPaymentId && (
                       <p className="text-xs text-[#6c817a] mt-1 break-all">
-                        {t("admin.order.providerId")}: {payment.providerPaymentId}
+                        {t("admin.order.providerId")}:{" "}
+                        {payment.providerPaymentId}
                       </p>
                     )}
                     {payment.lastWebhookPayloadHash && (
                       <p className="text-xs text-[#6c817a] mt-1 break-all">
-                        {t("admin.order.payloadHash")}: {payment.lastWebhookPayloadHash}
+                        {t("admin.order.payloadHash")}:{" "}
+                        {payment.lastWebhookPayloadHash}
                       </p>
                     )}
                     {payment.lastWebhookError && (

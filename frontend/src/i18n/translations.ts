@@ -253,7 +253,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.products.discountRangeError": "Discount must be between 0 and 90.",
     "admin.products.stockNegative": "Stock cannot be negative.",
     "admin.products.created": "Product created.",
-    "admin.products.createFailed": "Could not create product. Ensure you are admin.",
+    "admin.products.createFailed":
+      "Could not create product. Ensure you are admin.",
     "admin.products.confirmDelete": "Delete this product?",
     "admin.products.deleted": "Product deleted.",
     "admin.products.deleteFailed": "Could not delete product.",
@@ -277,7 +278,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.filaments.managementTitle": "Filament Management",
     "admin.filaments.loadFailed": "Could not load filaments.",
     "admin.filaments.added": "Filament added.",
-    "admin.filaments.createFailed": "Could not create filament. Ensure you are admin.",
+    "admin.filaments.createFailed":
+      "Could not create filament. Ensure you are admin.",
     "admin.filaments.requiredFields": "Name, material and color are required.",
     "admin.filaments.priceStockNegative": "Price and stock cannot be negative.",
     "admin.filaments.notFound": "Filament not found.",
@@ -1109,7 +1111,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.hintShipped": "Verzonden",
     "admin.dashboard.hintReachedCustomer": "Aangekomen bij klant",
     "admin.dashboard.hintCompletedLifecycle": "Levenscyclus afgerond",
-    "admin.dashboard.hintCancelledByAdminUser": "Geannuleerd door admin/gebruiker",
+    "admin.dashboard.hintCancelledByAdminUser":
+      "Geannuleerd door admin/gebruiker",
     "admin.dashboard.hintLastDay": "Laatste dag",
     "admin.dashboard.hintLastWeek": "Laatste week",
     "admin.dashboard.hintLastMonth": "Laatste maand",
@@ -1148,7 +1151,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.products.discountRangeError": "Korting moet tussen 0 en 90 liggen.",
     "admin.products.stockNegative": "Voorraad mag niet negatief zijn.",
     "admin.products.created": "Product aangemaakt.",
-    "admin.products.createFailed": "Kon product niet maken. Controleer adminrechten.",
+    "admin.products.createFailed":
+      "Kon product niet maken. Controleer adminrechten.",
     "admin.products.confirmDelete": "Dit product verwijderen?",
     "admin.products.deleted": "Product verwijderd.",
     "admin.products.deleteFailed": "Kon product niet verwijderen.",
@@ -1162,7 +1166,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.productEdit.missingCrumb": "Ontbreekt",
     "admin.productEdit.backToList": "Terug naar lijst",
     "admin.productEdit.missingProductId": "Product-id ontbreekt.",
-    "admin.productEdit.nameCategoryRequired": "Naam en categorie zijn verplicht.",
+    "admin.productEdit.nameCategoryRequired":
+      "Naam en categorie zijn verplicht.",
     "admin.productEdit.updated": "Product bijgewerkt.",
     "admin.productEdit.updateFailed": "Kon product niet bijwerken.",
     "admin.productEdit.noImagesConfigured":
@@ -1172,9 +1177,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.filaments.managementTitle": "Filamentbeheer",
     "admin.filaments.loadFailed": "Kon filamenten niet laden.",
     "admin.filaments.added": "Filament toegevoegd.",
-    "admin.filaments.createFailed": "Kon filament niet maken. Controleer adminrechten.",
-    "admin.filaments.requiredFields": "Naam, materiaal en kleur zijn verplicht.",
-    "admin.filaments.priceStockNegative": "Prijs en voorraad mogen niet negatief zijn.",
+    "admin.filaments.createFailed":
+      "Kon filament niet maken. Controleer adminrechten.",
+    "admin.filaments.requiredFields":
+      "Naam, materiaal en kleur zijn verplicht.",
+    "admin.filaments.priceStockNegative":
+      "Prijs en voorraad mogen niet negatief zijn.",
     "admin.filaments.notFound": "Filament niet gevonden.",
     "admin.filaments.updated": "Filament bijgewerkt.",
     "admin.filaments.updateAuthError":
@@ -1214,7 +1222,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.itemPriceUpdated": "Itemprijs bijgewerkt.",
     "admin.order.itemPriceUpdateFailed": "Kon itemprijs niet bijwerken.",
     "admin.order.deliveryPriceUpdated": "Leveringsprijs bijgewerkt.",
-    "admin.order.deliveryPriceUpdateFailed": "Kon leveringsprijs niet bijwerken.",
+    "admin.order.deliveryPriceUpdateFailed":
+      "Kon leveringsprijs niet bijwerken.",
     "admin.order.discountNegative": "Orderkorting mag niet negatief zijn.",
     "admin.order.discountUpdated": "Orderkorting bijgewerkt.",
     "admin.order.discountUpdateFailed": "Kon orderkorting niet bijwerken.",

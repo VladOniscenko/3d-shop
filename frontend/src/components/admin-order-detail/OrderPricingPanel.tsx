@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { Order } from "../../types";
 import { resolveAssetUrl } from "../../utils/assetUrl";
+import { CURRENCY_CODE, formatCurrencyAmount } from "../../utils/currency";
 
 interface OrderPricingPanelProps {
   order: Order;
@@ -115,7 +116,7 @@ export default function OrderPricingPanel({
                       {t("admin.orderDetail.priceLabel")}
                     </p>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-[#6c817a]">EUR</span>
+                      <span className="text-xs text-[#6c817a]">{CURRENCY_CODE}</span>
                       <input
                         type="number"
                         value={item.id ? itemPrices[item.id] || 0 : 0}
@@ -181,7 +182,7 @@ export default function OrderPricingPanel({
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <label className="block text-xs uppercase text-[#6c817a] font-semibold mb-3">
-                {t("admin.orderDetail.deliveryLabel")} (EUR)
+                {`${t("admin.orderDetail.deliveryLabel")} (${CURRENCY_CODE})`}
               </label>
               <input
                 type="number"
@@ -219,7 +220,7 @@ export default function OrderPricingPanel({
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <label className="block text-xs uppercase text-[#6c817a] font-semibold mb-3">
-                {t("admin.orderDetail.orderDiscountLabel")} (EUR)
+                {`${t("admin.orderDetail.orderDiscountLabel")} (${CURRENCY_CODE})`}
               </label>
               <input
                 type="number"
@@ -260,30 +261,26 @@ export default function OrderPricingPanel({
               <span className="text-sm">
                 {t("admin.orderDetail.subtotalLabel")}:
               </span>
-              <span className="font-semibold">EUR {subtotal.toFixed(2)}</span>
+              <span className="font-semibold">{formatCurrencyAmount(subtotal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">
                 {t("admin.orderDetail.deliveryLabel")}:
               </span>
-              <span className="font-semibold">
-                EUR {deliveryPrice.toFixed(2)}
-              </span>
+              <span className="font-semibold">{formatCurrencyAmount(deliveryPrice)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">
                 {t("admin.orderDetail.orderDiscountLabel")}:
               </span>
-              <span className="font-semibold">
-                EUR {orderDiscountAmount.toFixed(2)}
-              </span>
+              <span className="font-semibold">{formatCurrencyAmount(orderDiscountAmount)}</span>
             </div>
             <div className="border-t border-white/20 my-3 pt-3 flex justify-between items-center">
               <span className="text-base font-bold">
                 {t("admin.orderDetail.totalIncludingDeliveryLabel")}:
               </span>
               <span className="text-lg font-bold text-teal-300">
-                EUR {totalPrice.toFixed(2)}
+                {formatCurrencyAmount(totalPrice)}
               </span>
             </div>
           </div>

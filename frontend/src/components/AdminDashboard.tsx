@@ -6,6 +6,7 @@ import api from "../services/api";
 import type { Filament, Order, Product } from "../types";
 import { formatOrderStatusLabel } from "../utils/orderStatus";
 import { useI18n } from "../i18n/I18nContext";
+import { formatCurrencyAmount } from "../utils/currency";
 
 interface Summary {
   totalUsers: number;
@@ -266,17 +267,17 @@ export default function AdminDashboard() {
         />
         <StatCard
           label={t("admin.dashboard.quotedRevenue")}
-          value={`EUR ${quotedRevenue.toFixed(2)}`}
+          value={formatCurrencyAmount(quotedRevenue)}
           hint={t("admin.dashboard.hintSumQuotedPrices")}
         />
         <StatCard
           label={t("admin.dashboard.paidRevenue")}
-          value={`EUR ${paidRevenue.toFixed(2)}`}
+          value={formatCurrencyAmount(paidRevenue)}
           hint={t("admin.dashboard.hintRevenuePaidOrders")}
         />
         <StatCard
           label={t("admin.dashboard.avgQuoteValue")}
-          value={`EUR ${averageQuotedValue.toFixed(2)}`}
+          value={formatCurrencyAmount(averageQuotedValue)}
           hint={t("admin.dashboard.hintAverageQuotedOrder")}
         />
         <StatCard
@@ -311,7 +312,7 @@ export default function AdminDashboard() {
         />
         <StatCard
           label={t("admin.dashboard.avgFilamentPricePerGram")}
-          value={`EUR ${averageFilamentPrice.toFixed(4)}`}
+          value={formatCurrencyAmount(averageFilamentPrice, 4)}
           hint={t("admin.dashboard.hintAcrossFilamentSkus")}
         />
       </div>

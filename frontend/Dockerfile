@@ -1,6 +1,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+ARG VITE_CURRENCY_CODE=EUR
+ENV VITE_CURRENCY_CODE=${VITE_CURRENCY_CODE}
+
 COPY package*.json ./
 RUN npm ci
 

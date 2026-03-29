@@ -12,6 +12,7 @@ import {
   PRODUCT_TYPES,
   productImages,
 } from "../utils/products";
+import { formatCurrencyAmount } from "../utils/currency";
 
 const PRODUCT_TYPE_OPTIONS = [
   PRODUCT_TYPES.PRINT,
@@ -149,12 +150,7 @@ export default function AdminProducts() {
       notifySuccess(t("admin.products.created"));
     } catch (err) {
       console.error(err);
-      notifyError(
-        getApiErrorMessage(
-          err,
-          t("admin.products.createFailed"),
-        ),
-      );
+      notifyError(getApiErrorMessage(err, t("admin.products.createFailed")));
     }
   };
 
@@ -383,7 +379,7 @@ export default function AdminProducts() {
                         ] || product.productType}
                       </td>
                       <td>{product.category}</td>
-                      <td>EUR {product.price.toFixed(2)}</td>
+                      <td>{formatCurrencyAmount(product.price)}</td>
                       <td>
                         {product.isActive ? (
                           <span className="text-emerald-700 font-semibold">

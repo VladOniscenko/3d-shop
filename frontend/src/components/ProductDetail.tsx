@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import { useNotify } from "../context/NotifyContext";
 import { useI18n } from "../i18n/I18nContext";
 import { resolveAssetUrl } from "../utils/assetUrl";
+import { formatCurrencyAmount } from "../utils/currency";
 import {
   PRODUCT_TYPES,
   productImages,
@@ -208,12 +209,12 @@ export default function ProductDetail() {
 
             <div className="mt-4 flex items-end gap-3">
               <span className="text-3xl font-black text-[#0f766e]">
-                EUR {price?.current.toFixed(2) || "0.00"}
+                {formatCurrencyAmount(price?.current || 0)}
               </span>
               {price?.hasDiscount && (
                 <>
                   <span className="text-lg text-gray-400 line-through">
-                    EUR {price.original.toFixed(2)}
+                    {formatCurrencyAmount(price.original)}
                   </span>
                   <span className="inline-flex items-center gap-1 text-xs font-black text-rose-700 bg-rose-50 px-2 py-1 rounded-full">
                     <Tag size={12} /> -{Math.round(price.discountPercentage)}%

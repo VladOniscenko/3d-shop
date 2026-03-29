@@ -27,6 +27,7 @@ public class PaymentsController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly IDiscordWebhookService _discordWebhookService;
     private readonly ILogger<PaymentsController> _logger;
+    private readonly string _currencyCode;
 
     public PaymentsController(
         PrintCraftDb db,
@@ -40,6 +41,7 @@ public class PaymentsController : ControllerBase
         _emailService = emailService;
         _discordWebhookService = discordWebhookService;
         _logger = logger;
+        _currencyCode = NormalizeCurrencyCode(_configuration["CurrencyCode"]);
         var mollieKey = GetRequiredConfig("MollieKey");
         _paymentClient = new PaymentClient(mollieKey);
     }
@@ -433,7 +435,7 @@ public class PaymentsController : ControllerBase
             OrderId = order.Id,
             Provider = "mollie",
             Reference = BuildPaymentReference(order.Id),
-            Currency = Currency.EUR,
+            Currency = _currencyCode,
             Amount = amount,
             Status = "initializing",
             CreatedAt = DateTime.UtcNow,
@@ -454,7 +456,7 @@ public class PaymentsController : ControllerBase
 
             var paymentRequest = new PaymentRequest
             {
-                Amount = new Amount(Currency.EUR, amount.ToString("F2")),
+                Amount = new Amount(_currencyCode, amount.ToString("F2")),
                 Description = description,
                 RedirectUrl = redirectUrl,
                 WebhookUrl = webhookUrl,
@@ -590,6 +592,12 @@ public class PaymentsController : ControllerBase
 
     private static string NormalizePaymentStatus(string? status)
         => string.IsNullOrWhiteSpace(status) ? "unknown" : status.ToLowerInvariant();
+
+    private static string NormalizeCurrencyCode(string? currencyCode)
+    {
+        var normalized = (currencyCode ?? "EUR").Trim().ToUpperInvariant();
+        return normalized.Length == 3 ? normalized : "EUR";
+    }
 
     private static string BuildPaymentReference(Guid orderId)
         => $"PC-{orderId.ToString("N")[..8]}-{Guid.NewGuid().ToString("N")[..12]}";
