@@ -15,9 +15,12 @@ LoadDotEnv(
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=printcraft.db";
-builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite(connectionString));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("ConnectionStrings__DefaultConnection must be configured via environment variables.");
+}
+builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionString));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
 builder.Services.AddEndpointsApiExplorer();

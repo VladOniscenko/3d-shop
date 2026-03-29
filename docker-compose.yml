@@ -1,13 +1,33 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - printcraft_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U printcraft -d printcraft"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   printcraft-api:
     build:
       context: .
       dockerfile: PrintCraftApi/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: Data Source=/app/data/printcraft.db
-      FrontendBaseUrl: http://localhost:5173
-      BackendBaseUrl: http://localhost:5001
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      FrontendBaseUrl: ${FrontendBaseUrl}
+      BackendBaseUrl: ${BackendBaseUrl}
       JwtSecret: ${JwtSecret}
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
@@ -17,7 +37,6 @@ services:
     ports:
       - "5001:8080"
     volumes:
-      - printcraft_data:/app/data
       - printcraft_uploads:/app/wwwroot/uploads
     restart: unless-stopped
 
@@ -32,5 +51,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  printcraft_data:
+  printcraft_postgres_data:
   printcraft_uploads:

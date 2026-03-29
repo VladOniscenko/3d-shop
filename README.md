@@ -91,7 +91,7 @@ A full-stack e-commerce platform for 3D printing services. Browse products, cust
 
 ### Development Mode
 
-**Terminal 1 — Backend API** (runs on `http://localhost:5000`)
+**Terminal 1 — Backend API** (runs on `http://localhost:5243`)
 
 ```bash
 cd PrintCraftApi
@@ -122,7 +122,8 @@ docker compose up --build
 Services:
 
 - Frontend: `http://localhost:5173`
-- API: `http://localhost:5000`
+- API: `http://localhost:5001`
+- PostgreSQL: `localhost:5432` (`printcraft` / `printcraft`)
 
 Stop services:
 
@@ -130,7 +131,7 @@ Stop services:
 docker compose down
 ```
 
-Reset containers and volumes (wipes SQLite/upload data):
+Reset containers and volumes (wipes PostgreSQL/upload data):
 
 ```bash
 docker compose down -v
@@ -208,20 +209,29 @@ Create `.env` files (if needed):
 **Frontend** — `.env.local`
 
 ```
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5001
 ```
 
-**Backend** — `appsettings.Development.json`
+**Backend** — root `.env`
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=printcraft.db"
-  },
-  "Jwt": {
-    "SecretKey": "your-secret-key"
-  }
-}
+```env
+POSTGRES_DB=printcraft
+POSTGRES_USER=replace-me
+POSTGRES_PASSWORD=replace-me
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=printcraft;Username=replace-me;Password=replace-me
+JwtSecret=replace-with-very-strong-dev-secret-min-32-chars
+JwtIssuer=printcraft-api
+JwtAudience=printcraft-client
+Email__ApiToken=replace-me
+Email__Username=replace-me
+Email__Password=replace-me
+Email__SenderName=PrintCraft Dev
+Email__SenderEmail=hello@demomailtrap.com
+Email__SmtpHost=sandbox.smtp.mailtrap.io
+Email__SmtpPort=587
+Email__EnableSsl=true
+Email__ApiBaseUrl=https://send.api.mailtrap.io/api/send
+Email__Category=Integration Test
 ```
 
 ---
