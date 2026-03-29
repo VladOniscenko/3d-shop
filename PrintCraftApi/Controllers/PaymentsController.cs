@@ -10,6 +10,7 @@ using Mollie.Api.Client;
 using Mollie.Api.Models;
 using Mollie.Api.Models.Payment;
 using Mollie.Api.Models.Payment.Request;
+using PrintCraftApi.Configuration;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using PrintCraftApi.Services;
@@ -177,7 +178,7 @@ public class PaymentsController : ControllerBase
 
         foreach (var cartItem in cart.Items)
         {
-            if (cartItem.Count <= 0 || cartItem.Count > 100)
+            if (cartItem.Count <= 0 || cartItem.Count > AppLimits.MaxItemQuantity)
                 return BadRequest(new { message = "Invalid cart item quantity." });
 
             // Get product to validate price

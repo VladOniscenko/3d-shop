@@ -118,14 +118,13 @@ export default function CartItemsSection({
                       <input
                         type="number"
                         min="1"
-                        max="100"
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
                         value={item.count}
                         onChange={(e) =>
                           onUpdate(
                             item.id,
                             "count",
-                            Math.min(100, parseInt(e.target.value, 10) || 1),
+                            parseInt(e.target.value, 10) || 1,
                           )
                         }
                       />

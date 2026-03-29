@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PrintCraftApi.Configuration;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using PrintCraftApi.Services;
@@ -16,7 +17,6 @@ public class CartController : ControllerBase
 {
     private readonly PrintCraftDb _db;
     private const int MaxDistinctCartItems = 50;
-    private const int MaxItemCount = 100;
     private const int MaxVariantLength = 40;
     private static readonly Regex VariantRegex = new(@"^[A-Za-z0-9\s\-_.]+$", RegexOptions.Compiled);
 
@@ -127,8 +127,8 @@ public class CartController : ControllerBase
     public async Task<IActionResult> AddItem([FromBody] AddCartItemRequest request)
     {
         if (request.ProductId == Guid.Empty) return BadRequest(new { message = "ProductId is required" });
-        if (request.Count <= 0 || request.Count > MaxItemCount)
-            return BadRequest(new { message = $"Count must be between 1 and {MaxItemCount}." });
+        if (request.Count <= 0 || request.Count > AppLimits.MaxItemQuantity)
+            return BadRequest(new { message = $"Count must be between 1 and {AppLimits.MaxItemQuantity}." });
 
         var product = await _db.Products.FindAsync(request.ProductId);
         if (product == null) return NotFound(new { message = "Product not found" });
@@ -207,8 +207,8 @@ public class CartController : ControllerBase
 
         if (request.Count.HasValue)
         {
-            if (request.Count <= 0 || request.Count > MaxItemCount)
-                return BadRequest(new { message = $"Count must be between 1 and {MaxItemCount}." });
+            if (request.Count <= 0 || request.Count > AppLimits.MaxItemQuantity)
+                return BadRequest(new { message = $"Count must be between 1 and {AppLimits.MaxItemQuantity}." });
             item.Count = request.Count.Value;
         }
 

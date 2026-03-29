@@ -45,7 +45,7 @@ const FAQ = lazy(() => import("./components/FAQ.tsx"));
 const Orders = lazy(() => import("./components/Orders"));
 const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
 const Cart = lazy(() => import("./components/Cart.tsx"));
-const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx"));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
 const AdminOrders = lazy(() => import("./components/AdminOrders.tsx"));
 const AdminOrderDetail = lazy(
   () => import("./components/AdminOrderDetail.tsx"),

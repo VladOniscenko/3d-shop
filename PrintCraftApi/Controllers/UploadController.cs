@@ -253,6 +253,116 @@ public class UploadController : ControllerBase
         return Ok(new { message = "File deleted." });
     }
 
+    [HttpDelete("temp")]
+    [EnableRateLimiting("UploadLimit")]
+    public IActionResult DeleteTempUpload([FromQuery] string? fileUrl)
+    {
+        var fileName = ExtractFileNameFromAssetUrl(fileUrl);
+        if (string.IsNullOrWhiteSpace(fileName))
+            return BadRequest(new { message = "Valid file URL is required." });
+
+        var extension = Path.GetExtension(fileName);
+        if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
+            return BadRequest(new { message = "Only model files can be deleted from this endpoint." });
+
+        var linkedToProduct = _db.Products
+            .AsNoTracking()
+            .Select(p => p.FileUrl)
+            .AsEnumerable()
+            .Any(url => string.Equals(
+                ExtractFileNameFromAssetUrl(url),
+                fileName,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (linkedToProduct)
+            return Conflict(new { message = "File is linked to a product and cannot be deleted." });
+
+        var linkedToAnyOrder = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .AsEnumerable()
+            .SelectMany(order => order.Items)
+            .Any(item => string.Equals(
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                fileName,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (linkedToAnyOrder)
+            return Conflict(new { message = "File is linked to an order and cannot be deleted." });
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        if (!System.IO.File.Exists(filePath))
+            return Ok(new { message = "File already removed." });
+
+        System.IO.File.Delete(filePath);
+        return Ok(new { message = "Temporary file deleted." });
+    }
+
+    [HttpPost("temp/cleanup")]
+    [EnableRateLimiting("UploadLimit")]
+    public IActionResult CleanupTempUploads([FromBody] TempUploadCleanupRequest? request)
+    {
+        var fileUrls = request?.FileUrls ?? Array.Empty<string>();
+        if (fileUrls.Length == 0)
+            return Ok(new { requestedCount = 0, deletedCount = 0 });
+
+        var fileNames = fileUrls
+            .Select(ExtractFileNameFromAssetUrl)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (fileNames.Length == 0)
+            return Ok(new { requestedCount = fileUrls.Length, deletedCount = 0 });
+
+        var linkedProductFileNames = _db.Products
+            .AsNoTracking()
+            .Select(p => p.FileUrl)
+            .AsEnumerable()
+            .Select(ExtractFileNameFromAssetUrl)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var linkedOrderFileNames = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .AsEnumerable()
+            .SelectMany(order => order.Items)
+            .Select(item => ExtractFileNameFromAssetUrl(item.FileUrl))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        if (!Directory.Exists(uploadsFolder))
+            return Ok(new { requestedCount = fileUrls.Length, deletedCount = 0 });
+
+        var deletedCount = 0;
+
+        foreach (var fileName in fileNames)
+        {
+            var extension = Path.GetExtension(fileName);
+            if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
+                continue;
+
+            if (linkedProductFileNames.Contains(fileName) || linkedOrderFileNames.Contains(fileName))
+                continue;
+
+            var filePath = Path.Combine(uploadsFolder, fileName);
+            if (!System.IO.File.Exists(filePath))
+                continue;
+
+            System.IO.File.Delete(filePath);
+            deletedCount += 1;
+        }
+
+        return Ok(new { requestedCount = fileUrls.Length, deletedCount });
+    }
+
     private static string? ExtractFileNameFromAssetUrl(string? rawUrl)
     {
         if (string.IsNullOrWhiteSpace(rawUrl)) return null;
@@ -393,4 +503,6 @@ public class UploadController : ControllerBase
 
         return true;
     }
+
+    public sealed record TempUploadCleanupRequest(string[]? FileUrls);
 }

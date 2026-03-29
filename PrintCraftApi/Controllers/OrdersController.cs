@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PrintCraftApi.Configuration;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using PrintCraftApi.Validation;
@@ -131,9 +132,9 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "Each quote item must include either a file or description." });
         }
 
-        if (request.Items.Any(i => i.Count > 100))
+        if (request.Items.Any(i => i.Count > AppLimits.MaxItemQuantity))
         {
-            return BadRequest(new { message = "Item quantity cannot exceed 100 per model." });
+            return BadRequest(new { message = $"Item quantity cannot exceed {AppLimits.MaxItemQuantity} per model." });
         }
 
         var userId = Guid.Parse(userIdStr);

@@ -205,6 +205,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "models.backToFiles": "Back to files",
     "models.deleteConfirm": "Delete this file? This cannot be undone.",
     "models.deleteFailed": "Could not delete file.",
+    "models.cleanupOrphans": "Cleanup Orphans",
+    "models.cleanupRunning": "Cleaning...",
+    "models.cleanupConfirm":
+      "Delete all orphan model files (not linked to products or orders)?",
+    "models.cleanupNone": "No orphan model files found.",
+    "models.cleanupDone": "Cleanup completed. Deleted {count} files.",
+    "models.cleanupFailed": "Could not cleanup orphan files.",
     "models.deleteBlocked":
       "Cannot delete: file is linked to a product or an active order.",
     "models.loadFailed": "Could not load model files.",
@@ -1328,6 +1335,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "models.deleteConfirm":
       "Dit bestand verwijderen? Dit kan niet ongedaan worden gemaakt.",
     "models.deleteFailed": "Bestand kon niet worden verwijderd.",
+    "models.cleanupOrphans": "Verwijder verweesde bestanden",
+    "models.cleanupRunning": "Bezig met opschonen...",
+    "models.cleanupConfirm":
+      "Alle verweesde modelbestanden verwijderen (niet gekoppeld aan producten of orders)?",
+    "models.cleanupNone": "Geen verweesde modelbestanden gevonden.",
+    "models.cleanupDone": "Opschonen voltooid. {count} bestanden verwijderd.",
+    "models.cleanupFailed": "Opschonen van verweesde bestanden is mislukt.",
     "models.deleteBlocked":
       "Kan niet verwijderen: bestand is gekoppeld aan een product of actieve order.",
     "models.loadFailed": "Kon 3D-modelbestanden niet laden.",

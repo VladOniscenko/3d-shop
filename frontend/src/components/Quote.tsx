@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Upload,
   Trash2,
@@ -34,6 +34,8 @@ export default function Quote() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const submittedRef = useRef(false);
+  const uploadedFileUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -85,6 +87,10 @@ export default function Quote() {
             price: 0,
             count: 1,
           };
+
+          if (typeof res.data?.url === "string" && res.data.url.length > 0) {
+            uploadedFileUrlsRef.current.add(res.data.url);
+          }
 
           uploadedItems.push(newItem);
         } catch (err: any) {
@@ -153,8 +159,26 @@ export default function Quote() {
     await uploadSelectedFiles(droppedFiles);
   };
 
+  const deleteTempUpload = async (fileUrl?: string | null) => {
+    if (!fileUrl) return;
+
+    try {
+      await api.delete("/upload/temp", {
+        params: { fileUrl },
+      });
+      uploadedFileUrlsRef.current.delete(fileUrl);
+    } catch {
+      // Best-effort cleanup; ignore if file is already linked or removed.
+    }
+  };
+
   const removeItem = (index: number) => {
+    const removed = items[index];
     setItems(items.filter((_, i) => i !== index));
+
+    if (removed?.fileUrl) {
+      void deleteTempUpload(removed.fileUrl);
+    }
   };
 
   const addTextOnlyItem = () => {
@@ -196,6 +220,8 @@ export default function Quote() {
     setIsSubmitting(true);
     try {
       await api.post("/orders/quote", { items });
+      submittedRef.current = true;
+      uploadedFileUrlsRef.current.clear();
       navigate("/orders");
     } catch (err: any) {
       const message = err?.response?.data?.message || t("quote.submitFailed");
@@ -204,6 +230,39 @@ export default function Quote() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (submittedRef.current) return;
+
+      const pendingFileUrls = Array.from(uploadedFileUrlsRef.current);
+      if (pendingFileUrls.length === 0) return;
+
+      const token = localStorage.getItem("token");
+
+      void fetch("/api/upload/temp/cleanup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ fileUrls: pendingFileUrls }),
+        keepalive: true,
+      }).catch(() => {
+        // Best-effort fallback if keepalive batch call fails.
+      });
+
+      for (const fileUrl of pendingFileUrls) {
+        void api
+          .delete("/upload/temp", {
+            params: { fileUrl },
+          })
+          .catch(() => {
+            // Best-effort cleanup only.
+          });
+      }
+    };
+  }, []);
 
   return (
     <div className="site-shell">
@@ -347,7 +406,7 @@ export default function Quote() {
                               updateItem(
                                 idx,
                                 "count",
-                                parseInt(e.target.value) || 1,
+                                parseInt(e.target.value, 10) || 1,
                               )
                             }
                           />
