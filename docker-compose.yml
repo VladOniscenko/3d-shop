@@ -31,6 +31,7 @@ services:
       JwtSecret: ${JwtSecret}
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
+      Discord__WebhookUrl: ${Discord__WebhookUrl}
       MollieKey: ${MollieKey:?MollieKey is required}
       Email__SenderName: ${Email__SenderName}
       Email__SenderEmail: ${Email__SenderEmail}

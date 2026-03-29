@@ -225,6 +225,7 @@ ASPNETCORE_URLS=<backend-listen-url>
 JwtSecret=replace-with-very-strong-dev-secret-min-32-chars
 JwtIssuer=printcraft-api
 JwtAudience=printcraft-client
+Discord__WebhookUrl=replace-me
 MollieKey=replace-me
 VITE_DEV_API_ORIGIN=<dev-api-origin>
 Email__ApiToken=replace-me
