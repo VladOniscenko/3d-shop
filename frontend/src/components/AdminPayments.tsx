@@ -79,7 +79,9 @@ export default function AdminPayments() {
         if (fromDate) query.set("fromUtc", `${fromDate}T00:00:00.000Z`);
         if (toDate) query.set("toUtc", `${toDate}T23:59:59.999Z`);
 
-        const res = await api.get<PaymentsResponse>(`/admin/payments?${query.toString()}`);
+        const res = await api.get<PaymentsResponse>(
+          `/admin/payments?${query.toString()}`,
+        );
         setPayments(res.data.results || []);
         setTotalCount(res.data.totalCount || 0);
       } catch (error) {
@@ -98,10 +100,7 @@ export default function AdminPayments() {
     <AdminLayout>
       <AdminBreadcrumb
         title="Payment Tracking"
-        items={[
-          { label: "Admin", to: "/admin" },
-          { label: "Payments" },
-        ]}
+        items={[{ label: "Admin", to: "/admin" }, { label: "Payments" }]}
       />
 
       <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-5 p-4">
@@ -192,11 +191,15 @@ export default function AdminPayments() {
                       {payment.orderId.slice(0, 8)}
                     </Link>
                     {payment.order?.fullName && (
-                      <p className="text-xs text-[#60736d]">{payment.order.fullName}</p>
+                      <p className="text-xs text-[#60736d]">
+                        {payment.order.fullName}
+                      </p>
                     )}
                   </td>
                   <td className="font-mono text-xs">{payment.reference}</td>
-                  <td className="font-mono text-xs">{payment.providerPaymentId || "-"}</td>
+                  <td className="font-mono text-xs">
+                    {payment.providerPaymentId || "-"}
+                  </td>
                   <td>{payment.status}</td>
                   <td>
                     {payment.currency} {Number(payment.amount || 0).toFixed(2)}

@@ -273,7 +273,8 @@ export default function OrderDetail() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-700">
-                      {payment.currency} {Number(payment.amount || 0).toFixed(2)}
+                      {payment.currency}{" "}
+                      {Number(payment.amount || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Created {new Date(payment.createdAt).toLocaleString()}

@@ -360,16 +360,19 @@ export default function AdminOrderDetail() {
 
     const searchMatch =
       normalizedPaymentSearch.length === 0 ||
-      String(payment.reference || "").toLowerCase().includes(normalizedPaymentSearch) ||
-      String(payment.providerPaymentId || "").toLowerCase().includes(normalizedPaymentSearch);
+      String(payment.reference || "")
+        .toLowerCase()
+        .includes(normalizedPaymentSearch) ||
+      String(payment.providerPaymentId || "")
+        .toLowerCase()
+        .includes(normalizedPaymentSearch);
 
     const createdDate = new Date(payment.createdAt);
     const fromMatch =
       !paymentFromDate ||
       createdDate >= new Date(`${paymentFromDate}T00:00:00`);
     const toMatch =
-      !paymentToDate ||
-      createdDate <= new Date(`${paymentToDate}T23:59:59`);
+      !paymentToDate || createdDate <= new Date(`${paymentToDate}T23:59:59`);
 
     return statusMatch && searchMatch && fromMatch && toMatch;
   });
@@ -802,7 +805,8 @@ export default function AdminOrderDetail() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-[#2e423d]">
-                      {payment.currency} {Number(payment.amount || 0).toFixed(2)}
+                      {payment.currency}{" "}
+                      {Number(payment.amount || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-[#6c817a] mt-1">
                       Attempts: {payment.webhookAttemptCount || 0}

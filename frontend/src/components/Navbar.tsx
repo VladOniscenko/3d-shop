@@ -49,7 +49,9 @@ const Navbar = () => {
     ? [
         ...navLinks,
         { name: t("nav.myOrders"), path: "/orders" },
-        ...(userRole === "admin" ? [{ name: t("nav.admin"), path: "/admin" }] : []),
+        ...(userRole === "admin"
+          ? [{ name: t("nav.admin"), path: "/admin" }]
+          : []),
       ]
     : navLinks;
 
