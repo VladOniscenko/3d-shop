@@ -422,7 +422,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.actionFlow.default.steps.selectAfterChecks":
       "Select the next status only after prerequisites are verified.",
     "admin.order.suggestedNextStatus": "Suggested next status",
-    "admin.order.quoteValidity": "Quote Validity",
     "admin.order.expiresOn": "Expires on",
     "admin.order.noQuoteExpiry": "No quote expiry date recorded.",
     "admin.order.quoteExpiredHelp":
@@ -533,6 +532,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.noteAddFailed": "Could not add note.",
     "admin.order.noteDeleted": "Note deleted.",
     "admin.order.noteDeleteFailed": "Could not delete note.",
+    "admin.order.legacyNoteLabel": "Legacy note",
     "admin.order.messagingTitle": "Messaging",
     "admin.order.quoteLabel": "Quote",
     "admin.order.noneValue": "None",
@@ -1472,7 +1472,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.actionFlow.default.steps.selectAfterChecks":
       "Kies volgende status pas nadat vereisten zijn gecontroleerd.",
     "admin.order.suggestedNextStatus": "Aanbevolen volgende status",
-    "admin.order.quoteValidity": "Offertegeldigheid",
     "admin.order.expiresOn": "Verloopt op",
     "admin.order.noQuoteExpiry": "Geen vervaldatum voor offerte vastgelegd.",
     "admin.order.quoteExpiredHelp":
@@ -1584,6 +1583,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.noteAddFailed": "Notitie toevoegen mislukt.",
     "admin.order.noteDeleted": "Notitie verwijderd.",
     "admin.order.noteDeleteFailed": "Notitie verwijderen mislukt.",
+    "admin.order.legacyNoteLabel": "Oude notitie",
     "admin.order.messagingTitle": "Berichten",
     "admin.order.quoteLabel": "Offerte",
     "admin.order.noneValue": "Geen",

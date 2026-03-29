@@ -815,13 +815,36 @@ public class AdminController : ControllerBase
         return Ok(note);
     }
 
-    [HttpDelete("orders/{id:guid}/notes/{noteId:guid}")]
-    public async Task<IActionResult> DeleteOrderNote([FromRoute] Guid id, [FromRoute] Guid noteId)
+    [HttpDelete("orders/{id:guid}/notes/{noteId}")]
+    public async Task<IActionResult> DeleteOrderNote([FromRoute] Guid id, [FromRoute] string noteId)
     {
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
-        var note = await _db.OrderNotes.FirstOrDefaultAsync(n => n.Id == noteId && n.OrderId == id);
+        var normalizedNoteId = string.IsNullOrWhiteSpace(noteId)
+            ? string.Empty
+            : noteId.Trim().ToLowerInvariant();
+
+        if (normalizedNoteId == "legacy-internal")
+        {
+            order.InternalNotes = null;
+            order.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
+        if (normalizedNoteId == "legacy-customer")
+        {
+            order.CustomerNotes = null;
+            order.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
+        if (!Guid.TryParse(noteId, out var parsedNoteId))
+            return NotFound(new { message = "Note not found" });
+
+        var note = await _db.OrderNotes.FirstOrDefaultAsync(n => n.Id == parsedNoteId && n.OrderId == id);
         if (note == null) return NotFound(new { message = "Note not found" });
 
         _db.OrderNotes.Remove(note);

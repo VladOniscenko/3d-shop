@@ -484,9 +484,11 @@ export default function AdminOrderDetail() {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   const hasLegacyInternalNote =
-    internalNotes.length === 0 && String(order.internalNotes || "").trim().length > 0;
+    internalNotes.length === 0 &&
+    String(order.internalNotes || "").trim().length > 0;
   const hasLegacyCustomerNote =
-    customerNotes.length === 0 && String(order.customerNotes || "").trim().length > 0;
+    customerNotes.length === 0 &&
+    String(order.customerNotes || "").trim().length > 0;
   const hasTrackingInfo =
     String(trackingCode || order.trackingCode || "").trim().length > 0;
   const hasPaymentAttempts = payments.length > 0;
@@ -843,26 +845,6 @@ export default function AdminOrderDetail() {
 
           <article className="admin-panel p-4">
             <h3 className="font-bold mb-2 text-[#1b2b25]">
-              {t("admin.order.quoteValidity")}
-            </h3>
-            {hasQuoteExpiry ? (
-              <p className="text-sm text-[#2e423d]">
-                {t("admin.order.expiresOn")} {quoteExpiresAt.toLocaleString()}
-              </p>
-            ) : (
-              <p className="text-sm text-[#5b706a]">
-                {t("admin.order.noQuoteExpiry")}
-              </p>
-            )}
-            {normalizeOrderStatus(order.status) === "expired_quote" && (
-              <p className="mt-2 text-sm text-rose-700">
-                {t("admin.order.quoteExpiredHelp")}
-              </p>
-            )}
-          </article>
-
-          <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">
               {t("admin.order.communicationTitle")}
             </h3>
             <div className="grid gap-3">
@@ -941,11 +923,30 @@ export default function AdminOrderDetail() {
               </div>
 
               {internalNotes.length === 0 ? (
-                <p className="text-xs text-[#5f736d]">
-                  {hasLegacyInternalNote
-                    ? order.internalNotes
-                    : t("admin.order.noInternalNotes")}
-                </p>
+                hasLegacyInternalNote ? (
+                  <div className="rounded-lg border border-[#dce7e2] bg-[#f7fbf9] p-3">
+                    <p className="text-sm text-[#2e423d] whitespace-pre-wrap">
+                      {order.internalNotes}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-xs text-[#6c817a]">
+                        {t("admin.order.legacyNoteLabel")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => deleteNote("legacy-internal")}
+                        disabled={deletingNoteId === "legacy-internal"}
+                        className="text-xs text-rose-700 hover:underline disabled:opacity-60"
+                      >
+                        {t("admin.order.deleteNoteButton")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#5f736d]">
+                    {t("admin.order.noInternalNotes")}
+                  </p>
+                )
               ) : (
                 <div className="space-y-2">
                   {internalNotes.map((note: OrderNote) => (
@@ -1000,11 +1001,30 @@ export default function AdminOrderDetail() {
               </div>
 
               {customerNotes.length === 0 ? (
-                <p className="text-xs text-[#5f736d]">
-                  {hasLegacyCustomerNote
-                    ? order.customerNotes
-                    : t("admin.order.noCustomerNotes")}
-                </p>
+                hasLegacyCustomerNote ? (
+                  <div className="rounded-lg border border-[#dce7e2] bg-[#f7fbf9] p-3">
+                    <p className="text-sm text-[#2e423d] whitespace-pre-wrap">
+                      {order.customerNotes}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-xs text-[#6c817a]">
+                        {t("admin.order.legacyNoteLabel")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => deleteNote("legacy-customer")}
+                        disabled={deletingNoteId === "legacy-customer"}
+                        className="text-xs text-rose-700 hover:underline disabled:opacity-60"
+                      >
+                        {t("admin.order.deleteNoteButton")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#5f736d]">
+                    {t("admin.order.noCustomerNotes")}
+                  </p>
+                )
               ) : (
                 <div className="space-y-2">
                   {customerNotes.map((note: OrderNote) => (
