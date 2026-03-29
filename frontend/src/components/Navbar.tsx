@@ -40,7 +40,6 @@ const Navbar = () => {
     { name: t("nav.home"), path: "/" },
     { name: t("nav.materials"), path: "/materials" },
     { name: t("nav.gallery"), path: "/products" },
-    { name: t("nav.howItWorks"), path: "/how-it-works" },
     { name: t("nav.faq"), path: "/faq" },
   ];
 

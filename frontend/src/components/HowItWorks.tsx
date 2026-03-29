@@ -1,5 +1,4 @@
 import { Upload, Settings2, Printer, PackageCheck } from "lucide-react";
-import { Link } from "react-router-dom"; // 1. Import Link
 import type { StepItem } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 
@@ -40,10 +39,8 @@ export default function HowItWorks() {
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {steps.map((step) => (
-          /* 2. Changed div to Link and added 'block' and 'to' */
-          <Link
+          <div
             key={step.number}
-            to="/how-it-works"
             className="block rounded-2xl p-6 relative group bg-[#f6fbf8] border border-[#d9e8e1] hover:bg-white hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             <div className="w-8 h-8 bg-[#0f766e] text-white rounded-full flex items-center justify-center font-bold text-sm absolute top-6 left-6">
@@ -58,7 +55,7 @@ export default function HowItWorks() {
             <p className="text-[#60736d] text-sm leading-relaxed">
               {step.desc}
             </p>
-          </Link>
+          </div>
         ))}
       </div>
     </section>

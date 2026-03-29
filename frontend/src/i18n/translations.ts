@@ -14,7 +14,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "nav.home": "Home",
     "nav.materials": "Materials",
     "nav.gallery": "Products",
-    "nav.howItWorks": "How It Works",
     "nav.faq": "FAQ",
     "nav.myOrders": "My Orders",
     "nav.models": "3D Models",
@@ -878,27 +877,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "materials.footer":
       "© 2026 PrintCraft Collective. Professional 3D Printing Services.",
 
-    // How it works page
-    "how.pageTitle": "How It Works",
-    "how.pageSubtitle":
-      "Getting your custom parts printed is as easy as 1-2-3 (and 4).",
-    "how.pageStep1Title": "Request",
-    "how.pageStep2Title": "Review & Quote",
-    "how.pageStep3Title": "We Print",
-    "how.pageStep4Title": "Packed & Shipped",
-    "how.pageStep1Desc":
-      "Start by sending us your 3D design file. If you do not have a file yet, describe your idea and we can help design it.",
-    "how.pageStep2Desc":
-      "We review your file, pick the best setup, and send a clear quote.",
-    "how.pageStep3Desc":
-      "After approval, we print your design on our Bambu Lab P2S printers.",
-    "how.pageStep4Desc":
-      "After printing, we finish and safely pack your item for delivery.",
-    "how.promiseTitle": "Our Quality Promise",
-    "how.promiseDesc":
-      "If your print has major flaws, we will reprint it for free.",
-    "how.promiseCta": "Start your first project",
-
     // Quote
     "quote.title": "Request a Quote",
     "quote.subtitle": "Upload models and choose from our live inventory.",
@@ -1117,11 +1095,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Choose the right 3D print material and color for your project. Live filament overview.",
     "seo.materials.keywords":
       "PLA printing, PETG printing, 3D filament Netherlands",
-    "seo.how.title": "How Our 3D Print Service Works | PrintCraft",
-    "seo.how.description":
-      "From upload to delivery: discover how your 3D model gets printed in the Netherlands.",
-    "seo.how.keywords":
-      "how 3D print service works, 3D print process Netherlands",
     "seo.faq.title": "3D Printing FAQ | PrintCraft Netherlands",
     "seo.faq.description":
       "Frequently asked questions about lead times, materials, prices and quality.",
@@ -1132,7 +1105,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "nav.home": "Home",
     "nav.materials": "Materialen",
     "nav.gallery": "Producten",
-    "nav.howItWorks": "Hoe Het Werkt",
     "nav.faq": "FAQ",
     "nav.myOrders": "Mijn Orders",
     "nav.models": "3D Modellen",
@@ -2014,27 +1986,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "materials.footer":
       "© 2026 PrintCraft Collective. Professionele 3D-printservices.",
 
-    // How it works page
-    "how.pageTitle": "Hoe Het Werkt",
-    "how.pageSubtitle":
-      "Je maatwerk onderdelen laten printen is eenvoudig in 4 stappen.",
-    "how.pageStep1Title": "Aanvraag",
-    "how.pageStep2Title": "Controle & Offerte",
-    "how.pageStep3Title": "Wij Printen",
-    "how.pageStep4Title": "Verpakt & Verzonden",
-    "how.pageStep1Desc":
-      "Stuur je 3D-bestand op. Heb je nog geen bestand, dan helpen we met het ontwerp.",
-    "how.pageStep2Desc":
-      "We controleren je bestand, kiezen de juiste instellingen en sturen een duidelijke offerte.",
-    "how.pageStep3Desc":
-      "Na akkoord printen we je ontwerp op onze Bambu Lab P2S printers.",
-    "how.pageStep4Desc":
-      "Na het printen werken we het af en verpakken we het veilig voor verzending.",
-    "how.promiseTitle": "Onze Kwaliteitsbelofte",
-    "how.promiseDesc":
-      "Heeft je print grote fouten, dan printen we deze kosteloos opnieuw.",
-    "how.promiseCta": "Start je eerste project",
-
     // Quote
     "quote.title": "Vraag een Offerte Aan",
     "quote.subtitle": "Upload modellen en kies uit onze actuele voorraad.",
@@ -2255,10 +2206,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Kies het juiste 3D print materiaal en kleur voor jouw project. Live overzicht van filamenten.",
     "seo.materials.keywords":
       "PLA printen, PETG printen, 3D filament Nederland",
-    "seo.how.title": "Hoe Onze 3D Print Service Werkt | PrintCraft",
-    "seo.how.description":
-      "Van upload tot levering: ontdek hoe je 3D model geprint wordt in Nederland.",
-    "seo.how.keywords": "hoe werkt 3D print service, 3D print proces Nederland",
     "seo.faq.title": "FAQ 3D Printen | PrintCraft Nederland",
     "seo.faq.description":
       "Veelgestelde vragen over levertijd, materialen, prijzen en kwaliteit.",

@@ -18,7 +18,6 @@ const Signup = lazy(() => import("./components/Signup.tsx"));
 const Materials = lazy(() => import("./components/Materials.tsx"));
 const Gallery = lazy(() => import("./components/Gallery.tsx"));
 const ProductDetail = lazy(() => import("./components/ProductDetail.tsx"));
-const HowItWorksPage = lazy(() => import("./components/HowItWorksPage.tsx"));
 const FAQ = lazy(() => import("./components/FAQ.tsx"));
 const Orders = lazy(() => import("./components/Orders"));
 const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
@@ -136,7 +135,7 @@ export default function App() {
           />
           <Route path="/products" element={<Gallery />} />
           <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/how-it-works" element={<Navigate to="/" replace />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

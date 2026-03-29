@@ -137,12 +137,6 @@ export default function SeoManager() {
         keywords: t("seo.materials.keywords"),
         index: true,
       },
-      "/how-it-works": {
-        title: t("seo.how.title"),
-        description: t("seo.how.description"),
-        keywords: t("seo.how.keywords"),
-        index: true,
-      },
       "/faq": {
         title: t("seo.faq.title"),
         description: t("seo.faq.description"),
