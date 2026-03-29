@@ -1,4 +1,5 @@
 import { Box, Hash, Layers, MessageSquare, Palette } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { OrderSectionProps } from "./types";
 
 interface OrderItemsCardProps extends OrderSectionProps {
@@ -30,11 +31,21 @@ export default function OrderItemsCard({
                   <p className="font-bold text-gray-900 truncate">
                     {item.fileName}
                   </p>
-                  {!isPendingQuote && item.price > 0 && (
-                    <span className="font-bold text-emerald-700">
-                      €{item.price.toFixed(2)}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {item.fileUrl ? (
+                      <Link
+                        to={`/orders/${order.id}/models/${idx}`}
+                        className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-100 hover:bg-teal-100"
+                      >
+                        {t("orderDetail.viewModel")}
+                      </Link>
+                    ) : null}
+                    {!isPendingQuote && item.price > 0 && (
+                      <span className="font-bold text-emerald-700">
+                        €{item.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3 mt-1">
                   <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">

@@ -41,6 +41,12 @@ const RefundPolicy = lazy(() => import("./components/RefundPolicy.tsx"));
 const ShippingPolicy = lazy(() => import("./components/ShippingPolicy.tsx"));
 const ForgotPassword = lazy(() => import("./components/ForgotPassword.tsx"));
 const ResetPassword = lazy(() => import("./components/ResetPassword.tsx"));
+const ModelFilesBrowser = lazy(
+  () => import("./components/ModelFilesBrowser.tsx"),
+);
+const OrderModelViewerPage = lazy(
+  () => import("./components/OrderModelViewerPage.tsx"),
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
@@ -167,6 +173,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/orders/:id/models/:itemIndex"
+            element={
+              <ProtectedRoute>
+                <OrderModelViewerPage mode="user" />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin"
@@ -189,6 +203,22 @@ export default function App() {
             element={
               <AdminRoute>
                 <AdminOrderDetail />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/orders/:id/models/:itemIndex"
+            element={
+              <AdminRoute>
+                <OrderModelViewerPage mode="admin" />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/models"
+            element={
+              <AdminRoute>
+                <ModelFilesBrowser />
               </AdminRoute>
             }
           />

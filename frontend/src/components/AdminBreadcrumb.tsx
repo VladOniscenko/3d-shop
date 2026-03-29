@@ -17,6 +17,7 @@ const adminNavLinks = [
   { labelKey: "admin.nav.dashboard", to: "/admin" },
   { labelKey: "admin.nav.orders", to: "/admin/orders" },
   { labelKey: "admin.nav.payments", to: "/admin/payments" },
+  { labelKey: "admin.nav.models", to: "/admin/models" },
   { labelKey: "admin.nav.users", to: "/admin/users" },
   { labelKey: "admin.nav.products", to: "/admin/products" },
   { labelKey: "admin.nav.filaments", to: "/admin/filaments" },

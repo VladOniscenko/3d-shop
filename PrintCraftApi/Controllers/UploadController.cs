@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using PrintCraftApi.Data;
 using System.Text;
 
 namespace PrintCraftApi.Controllers;
@@ -10,8 +12,15 @@ namespace PrintCraftApi.Controllers;
 [Authorize]
 public class UploadController : ControllerBase
 {
+    private readonly PrintCraftDb _db;
+
     private const long MaxUploadBytes = 50 * 1024 * 1024; // 50 MB
     private const int HeaderReadSize = 512;
+    private static readonly HashSet<string> ModelExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".stl", ".obj", ".3mf", ".step", ".stp"
+    };
+
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".stl", ".obj", ".3mf", ".step", ".stp",
@@ -63,6 +72,11 @@ public class UploadController : ControllerBase
             },
         };
 
+    public UploadController(PrintCraftDb db)
+    {
+        _db = db;
+    }
+
     [HttpPost]
     [DisableRequestSizeLimit]
     [EnableRateLimiting("UploadLimit")]
@@ -101,6 +115,70 @@ public class UploadController : ControllerBase
         await file.CopyToAsync(stream);
 
         return Ok(new { url = $"/uploads/{safeFileName}" });
+    }
+
+    [HttpGet("models")]
+    [Authorize(Roles = "admin")]
+    [EnableRateLimiting("AuthBurst")]
+    public IActionResult GetUploadedModels()
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        if (!Directory.Exists(uploadsFolder))
+            return Ok(Array.Empty<object>());
+
+        var orderLinksByFileName = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .OrderByDescending(o => o.CreatedAt)
+            .AsEnumerable()
+            .SelectMany(order => order.Items
+                .Select((item, index) => new
+                {
+                    orderId = order.Id,
+                    itemIndex = index,
+                    fileName = ExtractFileNameFromAssetUrl(item.FileUrl),
+                }))
+            .Where(x => !string.IsNullOrWhiteSpace(x.fileName))
+            .GroupBy(x => x.fileName!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => g.First(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var files = Directory
+            .EnumerateFiles(uploadsFolder)
+            .Select(path => new FileInfo(path))
+            .Where(info => ModelExtensions.Contains(info.Extension))
+            .OrderByDescending(info => info.LastWriteTimeUtc)
+            .Select(info =>
+            {
+                orderLinksByFileName.TryGetValue(info.Name, out var link);
+
+                return new
+                {
+                    fileName = info.Name,
+                    extension = info.Extension.ToLowerInvariant(),
+                    sizeBytes = info.Length,
+                    lastModifiedUtc = info.LastWriteTimeUtc,
+                    url = $"/uploads/{info.Name}",
+                    orderId = link?.orderId,
+                    itemIndex = link?.itemIndex,
+                };
+            })
+            .ToArray();
+
+        return Ok(files);
+    }
+
+    private static string? ExtractFileNameFromAssetUrl(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return null;
+
+        var normalized = rawUrl.Replace('\\', '/').Trim();
+        var withoutQuery = normalized.Split('?', 2)[0];
+        if (string.IsNullOrWhiteSpace(withoutQuery)) return null;
+
+        return Path.GetFileName(withoutQuery);
     }
 
     private static bool IsAllowedContentType(string extension, string? contentType)

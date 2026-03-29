@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import { Link } from "react-router-dom";
 import type { Order, QuotePromotionSettings } from "../../types";
 import { resolveAssetUrl } from "../../utils/assetUrl";
 import { CURRENCY_CODE, formatCurrencyAmount } from "../../utils/currency";
@@ -80,14 +81,22 @@ export default function OrderPricingPanel({
                     {item.fileName ?? item.fileUrl ?? "—"}
                   </p>
                   {item.fileUrl && (
-                    <a
-                      href={resolveAssetUrl(item.fileUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline mt-1 inline-block"
-                    >
-                      ↓ {t("admin.orderDetail.downloadFile")}
-                    </a>
+                    <div className="mt-1 flex items-center gap-3">
+                      <a
+                        href={resolveAssetUrl(item.fileUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline inline-block"
+                      >
+                        ↓ {t("admin.orderDetail.downloadFile")}
+                      </a>
+                      <Link
+                        to={`/admin/orders/${order.id}/models/${idx}`}
+                        className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+                      >
+                        {t("admin.orderDetail.viewModel")}
+                      </Link>
+                    </div>
                   )}
                 </div>
 
