@@ -9,9 +9,18 @@ export default defineConfig(({ mode }) => {
   const devApiOrigin =
     frontendEnv.VITE_DEV_API_ORIGIN || rootEnv.VITE_DEV_API_ORIGIN;
 
-  if (!devApiOrigin) {
+  if (mode !== "production" && !devApiOrigin) {
     throw new Error("VITE_DEV_API_ORIGIN must be set in frontend env file.");
   }
+
+  const server = devApiOrigin
+    ? {
+        proxy: {
+          "/api": devApiOrigin,
+          "/uploads": devApiOrigin,
+        },
+      }
+    : undefined;
 
   return {
     plugins: [react(), tailwindcss()],
@@ -33,11 +42,6 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    server: {
-      proxy: {
-        "/api": devApiOrigin,
-        "/uploads": devApiOrigin,
-      },
-    },
+    server,
   };
 });
