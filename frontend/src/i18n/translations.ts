@@ -43,7 +43,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Home
     "home.footer": "© 2026 PrintCraft Collective. All rights reserved.",
     "home.promo.badge": "Quote Offer",
+    "home.how.bridgeBadge": "Next Step",
+    "home.how.bridgeTitle": "How does it work from idea to delivery?",
+    "home.how.bridgeSubtitle":
+      "First, understand the simple process so you know exactly what happens after your request.",
     "home.modelFinder.badge": "Model Starter",
+    "home.modelFinder.bridgeBadge": "Optional Step",
+    "home.modelFinder.bridgeTitle":
+      "No model yet? You can browse a few trusted libraries first.",
+    "home.modelFinder.bridgeSubtitle":
+      "Use this only if you still need a printable file before requesting your quote.",
     "home.modelFinder.title": "Need a 3D model first? Start here",
     "home.modelFinder.subtitle":
       "Explore trusted libraries to find printable files, then upload your favorite model to request a quote.",
@@ -63,6 +72,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "home.modelFinder.custom.desc":
       "If you cannot find the right file, describe your idea and we can help turn it into a printable model.",
     "home.modelFinder.custom.cta": "Request a quote",
+    "home.proof.bridgeBadge": "Quality Check",
+    "home.proof.bridgeTitle": "Now choose finish and quality level.",
+    "home.proof.bridgeSubtitle":
+      "See available materials and recent prints to set expectations before you request your quote.",
 
     // Hero
     "hero.titleLine1": "Custom 3D Prints,",
@@ -1149,7 +1162,16 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Home
     "home.footer": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
     "home.promo.badge": "Offerte-aanbieding",
+    "home.how.bridgeBadge": "Volgende Stap",
+    "home.how.bridgeTitle": "Hoe werkt het van idee tot levering?",
+    "home.how.bridgeSubtitle":
+      "Begrijp eerst het eenvoudige proces, zodat je precies weet wat er gebeurt na je aanvraag.",
     "home.modelFinder.badge": "Model Startpunt",
+    "home.modelFinder.bridgeBadge": "Optionele Stap",
+    "home.modelFinder.bridgeTitle":
+      "Nog geen model? Bekijk eerst een paar betrouwbare bibliotheken.",
+    "home.modelFinder.bridgeSubtitle":
+      "Gebruik dit alleen als je nog een printbaar bestand nodig hebt voordat je je offerte aanvraagt.",
     "home.modelFinder.title": "Eerst een 3D-model nodig? Begin hier",
     "home.modelFinder.subtitle":
       "Ontdek betrouwbare bibliotheken om printbare bestanden te vinden en upload daarna je favoriete model voor een offerte.",
@@ -1169,6 +1191,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "home.modelFinder.custom.desc":
       "Kun je het juiste bestand niet vinden? Beschrijf je idee en wij helpen je naar een printbaar model.",
     "home.modelFinder.custom.cta": "Vraag offerte aan",
+    "home.proof.bridgeBadge": "Kwaliteitscheck",
+    "home.proof.bridgeTitle": "Kies nu afwerking en kwaliteitsniveau.",
+    "home.proof.bridgeSubtitle":
+      "Bekijk beschikbare materialen en recente prints om de verwachtingen goed te zetten voordat je je offerte aanvraagt.",
 
     // Hero
     "hero.titleLine1": "Maatwerk 3D Prints,",
