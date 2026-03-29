@@ -382,6 +382,36 @@ export default function AdminOrderDetail() {
     return statusMatch && searchMatch && fromMatch && toMatch;
   });
 
+  const hasUnpricedItems = order.items.some((item) => {
+    const key = item.id ?? "";
+    const price =
+      key && itemPrices[key] !== undefined ? itemPrices[key] : item.price || 0;
+    return price <= 0;
+  });
+  const hasShippingInfo = [
+    order.fullName,
+    order.addressLine1,
+    order.city,
+    order.postalCode,
+    order.phoneNumber,
+  ].every((value) => String(value || "").trim().length > 0);
+  const hasQuoteMessage = String(order.quoteMessage || "").trim().length > 0;
+  const hasTrackingInfo =
+    String(trackingCode || order.trackingCode || "").trim().length > 0;
+  const hasPaymentAttempts = payments.length > 0;
+  const hasPaidPayment =
+    !!order.isPaid ||
+    payments.some((payment) => String(payment.status || "").toLowerCase() === "paid");
+  const actionFlow = buildAdminActionFlow({
+    status: currentStatus,
+    hasUnpricedItems,
+    hasShippingInfo,
+    hasQuoteMessage,
+    hasPaymentAttempts,
+    hasPaidPayment,
+    hasTrackingInfo,
+  });
+
   return (
     <AdminLayout>
       <AdminBreadcrumb
@@ -572,6 +602,40 @@ export default function AdminOrderDetail() {
             <h3 className="font-bold mb-2 text-[#1b2b25]">
               {t("admin.order.orderActionsTitle")}
             </h3>
+
+            <div className="mb-4 rounded-xl border border-[#dce7e2] bg-[#f7fbf9] p-3">
+              <p className="text-xs uppercase tracking-wide text-[#5f736d]">
+                Recommended Action Flow
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[#1b2b25]">
+                {actionFlow.title}
+              </p>
+
+              <ul className="mt-2 space-y-1 text-sm text-[#2e423d]">
+                {actionFlow.steps.map((step, index) => (
+                  <li key={`${index}-${step}`} className="flex gap-2">
+                    <span className="text-[#5f736d]">{index + 1}.</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-3 space-y-1">
+                {actionFlow.checks.map((check) => (
+                  <p
+                    key={check.label}
+                    className={`text-xs ${check.ok ? "text-emerald-700" : "text-amber-700"}`}
+                  >
+                    {check.ok ? "OK" : "TODO"} - {check.label}
+                  </p>
+                ))}
+              </div>
+
+              <p className="mt-3 text-xs text-[#5f736d]">
+                Suggested next status: <strong>{actionFlow.suggestedStatus}</strong>
+              </p>
+            </div>
+
             <div className="grid gap-2">
               <div className="flex items-center gap-2 mb-2">
                 <select
@@ -883,4 +947,179 @@ export default function AdminOrderDetail() {
       </div>
     </AdminLayout>
   );
+}
+
+type AdminActionFlowInput = {
+  status: string;
+  hasUnpricedItems: boolean;
+  hasShippingInfo: boolean;
+  hasQuoteMessage: boolean;
+  hasPaymentAttempts: boolean;
+  hasPaidPayment: boolean;
+  hasTrackingInfo: boolean;
+};
+
+type AdminActionFlow = {
+  title: string;
+  steps: string[];
+  checks: Array<{ label: string; ok: boolean }>;
+  suggestedStatus: string;
+};
+
+function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
+  const baseChecks = [
+    { label: "All item prices set", ok: !input.hasUnpricedItems },
+    { label: "Shipping details complete", ok: input.hasShippingInfo },
+    { label: "Quote message present", ok: input.hasQuoteMessage },
+    { label: "Payment attempt exists", ok: input.hasPaymentAttempts },
+    { label: "Paid payment confirmed", ok: input.hasPaidPayment },
+    { label: "Tracking code added", ok: input.hasTrackingInfo },
+  ];
+
+  switch (input.status) {
+    case "pending_quote":
+      return {
+        title: "Prepare quote before customer confirmation",
+        steps: [
+          "Review uploaded model files and customer instructions carefully.",
+          "Set price per item based on complexity, print time, and material.",
+          "Set delivery price and apply discount only if needed.",
+          "Add a clear quote message and verify shipping details.",
+          "Send quote confirmation and update status to Quoted.",
+        ],
+        checks: [baseChecks[0], baseChecks[1], baseChecks[2]],
+        suggestedStatus: "quoted",
+      };
+
+    case "quoted":
+      return {
+        title: "Await customer payment",
+        steps: [
+          "Keep pricing stable unless customer requests a revision.",
+          "Monitor quote expiry date and payment attempts.",
+          "Do not start production before payment is confirmed.",
+          "If changes are requested, move back to Pending Quote and reprice.",
+        ],
+        checks: [baseChecks[3], baseChecks[4]],
+        suggestedStatus: input.hasPaidPayment ? "paid" : "quoted",
+      };
+
+    case "expired_quote":
+      return {
+        title: "Quote expired, request refresh",
+        steps: [
+          "Do not print or ship while quote is expired.",
+          "Ask customer to request a new quote from their order page.",
+          "Re-check model scope, recalculate pricing, and send updated quote.",
+        ],
+        checks: [baseChecks[0], baseChecks[1]],
+        suggestedStatus: "pending_quote",
+      };
+
+    case "pending_payment":
+      return {
+        title: "Payment in progress",
+        steps: [
+          "Check payment attempts and webhook result in payment history.",
+          "If paid is confirmed, move forward with production flow.",
+          "If payment fails or expires, return to quote flow.",
+        ],
+        checks: [baseChecks[3], baseChecks[4]],
+        suggestedStatus: input.hasPaidPayment ? "paid" : "pending_payment",
+      };
+
+    case "paid":
+      return {
+        title: "Ready to start production",
+        steps: [
+          "Confirm payment amount/reference and selected print specs.",
+          "Confirm printer availability and material stock.",
+          "Start production and update status to Printing.",
+        ],
+        checks: [baseChecks[4]],
+        suggestedStatus: "printing",
+      };
+
+    case "printing":
+      return {
+        title: "Production and shipment prep",
+        steps: [
+          "Complete print and quality checks before packaging.",
+          "Create shipping label and enter track and trace.",
+          "Send tracking email and update status to Sent or Shipped.",
+        ],
+        checks: [baseChecks[5]],
+        suggestedStatus: input.hasTrackingInfo ? "sent" : "printing",
+      };
+
+    case "sent":
+    case "shipped":
+      return {
+        title: "In transit follow-up",
+        steps: [
+          "Ensure tracking code and URL are correct.",
+          "Monitor carrier updates and delivery confirmation.",
+          "Update status to Delivered when handoff is confirmed.",
+        ],
+        checks: [baseChecks[5]],
+        suggestedStatus: "delivered",
+      };
+
+    case "delivered":
+      return {
+        title: "Post-delivery completion",
+        steps: [
+          "Confirm delivery with tracking evidence.",
+          "Handle support issues if customer reports problems.",
+          "Close order as Completed when no pending actions remain.",
+        ],
+        checks: [baseChecks[5]],
+        suggestedStatus: "completed",
+      };
+
+    case "completed":
+      return {
+        title: "Order closed",
+        steps: [
+          "No operational action required.",
+          "Only reopen status if a verified correction is needed.",
+        ],
+        checks: [],
+        suggestedStatus: "completed",
+      };
+
+    case "failed":
+      return {
+        title: "Resolve payment or process failure",
+        steps: [
+          "Review payment errors and communication history.",
+          "Contact customer with clear next steps.",
+          "If customer retries, move back to quote/payment flow.",
+        ],
+        checks: [baseChecks[3]],
+        suggestedStatus: "pending_quote",
+      };
+
+    case "cancelled":
+      return {
+        title: "Order cancelled",
+        steps: [
+          "No fulfillment action should be taken.",
+          "Keep cancellation reason documented in notes.",
+        ],
+        checks: [],
+        suggestedStatus: "cancelled",
+      };
+
+    default:
+      return {
+        title: "Review order before next action",
+        steps: [
+          "Check order details, pricing, and payment history.",
+          "Select the next status only after prerequisites are verified.",
+        ],
+        checks: [baseChecks[0], baseChecks[3], baseChecks[4]],
+        suggestedStatus: "pending_quote",
+      };
+  }
 }
