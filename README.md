@@ -107,6 +107,35 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
+### Docker (Full Stack)
+
+Run frontend and backend together with Docker Compose:
+
+1. Ensure Docker Desktop is running.
+2. Make sure `.env` exists at project root (copy from `.env.example` and fill values if needed).
+3. Start everything:
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- Frontend: `http://localhost:5173`
+- API: `http://localhost:5000`
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Reset containers and volumes (wipes SQLite/upload data):
+
+```bash
+docker compose down -v
+```
+
 ### Production Build
 
 **Frontend**

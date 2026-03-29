@@ -1,0 +1,36 @@
+services:
+  printcraft-api:
+    build:
+      context: .
+      dockerfile: PrintCraftApi/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Data Source=/app/data/printcraft.db
+      FrontendBaseUrl: http://localhost:5173
+      BackendBaseUrl: http://localhost:5001
+      JwtSecret: ${JwtSecret}
+      JwtIssuer: ${JwtIssuer}
+      JwtAudience: ${JwtAudience}
+      Email__ApiToken: ${Email__ApiToken}
+      Email__Username: ${Email__Username}
+      Email__Password: ${Email__Password}
+    ports:
+      - "5001:8080"
+    volumes:
+      - printcraft_data:/app/data
+      - printcraft_uploads:/app/wwwroot/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - printcraft-api
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  printcraft_data:
+  printcraft_uploads:

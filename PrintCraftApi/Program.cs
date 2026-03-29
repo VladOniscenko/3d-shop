@@ -15,7 +15,9 @@ LoadDotEnv(
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES ---
-builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite("Data Source=printcraft.db"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=printcraft.db";
+builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseSqlite(connectionString));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -166,6 +168,12 @@ app.UseStaticFiles();
 
 // --- ROUTES ---
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PrintCraftDb>();
+    db.Database.Migrate();
+}
 
 app.Run();
 
