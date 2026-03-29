@@ -102,7 +102,9 @@ function MetricGroup({
   compact?: boolean;
 }) {
   return (
-    <div className={`admin-metric-group ${compact ? "admin-metric-group-compact" : ""}`}>
+    <div
+      className={`admin-metric-group ${compact ? "admin-metric-group-compact" : ""}`}
+    >
       <h3 className="admin-metric-group-title">{title}</h3>
       <div className="admin-metric-group-rows">
         {rows.map((row) => (
@@ -688,7 +690,7 @@ export default function AdminDashboard() {
         </details>
 
         <p className="text-xs text-[#6e857d] mt-2">
-          {t("admin.dashboard.locationsTracked")}: {uniqueCountries} • {" "}
+          {t("admin.dashboard.locationsTracked")}: {uniqueCountries} •{" "}
           {new Date(analytics.generatedAtUtc).toLocaleString()}
         </p>
       </section>
@@ -703,7 +705,9 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.promotion.enabled")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.enabled")}
+            </span>
             <select
               className="admin-field"
               value={data.promotion.isEnabled ? "yes" : "no"}
@@ -736,7 +740,9 @@ export default function AdminDashboard() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.promotion.ruleType")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.ruleType")}
+            </span>
             <select
               className="admin-field"
               value={data.promotion.promotionType}
@@ -762,11 +768,12 @@ export default function AdminDashboard() {
             {t("admin.promotion.advancedSettings")}
           </summary>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
-
             {data.promotion.promotionType === "buy_x_get_y" ? (
               <>
                 <label className="admin-label">
-                  <span className="font-semibold">{t("admin.promotion.buyQty")}</span>
+                  <span className="font-semibold">
+                    {t("admin.promotion.buyQty")}
+                  </span>
                   <input
                     type="number"
                     min={1}
@@ -781,7 +788,9 @@ export default function AdminDashboard() {
                   />
                 </label>
                 <label className="admin-label">
-                  <span className="font-semibold">{t("admin.promotion.freeQty")}</span>
+                  <span className="font-semibold">
+                    {t("admin.promotion.freeQty")}
+                  </span>
                   <input
                     type="number"
                     min={1}
@@ -858,7 +867,7 @@ export default function AdminDashboard() {
               : t("admin.promotion.save")}
           </button>
           <p className="text-xs text-[#5f736d]">
-            {t("admin.promotion.activeRule")}: {" "}
+            {t("admin.promotion.activeRule")}:{" "}
             {data.promotion.ruleSummary || "-"}
           </p>
         </div>

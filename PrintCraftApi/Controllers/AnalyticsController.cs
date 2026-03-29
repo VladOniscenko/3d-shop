@@ -38,7 +38,8 @@ public class AnalyticsController : ControllerBase
         var visitorSource = ResolveVisitorSource(userIdClaim, Request.Headers["X-Visitor-Id"].FirstOrDefault(), HttpContext);
         var visitorKey = HashValue(visitorSource);
 
-        var duplicateWindowStart = DateTime.UtcNow.AddSeconds(-20);
+        var duplicateWindowSeconds = eventType == "heartbeat" ? 20 : 45;
+        var duplicateWindowStart = DateTime.UtcNow.AddSeconds(-duplicateWindowSeconds);
         var isDuplicate = await _db.VisitEvents
             .AsNoTracking()
             .AnyAsync(v => v.VisitorKey == visitorKey

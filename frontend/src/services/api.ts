@@ -3,7 +3,10 @@ import axios from "axios";
 const VISITOR_ID_STORAGE_KEY = "pc_visitor_id";
 
 function generateVisitorId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
 

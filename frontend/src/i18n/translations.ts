@@ -1431,7 +1431,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.dailyViews": "Dagweergaven (weergaven / uniek)",
     "admin.dashboard.monthlyViews": "Maandweergaven (weergaven / uniek)",
     "admin.dashboard.yearlyViews": "Jaarweergaven (weergaven / uniek)",
-    "admin.dashboard.trafficDetailsToggle": "Toon gedetailleerde verkeersverdeling",
+    "admin.dashboard.trafficDetailsToggle":
+      "Toon gedetailleerde verkeersverdeling",
     "admin.dashboard.topCountries": "Top landen (30d)",
     "admin.dashboard.topCities": "Top steden (30d)",
     "admin.dashboard.noLocationData": "Nog geen locatiedata beschikbaar.",

@@ -162,7 +162,7 @@ public class AdminController : ControllerBase
 
         var dayRaw = await _db.VisitEvents
             .AsNoTracking()
-            .Where(v => v.VisitedAt >= dayStart && (v.EventType == "pageview" || v.EventType == null))
+            .Where(v => v.VisitedAt >= dayStart && v.EventType == "pageview")
             .GroupBy(v => v.VisitedAt.Date)
             .Select(g => new
             {
@@ -198,7 +198,7 @@ public class AdminController : ControllerBase
 
         var monthRaw = await _db.VisitEvents
             .AsNoTracking()
-            .Where(v => v.VisitedAt >= monthStart && (v.EventType == "pageview" || v.EventType == null))
+            .Where(v => v.VisitedAt >= monthStart && v.EventType == "pageview")
             .GroupBy(v => new { v.VisitedAt.Year, v.VisitedAt.Month })
             .Select(g => new
             {
@@ -236,7 +236,7 @@ public class AdminController : ControllerBase
 
         var yearRaw = await _db.VisitEvents
             .AsNoTracking()
-            .Where(v => v.VisitedAt >= yearStart && (v.EventType == "pageview" || v.EventType == null))
+            .Where(v => v.VisitedAt >= yearStart && v.EventType == "pageview")
             .GroupBy(v => v.VisitedAt.Year)
             .Select(g => new
             {
@@ -280,7 +280,7 @@ public class AdminController : ControllerBase
         var locationWindowStart = now.AddDays(-30);
         var topCountries = await _db.VisitEvents
             .AsNoTracking()
-            .Where(v => v.VisitedAt >= locationWindowStart && (v.EventType == "pageview" || v.EventType == null))
+            .Where(v => v.VisitedAt >= locationWindowStart && v.EventType == "pageview")
             .GroupBy(v => string.IsNullOrWhiteSpace(v.CountryCode) ? "UN" : v.CountryCode!)
             .Select(g => new
             {
@@ -295,7 +295,7 @@ public class AdminController : ControllerBase
         var topCities = await _db.VisitEvents
             .AsNoTracking()
             .Where(v => v.VisitedAt >= locationWindowStart
-                && (v.EventType == "pageview" || v.EventType == null)
+                && v.EventType == "pageview"
                 && !string.IsNullOrWhiteSpace(v.City))
             .GroupBy(v => new { CountryCode = string.IsNullOrWhiteSpace(v.CountryCode) ? "UN" : v.CountryCode!, City = v.City! })
             .Select(g => new

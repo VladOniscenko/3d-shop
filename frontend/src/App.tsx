@@ -11,6 +11,29 @@ import {
 import SeoManager from "./components/SeoManager";
 import api from "./services/api";
 
+const recentVisitDispatches = new Map<string, number>();
+
+function shouldSendVisit(eventType: "pageview" | "heartbeat", path: string) {
+  const key = `${eventType}:${path}`;
+  const now = Date.now();
+  const minGapMs = eventType === "pageview" ? 3000 : 55000;
+  const previous = recentVisitDispatches.get(key) ?? 0;
+
+  if (now - previous < minGapMs) {
+    return false;
+  }
+
+  recentVisitDispatches.set(key, now);
+
+  for (const [entryKey, timestamp] of recentVisitDispatches) {
+    if (now - timestamp > 10 * 60 * 1000) {
+      recentVisitDispatches.delete(entryKey);
+    }
+  }
+
+  return true;
+}
+
 const Home = lazy(() => import("./components/Home.tsx"));
 const Login = lazy(() => import("./components/Login.tsx"));
 const Quote = lazy(() => import("./components/Quote.tsx"));
@@ -117,6 +140,10 @@ function VisitTracker() {
     let stopped = false;
 
     const sendVisit = async (eventType: "pageview" | "heartbeat") => {
+      if (!shouldSendVisit(eventType, path)) {
+        return;
+      }
+
       try {
         await api.post("/analytics/visit", {
           path,

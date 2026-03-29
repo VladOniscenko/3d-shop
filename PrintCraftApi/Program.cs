@@ -120,6 +120,7 @@ builder.Services.AddRateLimiter(options =>
         var userId = httpContext.User?.Identity?.IsAuthenticated == true
             ? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
             : null;
+        var isAdmin = httpContext.User?.IsInRole("admin") == true;
 
         var key = !string.IsNullOrWhiteSpace(userId)
             ? $"user:{userId}"
@@ -127,7 +128,7 @@ builder.Services.AddRateLimiter(options =>
 
         return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 120,
+            PermitLimit = isAdmin ? 240 : 120,
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0,
             AutoReplenishment = true
