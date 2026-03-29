@@ -54,6 +54,7 @@ public class OrdersController : ControllerBase
         var orders = await _db.Orders
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
+            .Include(o => o.Payments)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
@@ -73,6 +74,7 @@ public class OrdersController : ControllerBase
 
         var order = await _db.Orders
             .Include(o => o.Items)
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
 
         return order != null ? Ok(order) : NotFound(new { message = "Order not found or access denied." });

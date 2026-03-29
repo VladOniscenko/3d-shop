@@ -53,7 +53,9 @@ export default function Orders() {
   );
 
   const isMeaningfulField = (value?: string) => {
-    const normalized = String(value ?? "").trim().toLowerCase();
+    const normalized = String(value ?? "")
+      .trim()
+      .toLowerCase();
     return (
       normalized !== "" &&
       normalized !== "0" &&
@@ -70,7 +72,8 @@ export default function Orders() {
     const hasCity = isMeaningfulField(city);
     const hasAddressLine = isMeaningfulField(order.addressLine1);
     const hasPostalCode = isMeaningfulField(order.postalCode);
-    const isPendingQuote = normalizeOrderStatus(order.status) === "pending_quote";
+    const isPendingQuote =
+      normalizeOrderStatus(order.status) === "pending_quote";
 
     if (!hasCity) return null;
     if (isPendingQuote && (!hasAddressLine || !hasPostalCode)) return null;
@@ -166,7 +169,7 @@ export default function Orders() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-400">
-                          {t("orders.placedOn")} {" "}
+                          {t("orders.placedOn")}{" "}
                           {new Date(order.createdAt).toLocaleDateString(
                             undefined,
                             { dateStyle: "long" },
@@ -179,14 +182,15 @@ export default function Orders() {
                     <div className="flex-1 lg:px-10 border-gray-100 lg:border-x">
                       <div className="flex items-center gap-2 text-gray-600 mb-1 text-sm font-bold">
                         <Package size={14} />
-                        {order.items?.length || 0} {" "}
+                        {order.items?.length || 0}{" "}
                         {order.items?.length === 1
                           ? t("orders.model")
                           : t("orders.models")}
                       </div>
                       {shippingCity && (
                         <p className="text-xs text-gray-400 flex items-center gap-1">
-                          <MapPin size={12} /> {t("orders.shippingTo")} {shippingCity}
+                          <MapPin size={12} /> {t("orders.shippingTo")}{" "}
+                          {shippingCity}
                         </p>
                       )}
                       {Number(order.orderDiscountAmount ?? 0) > 0 &&

@@ -159,6 +159,7 @@ public class AdminController : ControllerBase
 
         var query = _db.Orders
             .Include(o => o.Items)
+            .Include(o => o.Payments)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -205,6 +206,7 @@ public class AdminController : ControllerBase
     {
         var order = await _db.Orders
             .Include(o => o.Items)
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         return order == null ? NotFound(new { message = "Order not found" }) : Ok(order);

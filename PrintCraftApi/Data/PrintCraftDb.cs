@@ -13,6 +13,7 @@ public class PrintCraftDb : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OrderCommunication> OrderCommunications => Set<OrderCommunication>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -52,6 +53,23 @@ public class PrintCraftDb : DbContext
             .HasOne<Order>()
             .WithMany(o => o.StatusHistory)
             .HasForeignKey(s => s.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Payment>()
+            .HasIndex(p => new { p.OrderId, p.CreatedAt });
+
+        modelBuilder.Entity<Payment>()
+            .HasIndex(p => p.ProviderPaymentId)
+            .IsUnique();
+
+        modelBuilder.Entity<Payment>()
+            .HasIndex(p => p.Reference)
+            .IsUnique();
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.Order)
+            .WithMany(o => o.Payments)
+            .HasForeignKey(p => p.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
