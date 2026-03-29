@@ -235,6 +235,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.status.open": "Open",
 
     "admin.dashboard.title": "Admin Dashboard",
+    "admin.dashboard.overviewSubtitle":
+      "Live overview of orders, revenue, traffic and stock.",
+    "admin.dashboard.groupOrderFlow": "Order flow",
+    "admin.dashboard.groupSalesQuality": "Sales quality",
+    "admin.dashboard.groupOrderVelocity": "Order velocity",
+    "admin.dashboard.groupInventorySnapshot": "Inventory snapshot",
     "admin.dashboard.loadError":
       "Unable to load admin dashboard data. Are you authorized?",
     "admin.dashboard.totalUsers": "Total Users",
@@ -291,6 +297,25 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.hintDistinctFilamentMaterials":
       "Distinct filament materials",
     "admin.dashboard.hintAcrossFilamentSkus": "Across filament SKUs",
+    "admin.dashboard.trafficTitle": "Traffic Analytics",
+    "admin.dashboard.trafficSubtitle":
+      "Track page views over time, live visitors, and user locations.",
+    "admin.dashboard.liveVisitorsNow": "Live Visitors",
+    "admin.dashboard.viewsLast14Days": "Views (14 days)",
+    "admin.dashboard.viewsLast12Months": "Views (12 months)",
+    "admin.dashboard.viewsLast5Years": "Views (5 years)",
+    "admin.dashboard.dailyViews": "Daily views (views / unique)",
+    "admin.dashboard.monthlyViews": "Monthly views (views / unique)",
+    "admin.dashboard.yearlyViews": "Yearly views (views / unique)",
+    "admin.dashboard.trafficDetailsToggle": "Show detailed traffic breakdown",
+    "admin.dashboard.topCountries": "Top Countries (30d)",
+    "admin.dashboard.topCities": "Top Cities (30d)",
+    "admin.dashboard.noLocationData": "No location data available yet.",
+    "admin.dashboard.locationsTracked": "Countries tracked",
+    "admin.dashboard.hintLastFiveMinutes": "Last 5 minutes",
+    "admin.dashboard.hintAggregatedDaily": "Sum across daily buckets",
+    "admin.dashboard.hintAggregatedMonthly": "Sum across monthly buckets",
+    "admin.dashboard.hintAggregatedYearly": "Sum across yearly buckets",
     "admin.promotion.title": "Quote Promotion",
     "admin.promotion.subtitle":
       "Configure quote-only discount rules and control the homepage banner.",
@@ -309,6 +334,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.promotion.bannerTextNlPlaceholder":
       "bijv. Koop 1 krijg 1 gratis op offerte-orders",
     "admin.promotion.activeRule": "Active rule",
+    "admin.promotion.advancedSettings": "Show advanced settings",
     "admin.promotion.save": "Save Promotion",
     "admin.promotion.saving": "Saving...",
     "admin.promotion.saved": "Promotion settings saved.",
@@ -1332,6 +1358,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.status.open": "Open",
 
     "admin.dashboard.title": "Admin Dashboard",
+    "admin.dashboard.overviewSubtitle":
+      "Live overzicht van orders, omzet, verkeer en voorraad.",
+    "admin.dashboard.groupOrderFlow": "Orderstroom",
+    "admin.dashboard.groupSalesQuality": "Verkoopkwaliteit",
+    "admin.dashboard.groupOrderVelocity": "Ordersnelheid",
+    "admin.dashboard.groupInventorySnapshot": "Voorraadoverzicht",
     "admin.dashboard.loadError":
       "Kan admin dashboardgegevens niet laden. Ben je geautoriseerd?",
     "admin.dashboard.totalUsers": "Totaal gebruikers",
@@ -1389,6 +1421,25 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.hintDistinctFilamentMaterials":
       "Unieke filamentmaterialen",
     "admin.dashboard.hintAcrossFilamentSkus": "Over alle filament SKU's",
+    "admin.dashboard.trafficTitle": "Verkeersanalyse",
+    "admin.dashboard.trafficSubtitle":
+      "Volg paginabezoeken in de tijd, live bezoekers en gebruikerslocaties.",
+    "admin.dashboard.liveVisitorsNow": "Live bezoekers",
+    "admin.dashboard.viewsLast14Days": "Weergaven (14 dagen)",
+    "admin.dashboard.viewsLast12Months": "Weergaven (12 maanden)",
+    "admin.dashboard.viewsLast5Years": "Weergaven (5 jaar)",
+    "admin.dashboard.dailyViews": "Dagweergaven (weergaven / uniek)",
+    "admin.dashboard.monthlyViews": "Maandweergaven (weergaven / uniek)",
+    "admin.dashboard.yearlyViews": "Jaarweergaven (weergaven / uniek)",
+    "admin.dashboard.trafficDetailsToggle": "Toon gedetailleerde verkeersverdeling",
+    "admin.dashboard.topCountries": "Top landen (30d)",
+    "admin.dashboard.topCities": "Top steden (30d)",
+    "admin.dashboard.noLocationData": "Nog geen locatiedata beschikbaar.",
+    "admin.dashboard.locationsTracked": "Getrackte landen",
+    "admin.dashboard.hintLastFiveMinutes": "Laatste 5 minuten",
+    "admin.dashboard.hintAggregatedDaily": "Som van dagelijkse buckets",
+    "admin.dashboard.hintAggregatedMonthly": "Som van maandelijkse buckets",
+    "admin.dashboard.hintAggregatedYearly": "Som van jaarlijkse buckets",
     "admin.promotion.title": "Offertepromotie",
     "admin.promotion.subtitle":
       "Stel kortingregels voor offertes in en beheer de banner op de homepage.",
@@ -1407,6 +1458,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.promotion.bannerTextNlPlaceholder":
       "bijv. Koop 1 krijg 1 gratis op offerte-orders",
     "admin.promotion.activeRule": "Actieve regel",
+    "admin.promotion.advancedSettings": "Toon geavanceerde instellingen",
     "admin.promotion.save": "Promotie opslaan",
     "admin.promotion.saving": "Bezig met opslaan...",
     "admin.promotion.saved": "Promotie-instellingen opgeslagen.",

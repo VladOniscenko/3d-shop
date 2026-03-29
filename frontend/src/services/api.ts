@@ -1,5 +1,25 @@
 import axios from "axios";
 
+const VISITOR_ID_STORAGE_KEY = "pc_visitor_id";
+
+function generateVisitorId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function getOrCreateVisitorId() {
+  let id = localStorage.getItem(VISITOR_ID_STORAGE_KEY);
+  if (!id) {
+    id = generateVisitorId();
+    localStorage.setItem(VISITOR_ID_STORAGE_KEY, id);
+  }
+
+  return id;
+}
+
 const api = axios.create({
   baseURL: "/api",
 });
@@ -7,8 +27,12 @@ const api = axios.create({
 // Attach token to every request if present
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+  const visitorId = getOrCreateVisitorId();
+
+  config.headers = config.headers || {};
+  config.headers["X-Visitor-Id"] = visitorId;
+
   if (token) {
-    config.headers = config.headers || {};
     config.headers["Authorization"] = `Bearer ${token}`;
   }
   return config;

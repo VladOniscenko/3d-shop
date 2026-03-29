@@ -109,10 +109,48 @@ function AuthSessionGuard() {
   return null;
 }
 
+function VisitTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = `${location.pathname}${location.search}`;
+    let stopped = false;
+
+    const sendVisit = async (eventType: "pageview" | "heartbeat") => {
+      try {
+        await api.post("/analytics/visit", {
+          path,
+          eventType,
+        });
+      } catch {
+        if (!stopped) {
+          // Intentionally swallow analytics tracking errors.
+        }
+      }
+    };
+
+    void sendVisit("pageview");
+
+    const heartbeatId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void sendVisit("heartbeat");
+      }
+    }, 60000);
+
+    return () => {
+      stopped = true;
+      window.clearInterval(heartbeatId);
+    };
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthSessionGuard />
+      <VisitTracker />
       <SeoManager />
       <Suspense
         fallback={

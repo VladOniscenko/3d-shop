@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
@@ -9,7 +8,6 @@ import type {
   Product,
   QuotePromotionSettings,
 } from "../types";
-import { formatOrderStatusLabel } from "../utils/orderStatus";
 import { useI18n } from "../i18n/I18nContext";
 import { formatCurrencyAmount } from "../utils/currency";
 
@@ -17,12 +15,40 @@ interface Summary {
   totalUsers: number;
   totalOrders: number;
   pendingOrders: number;
-  recentOrders: Order[];
 }
 
 interface OrdersResponse {
   results: Order[];
   totalCount: number;
+}
+
+interface VisitBucket {
+  label: string;
+  views: number;
+  uniqueVisitors: number;
+}
+
+interface CountryStat {
+  countryCode: string;
+  views: number;
+  uniqueVisitors: number;
+}
+
+interface CityStat {
+  countryCode: string;
+  city: string;
+  views: number;
+  uniqueVisitors: number;
+}
+
+interface VisitAnalytics {
+  generatedAtUtc: string;
+  liveVisitorsNow: number;
+  viewsByDay: VisitBucket[];
+  viewsByMonth: VisitBucket[];
+  viewsByYear: VisitBucket[];
+  topCountries: CountryStat[];
+  topCities: CityStat[];
 }
 
 type DashboardData = {
@@ -32,6 +58,7 @@ type DashboardData = {
   products: Product[];
   filaments: Filament[];
   promotion: QuotePromotionSettings;
+  analytics: VisitAnalytics;
 };
 
 const DEFAULT_PROMOTION: QuotePromotionSettings = {
@@ -65,6 +92,35 @@ function StatCard({
   );
 }
 
+function MetricGroup({
+  title,
+  rows,
+  compact,
+}: {
+  title: string;
+  rows: Array<{ label: string; value: string | number; hint?: string }>;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`admin-metric-group ${compact ? "admin-metric-group-compact" : ""}`}>
+      <h3 className="admin-metric-group-title">{title}</h3>
+      <div className="admin-metric-group-rows">
+        {rows.map((row) => (
+          <div key={row.label} className="admin-metric-row">
+            <div>
+              <p className="admin-metric-label">{row.label}</p>
+              {!compact && row.hint ? (
+                <p className="admin-metric-hint">{row.hint}</p>
+              ) : null}
+            </div>
+            <p className="admin-metric-value">{row.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { t } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -83,6 +139,7 @@ export default function AdminDashboard() {
           productsRes,
           filamentsRes,
           promotionRes,
+          analyticsRes,
         ] = await Promise.all([
           api.get<Summary>("/admin/summary"),
           api.get<OrdersResponse>(
@@ -92,6 +149,7 @@ export default function AdminDashboard() {
           api.get<Product[]>("/products"),
           api.get<Filament[]>("/filaments"),
           api.get<QuotePromotionSettings>("/admin/promotions/quote"),
+          api.get<VisitAnalytics>("/admin/analytics/visits"),
         ]);
 
         setData({
@@ -101,6 +159,7 @@ export default function AdminDashboard() {
           products: Array.isArray(productsRes.data) ? productsRes.data : [],
           filaments: Array.isArray(filamentsRes.data) ? filamentsRes.data : [],
           promotion: promotionRes.data || DEFAULT_PROMOTION,
+          analytics: analyticsRes.data,
         });
       } catch (err) {
         console.error(err);
@@ -192,7 +251,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const { summary, orders, usersCount, products, filaments } = data;
+  const { summary, orders, usersCount, products, filaments, analytics } = data;
 
   const statusCounts = orders.reduce<Record<string, number>>((acc, order) => {
     const key = order.status || "unknown";
@@ -265,6 +324,172 @@ export default function AdminDashboard() {
         filaments.length
       : 0;
 
+  const dailyViews = analytics.viewsByDay.reduce(
+    (sum, row) => sum + row.views,
+    0,
+  );
+  const monthlyViews = analytics.viewsByMonth.reduce(
+    (sum, row) => sum + row.views,
+    0,
+  );
+  const yearlyViews = analytics.viewsByYear.reduce(
+    (sum, row) => sum + row.views,
+    0,
+  );
+  const uniqueCountries = analytics.topCountries.length;
+  const topCountriesPreview = analytics.topCountries.slice(0, 3);
+  const topCitiesPreview = analytics.topCities.slice(0, 3);
+
+  const quickSnapshot = [
+    {
+      label: t("admin.dashboard.totalOrders"),
+      value: summary.totalOrders,
+      hint: t("admin.dashboard.hintAllTime"),
+    },
+    {
+      label: t("admin.dashboard.pendingOrders"),
+      value: summary.pendingOrders,
+      hint: t("admin.dashboard.hintNeedsAction"),
+    },
+    {
+      label: t("admin.dashboard.paidRevenue"),
+      value: formatCurrencyAmount(paidRevenue),
+      hint: t("admin.dashboard.hintRevenuePaidOrders"),
+    },
+    {
+      label: t("admin.dashboard.liveVisitorsNow"),
+      value: analytics.liveVisitorsNow,
+      hint: t("admin.dashboard.hintLastFiveMinutes"),
+    },
+    {
+      label: t("admin.dashboard.totalUsers"),
+      value: usersCount || summary.totalUsers,
+      hint: t("admin.dashboard.hintRegisteredAccounts"),
+    },
+    {
+      label: t("admin.dashboard.uniqueCustomers"),
+      value: uniqueCustomers,
+      hint: t("admin.dashboard.hintCustomersWithOrders"),
+    },
+  ];
+
+  const orderFlowRows = [
+    {
+      label: t("admin.dashboard.quotedOrders"),
+      value: quotedOrders,
+      hint: t("admin.dashboard.hintQuoteSent"),
+    },
+    {
+      label: t("admin.dashboard.printingOrders"),
+      value: printingOrders,
+      hint: t("admin.dashboard.hintInProduction"),
+    },
+    {
+      label: t("admin.dashboard.sentOrders"),
+      value: sentOrders,
+      hint: t("admin.dashboard.hintShipped"),
+    },
+    {
+      label: t("admin.dashboard.deliveredOrders"),
+      value: deliveredOrders,
+      hint: t("admin.dashboard.hintReachedCustomer"),
+    },
+    {
+      label: t("admin.dashboard.completedOrders"),
+      value: completedOrders,
+      hint: t("admin.dashboard.hintCompletedLifecycle"),
+    },
+    {
+      label: t("admin.dashboard.cancelledOrders"),
+      value: cancelledOrders,
+      hint: t("admin.dashboard.hintCancelledByAdminUser"),
+    },
+  ];
+
+  const salesRows = [
+    {
+      label: t("admin.dashboard.quotedRevenue"),
+      value: formatCurrencyAmount(quotedRevenue),
+      hint: t("admin.dashboard.hintSumQuotedPrices"),
+    },
+    {
+      label: t("admin.dashboard.avgQuoteValue"),
+      value: formatCurrencyAmount(averageQuotedValue),
+      hint: t("admin.dashboard.hintAverageQuotedOrder"),
+    },
+    {
+      label: t("admin.dashboard.totalItemQty"),
+      value: totalOrderItems,
+      hint: t("admin.dashboard.hintUnitsAcrossOrders"),
+    },
+    {
+      label: t("admin.dashboard.avgItemsPerOrder"),
+      value: avgItemsPerOrder.toFixed(2),
+      hint: t("admin.dashboard.hintOperationalComplexity"),
+    },
+  ];
+
+  const velocityRows = [
+    {
+      label: t("admin.dashboard.orders24h"),
+      value: ordersToday,
+      hint: t("admin.dashboard.hintLastDay"),
+    },
+    {
+      label: t("admin.dashboard.orders7d"),
+      value: ordersThisWeek,
+      hint: t("admin.dashboard.hintLastWeek"),
+    },
+    {
+      label: t("admin.dashboard.orders30d"),
+      value: ordersThisMonth,
+      hint: t("admin.dashboard.hintLastMonth"),
+    },
+    {
+      label: t("admin.dashboard.paidOrders"),
+      value: paidOrders,
+      hint: t("admin.dashboard.hintConfirmedPayments"),
+    },
+  ];
+
+  const inventoryRows = [
+    {
+      label: t("admin.dashboard.products"),
+      value: products.length,
+      hint: t("admin.dashboard.hintCatalogSize"),
+    },
+    {
+      label: t("admin.dashboard.filamentSkus"),
+      value: filaments.length,
+      hint: t("admin.dashboard.hintMaterialColorEntries"),
+    },
+    {
+      label: t("admin.dashboard.inStockFilaments"),
+      value: inStockFilaments,
+      hint: t("admin.dashboard.hintAvailableNow"),
+    },
+    {
+      label: t("admin.dashboard.lowStockFilaments"),
+      value: lowStockFilaments,
+      hint: t("admin.dashboard.hintOneToHundred"),
+    },
+    {
+      label: t("admin.dashboard.outOfStockFilaments"),
+      value: outOfStockFilaments,
+      hint: t("admin.dashboard.hintNeedsRestock"),
+    },
+    {
+      label: t("admin.dashboard.materials"),
+      value: uniqueMaterials,
+      hint: t("admin.dashboard.hintDistinctFilamentMaterials"),
+    },
+    {
+      label: t("admin.dashboard.avgFilamentPricePerGram"),
+      value: formatCurrencyAmount(averageFilamentPrice, 4),
+      hint: t("admin.dashboard.hintAcrossFilamentSkus"),
+    },
+  ];
+
   return (
     <AdminLayout>
       <AdminBreadcrumb
@@ -274,17 +499,211 @@ export default function AdminDashboard() {
 
       <section className="admin-panel p-6 mb-6">
         <h2 className="text-xl font-semibold mb-1 text-[#16251f]">
-          {t("admin.promotion.title")}
+          {t("admin.dashboard.title")}
         </h2>
         <p className="text-sm text-[#5f736d] mb-4">
+          {t("admin.dashboard.overviewSubtitle")}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {quickSnapshot.map((card) => (
+            <StatCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              hint={card.hint}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+        <MetricGroup
+          title={t("admin.dashboard.groupOrderFlow")}
+          rows={orderFlowRows}
+          compact
+        />
+        <MetricGroup
+          title={t("admin.dashboard.groupSalesQuality")}
+          rows={salesRows}
+          compact
+        />
+        <MetricGroup
+          title={t("admin.dashboard.groupOrderVelocity")}
+          rows={velocityRows}
+          compact
+        />
+        <MetricGroup
+          title={t("admin.dashboard.groupInventorySnapshot")}
+          rows={inventoryRows}
+          compact
+        />
+      </section>
+
+      <section className="admin-panel p-5 mb-6">
+        <h2 className="text-lg font-semibold mb-1 text-[#16251f]">
+          {t("admin.dashboard.trafficTitle")}
+        </h2>
+        <p className="text-xs text-[#5f736d] mb-3">
+          {t("admin.dashboard.trafficSubtitle")}
+        </p>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[#6d837b]">
+              {t("admin.dashboard.liveVisitorsNow")}
+            </p>
+            <p className="text-lg font-bold text-[#16251f]">
+              {analytics.liveVisitorsNow}
+            </p>
+          </div>
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[#6d837b]">
+              {t("admin.dashboard.viewsLast14Days")}
+            </p>
+            <p className="text-lg font-bold text-[#16251f]">{dailyViews}</p>
+          </div>
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[#6d837b]">
+              {t("admin.dashboard.viewsLast12Months")}
+            </p>
+            <p className="text-lg font-bold text-[#16251f]">{monthlyViews}</p>
+          </div>
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[#6d837b]">
+              {t("admin.dashboard.viewsLast5Years")}
+            </p>
+            <p className="text-lg font-bold text-[#16251f]">{yearlyViews}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] p-3">
+            <h3 className="text-sm font-semibold text-[#1f312b] mb-1">
+              {t("admin.dashboard.topCountries")}
+            </h3>
+            {topCountriesPreview.length === 0 ? (
+              <p className="text-xs text-[#6d837b]">
+                {t("admin.dashboard.noLocationData")}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {topCountriesPreview.map((row) => (
+                  <div
+                    key={row.countryCode}
+                    className="flex items-center justify-between text-xs text-[#3b564e]"
+                  >
+                    <span>{row.countryCode}</span>
+                    <span>{row.views}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="rounded-lg border border-[#dbe7e2] bg-[#f8fcfa] p-3">
+            <h3 className="text-sm font-semibold text-[#1f312b] mb-1">
+              {t("admin.dashboard.topCities")}
+            </h3>
+            {topCitiesPreview.length === 0 ? (
+              <p className="text-xs text-[#6d837b]">
+                {t("admin.dashboard.noLocationData")}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {topCitiesPreview.map((row) => (
+                  <div
+                    key={`${row.countryCode}-${row.city}`}
+                    className="flex items-center justify-between text-xs text-[#3b564e]"
+                  >
+                    <span className="truncate pr-2">
+                      {row.city}, {row.countryCode}
+                    </span>
+                    <span>{row.views}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <details className="rounded-lg border border-[#dbe7e2] bg-[#fbfefd] p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-[#1f312b]">
+            {t("admin.dashboard.trafficDetailsToggle")}
+          </summary>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 mt-3">
+            <div className="rounded-lg border border-[#dbe7e2] bg-[#f7fcf9] p-3">
+              <h3 className="font-semibold text-[#1f312b] mb-2 text-sm">
+                {t("admin.dashboard.dailyViews")}
+              </h3>
+              <div className="space-y-1 max-h-44 overflow-y-auto">
+                {analytics.viewsByDay.map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between text-xs text-[#395049]"
+                  >
+                    <span>{row.label}</span>
+                    <span>
+                      {row.views} / {row.uniqueVisitors}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg border border-[#dbe7e2] bg-[#f7fcf9] p-3">
+              <h3 className="font-semibold text-[#1f312b] mb-2 text-sm">
+                {t("admin.dashboard.monthlyViews")}
+              </h3>
+              <div className="space-y-1 max-h-44 overflow-y-auto">
+                {analytics.viewsByMonth.map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between text-xs text-[#395049]"
+                  >
+                    <span>{row.label}</span>
+                    <span>
+                      {row.views} / {row.uniqueVisitors}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg border border-[#dbe7e2] bg-[#f7fcf9] p-3">
+              <h3 className="font-semibold text-[#1f312b] mb-2 text-sm">
+                {t("admin.dashboard.yearlyViews")}
+              </h3>
+              <div className="space-y-1 max-h-44 overflow-y-auto">
+                {analytics.viewsByYear.map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between text-xs text-[#395049]"
+                  >
+                    <span>{row.label}</span>
+                    <span>
+                      {row.views} / {row.uniqueVisitors}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <p className="text-xs text-[#6e857d] mt-2">
+          {t("admin.dashboard.locationsTracked")}: {uniqueCountries} • {" "}
+          {new Date(analytics.generatedAtUtc).toLocaleString()}
+        </p>
+      </section>
+
+      <section className="admin-panel p-5 mb-6">
+        <h2 className="text-lg font-semibold mb-1 text-[#16251f]">
+          {t("admin.promotion.title")}
+        </h2>
+        <p className="text-xs text-[#5f736d] mb-3">
           {t("admin.promotion.subtitle")}
         </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <label className="admin-label">
-            <span className="font-semibold">
-              {t("admin.promotion.enabled")}
-            </span>
+            <span className="font-semibold">{t("admin.promotion.enabled")}</span>
             <select
               className="admin-field"
               value={data.promotion.isEnabled ? "yes" : "no"}
@@ -316,10 +735,8 @@ export default function AdminDashboard() {
             </select>
           </label>
 
-          <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">
-              {t("admin.promotion.ruleType")}
-            </span>
+          <label className="admin-label">
+            <span className="font-semibold">{t("admin.promotion.ruleType")}</span>
             <select
               className="admin-field"
               value={data.promotion.promotionType}
@@ -338,94 +755,98 @@ export default function AdminDashboard() {
               </option>
             </select>
           </label>
-
-          {data.promotion.promotionType === "buy_x_get_y" ? (
-            <>
-              <label className="admin-label">
-                <span className="font-semibold">
-                  {t("admin.promotion.buyQty")}
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  className="admin-field"
-                  value={data.promotion.buyQuantity}
-                  onChange={(e) =>
-                    updatePromotionField(
-                      "buyQuantity",
-                      parseInt(e.target.value, 10) || 1,
-                    )
-                  }
-                />
-              </label>
-              <label className="admin-label">
-                <span className="font-semibold">
-                  {t("admin.promotion.freeQty")}
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  className="admin-field"
-                  value={data.promotion.freeQuantity}
-                  onChange={(e) =>
-                    updatePromotionField(
-                      "freeQuantity",
-                      parseInt(e.target.value, 10) || 1,
-                    )
-                  }
-                />
-              </label>
-            </>
-          ) : (
-            <label className="admin-label lg:col-span-2">
-              <span className="font-semibold">
-                {t("admin.promotion.secondPercent")}
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={100}
-                className="admin-field"
-                value={data.promotion.secondItemPercentOff}
-                onChange={(e) =>
-                  updatePromotionField(
-                    "secondItemPercentOff",
-                    parseFloat(e.target.value) || 0,
-                  )
-                }
-              />
-            </label>
-          )}
-
-          <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">
-              {t("admin.promotion.bannerTextEn")}
-            </span>
-            <input
-              className="admin-field"
-              value={data.promotion.bannerTextEn || ""}
-              onChange={(e) =>
-                updatePromotionField("bannerTextEn", e.target.value)
-              }
-              placeholder={t("admin.promotion.bannerTextEnPlaceholder")}
-            />
-          </label>
-          <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">
-              {t("admin.promotion.bannerTextNl")}
-            </span>
-            <input
-              className="admin-field"
-              value={data.promotion.bannerTextNl || ""}
-              onChange={(e) =>
-                updatePromotionField("bannerTextNl", e.target.value)
-              }
-              placeholder={t("admin.promotion.bannerTextNlPlaceholder")}
-            />
-          </label>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
+        <details className="rounded-lg border border-[#dbe7e2] bg-[#fbfefd] p-3 mt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-[#1f312b]">
+            {t("admin.promotion.advancedSettings")}
+          </summary>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
+
+            {data.promotion.promotionType === "buy_x_get_y" ? (
+              <>
+                <label className="admin-label">
+                  <span className="font-semibold">{t("admin.promotion.buyQty")}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="admin-field"
+                    value={data.promotion.buyQuantity}
+                    onChange={(e) =>
+                      updatePromotionField(
+                        "buyQuantity",
+                        parseInt(e.target.value, 10) || 1,
+                      )
+                    }
+                  />
+                </label>
+                <label className="admin-label">
+                  <span className="font-semibold">{t("admin.promotion.freeQty")}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="admin-field"
+                    value={data.promotion.freeQuantity}
+                    onChange={(e) =>
+                      updatePromotionField(
+                        "freeQuantity",
+                        parseInt(e.target.value, 10) || 1,
+                      )
+                    }
+                  />
+                </label>
+              </>
+            ) : (
+              <label className="admin-label lg:col-span-2">
+                <span className="font-semibold">
+                  {t("admin.promotion.secondPercent")}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  className="admin-field"
+                  value={data.promotion.secondItemPercentOff}
+                  onChange={(e) =>
+                    updatePromotionField(
+                      "secondItemPercentOff",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
+                />
+              </label>
+            )}
+
+            <label className="admin-label lg:col-span-2">
+              <span className="font-semibold">
+                {t("admin.promotion.bannerTextEn")}
+              </span>
+              <input
+                className="admin-field"
+                value={data.promotion.bannerTextEn || ""}
+                onChange={(e) =>
+                  updatePromotionField("bannerTextEn", e.target.value)
+                }
+                placeholder={t("admin.promotion.bannerTextEnPlaceholder")}
+              />
+            </label>
+            <label className="admin-label lg:col-span-2">
+              <span className="font-semibold">
+                {t("admin.promotion.bannerTextNl")}
+              </span>
+              <input
+                className="admin-field"
+                value={data.promotion.bannerTextNl || ""}
+                onChange={(e) =>
+                  updatePromotionField("bannerTextNl", e.target.value)
+                }
+                placeholder={t("admin.promotion.bannerTextNlPlaceholder")}
+              />
+            </label>
+          </div>
+        </details>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
             type="button"
             className="admin-btn admin-btn-primary"
@@ -436,178 +857,14 @@ export default function AdminDashboard() {
               ? t("admin.promotion.saving")
               : t("admin.promotion.save")}
           </button>
-          <p className="text-sm text-[#5f736d]">
-            {t("admin.promotion.activeRule")}:{" "}
+          <p className="text-xs text-[#5f736d]">
+            {t("admin.promotion.activeRule")}: {" "}
             {data.promotion.ruleSummary || "-"}
           </p>
         </div>
         {promotionMessage ? (
-          <p className="mt-2 text-sm text-[#2e423d]">{promotionMessage}</p>
+          <p className="mt-2 text-xs text-[#2e423d]">{promotionMessage}</p>
         ) : null}
-      </section>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          label={t("admin.dashboard.totalUsers")}
-          value={usersCount || summary.totalUsers}
-          hint={t("admin.dashboard.hintRegisteredAccounts")}
-        />
-        <StatCard
-          label={t("admin.dashboard.totalOrders")}
-          value={summary.totalOrders}
-          hint={t("admin.dashboard.hintAllTime")}
-        />
-        <StatCard
-          label={t("admin.dashboard.pendingOrders")}
-          value={summary.pendingOrders}
-          hint={t("admin.dashboard.hintNeedsAction")}
-        />
-        <StatCard
-          label={t("admin.dashboard.paidOrders")}
-          value={paidOrders}
-          hint={t("admin.dashboard.hintConfirmedPayments")}
-        />
-        <StatCard
-          label={t("admin.dashboard.quotedOrders")}
-          value={quotedOrders}
-          hint={t("admin.dashboard.hintQuoteSent")}
-        />
-        <StatCard
-          label={t("admin.dashboard.printingOrders")}
-          value={printingOrders}
-          hint={t("admin.dashboard.hintInProduction")}
-        />
-        <StatCard
-          label={t("admin.dashboard.sentOrders")}
-          value={sentOrders}
-          hint={t("admin.dashboard.hintShipped")}
-        />
-        <StatCard
-          label={t("admin.dashboard.deliveredOrders")}
-          value={deliveredOrders}
-          hint={t("admin.dashboard.hintReachedCustomer")}
-        />
-        <StatCard
-          label={t("admin.dashboard.completedOrders")}
-          value={completedOrders}
-          hint={t("admin.dashboard.hintCompletedLifecycle")}
-        />
-        <StatCard
-          label={t("admin.dashboard.cancelledOrders")}
-          value={cancelledOrders}
-          hint={t("admin.dashboard.hintCancelledByAdminUser")}
-        />
-        <StatCard
-          label={t("admin.dashboard.orders24h")}
-          value={ordersToday}
-          hint={t("admin.dashboard.hintLastDay")}
-        />
-        <StatCard
-          label={t("admin.dashboard.orders7d")}
-          value={ordersThisWeek}
-          hint={t("admin.dashboard.hintLastWeek")}
-        />
-        <StatCard
-          label={t("admin.dashboard.orders30d")}
-          value={ordersThisMonth}
-          hint={t("admin.dashboard.hintLastMonth")}
-        />
-        <StatCard
-          label={t("admin.dashboard.uniqueCustomers")}
-          value={uniqueCustomers}
-          hint={t("admin.dashboard.hintCustomersWithOrders")}
-        />
-        <StatCard
-          label={t("admin.dashboard.totalItemQty")}
-          value={totalOrderItems}
-          hint={t("admin.dashboard.hintUnitsAcrossOrders")}
-        />
-        <StatCard
-          label={t("admin.dashboard.avgItemsPerOrder")}
-          value={avgItemsPerOrder.toFixed(2)}
-          hint={t("admin.dashboard.hintOperationalComplexity")}
-        />
-        <StatCard
-          label={t("admin.dashboard.quotedRevenue")}
-          value={formatCurrencyAmount(quotedRevenue)}
-          hint={t("admin.dashboard.hintSumQuotedPrices")}
-        />
-        <StatCard
-          label={t("admin.dashboard.paidRevenue")}
-          value={formatCurrencyAmount(paidRevenue)}
-          hint={t("admin.dashboard.hintRevenuePaidOrders")}
-        />
-        <StatCard
-          label={t("admin.dashboard.avgQuoteValue")}
-          value={formatCurrencyAmount(averageQuotedValue)}
-          hint={t("admin.dashboard.hintAverageQuotedOrder")}
-        />
-        <StatCard
-          label={t("admin.dashboard.products")}
-          value={products.length}
-          hint={t("admin.dashboard.hintCatalogSize")}
-        />
-        <StatCard
-          label={t("admin.dashboard.filamentSkus")}
-          value={filaments.length}
-          hint={t("admin.dashboard.hintMaterialColorEntries")}
-        />
-        <StatCard
-          label={t("admin.dashboard.inStockFilaments")}
-          value={inStockFilaments}
-          hint={t("admin.dashboard.hintAvailableNow")}
-        />
-        <StatCard
-          label={t("admin.dashboard.lowStockFilaments")}
-          value={lowStockFilaments}
-          hint={t("admin.dashboard.hintOneToHundred")}
-        />
-        <StatCard
-          label={t("admin.dashboard.outOfStockFilaments")}
-          value={outOfStockFilaments}
-          hint={t("admin.dashboard.hintNeedsRestock")}
-        />
-        <StatCard
-          label={t("admin.dashboard.materials")}
-          value={uniqueMaterials}
-          hint={t("admin.dashboard.hintDistinctFilamentMaterials")}
-        />
-        <StatCard
-          label={t("admin.dashboard.avgFilamentPricePerGram")}
-          value={formatCurrencyAmount(averageFilamentPrice, 4)}
-          hint={t("admin.dashboard.hintAcrossFilamentSkus")}
-        />
-      </div>
-
-      <section className="admin-panel p-6">
-        <h2 className="text-xl font-semibold mb-4 text-[#16251f]">
-          {t("admin.dashboard.recentOrders")}
-        </h2>
-        {summary.recentOrders.length === 0 ? (
-          <p className="admin-note">{t("admin.noRecentOrders")}</p>
-        ) : (
-          <div className="space-y-3">
-            {summary.recentOrders.map((order) => (
-              <Link
-                key={order.id}
-                to={`/admin/orders/${order.id}`}
-                className="block rounded-xl border border-[#dbe7e2] bg-[#f7fcf9] p-3 transition-colors hover:bg-[#eaf6f2]"
-              >
-                <div className="flex justify-between">
-                  <span className="font-bold text-[#1f312b]">
-                    Project #{order.id.slice(0, 8)}
-                  </span>
-                  <span className="text-sm text-[#5f736d]">
-                    {new Date(order.createdAt).toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-sm text-[#516760]">
-                  {order.fullName} • {formatOrderStatusLabel(order.status)}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
     </AdminLayout>
   );

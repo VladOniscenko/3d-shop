@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrintCraftApi.Data;
@@ -11,9 +12,11 @@ using PrintCraftApi.Data;
 namespace PrintCraftApi.Migrations
 {
     [DbContext(typeof(PrintCraftDb))]
-    partial class PrintCraftDbModelSnapshot : ModelSnapshot
+    [Migration("20260329203447_AddVisitAnalytics")]
+    partial class AddVisitAnalytics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -593,10 +596,6 @@ namespace PrintCraftApi.Migrations
                     b.Property<string>("CountryCode")
                         .HasColumnType("text");
 
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("PagePath")
                         .IsRequired()
                         .HasColumnType("text");
@@ -619,8 +618,6 @@ namespace PrintCraftApi.Migrations
                     b.HasIndex("VisitedAt");
 
                     b.HasIndex("CountryCode", "VisitedAt");
-
-                    b.HasIndex("EventType", "VisitedAt");
 
                     b.HasIndex("VisitorKey", "VisitedAt");
 

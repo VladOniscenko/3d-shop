@@ -143,18 +143,181 @@ public class AdminController : ControllerBase
         var totalOrders = await _db.Orders.CountAsync();
         var pendingOrders = await _db.Orders.CountAsync(o => o.Status == "pending_quote" || o.Status == "pending" || o.Status == "quoted");
 
-        var recentOrders = await _db.Orders
-            .Include(o => o.Items)
-            .OrderByDescending(o => o.CreatedAt)
-            .Take(8)
-            .ToListAsync();
-
         return Ok(new
         {
             totalUsers,
             totalOrders,
-            pendingOrders,
-            recentOrders
+            pendingOrders
+        });
+    }
+
+    [HttpGet("analytics/visits")]
+    public async Task<IActionResult> GetVisitAnalytics()
+    {
+        var now = DateTime.UtcNow;
+
+        var dayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddDays(-13);
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-11);
+        var yearStart = new DateTime(now.Year - 4, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var dayRaw = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= dayStart && (v.EventType == "pageview" || v.EventType == null))
+            .GroupBy(v => v.VisitedAt.Date)
+            .Select(g => new
+            {
+                Day = g.Key,
+                Views = g.Count(),
+                UniqueVisitors = g.Select(x => x.VisitorKey).Distinct().Count()
+            })
+            .ToListAsync();
+
+        var dayMap = dayRaw.ToDictionary(x => x.Day, x => x);
+        var viewsByDay = Enumerable.Range(0, 14)
+            .Select(offset => dayStart.AddDays(offset))
+            .Select(day =>
+            {
+                if (dayMap.TryGetValue(day, out var row))
+                {
+                    return new
+                    {
+                        label = day.ToString("yyyy-MM-dd"),
+                        views = row.Views,
+                        uniqueVisitors = row.UniqueVisitors
+                    };
+                }
+
+                return new
+                {
+                    label = day.ToString("yyyy-MM-dd"),
+                    views = 0,
+                    uniqueVisitors = 0
+                };
+            })
+            .ToList();
+
+        var monthRaw = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= monthStart && (v.EventType == "pageview" || v.EventType == null))
+            .GroupBy(v => new { v.VisitedAt.Year, v.VisitedAt.Month })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Views = g.Count(),
+                UniqueVisitors = g.Select(x => x.VisitorKey).Distinct().Count()
+            })
+            .ToListAsync();
+
+        var monthMap = monthRaw.ToDictionary(x => (x.Year, x.Month), x => x);
+        var viewsByMonth = Enumerable.Range(0, 12)
+            .Select(offset => monthStart.AddMonths(offset))
+            .Select(month =>
+            {
+                var key = (month.Year, month.Month);
+                if (monthMap.TryGetValue(key, out var row))
+                {
+                    return new
+                    {
+                        label = month.ToString("yyyy-MM"),
+                        views = row.Views,
+                        uniqueVisitors = row.UniqueVisitors
+                    };
+                }
+
+                return new
+                {
+                    label = month.ToString("yyyy-MM"),
+                    views = 0,
+                    uniqueVisitors = 0
+                };
+            })
+            .ToList();
+
+        var yearRaw = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= yearStart && (v.EventType == "pageview" || v.EventType == null))
+            .GroupBy(v => v.VisitedAt.Year)
+            .Select(g => new
+            {
+                Year = g.Key,
+                Views = g.Count(),
+                UniqueVisitors = g.Select(x => x.VisitorKey).Distinct().Count()
+            })
+            .ToListAsync();
+
+        var yearMap = yearRaw.ToDictionary(x => x.Year, x => x);
+        var viewsByYear = Enumerable.Range(now.Year - 4, 5)
+            .Select(year =>
+            {
+                if (yearMap.TryGetValue(year, out var row))
+                {
+                    return new
+                    {
+                        label = year.ToString(),
+                        views = row.Views,
+                        uniqueVisitors = row.UniqueVisitors
+                    };
+                }
+
+                return new
+                {
+                    label = year.ToString(),
+                    views = 0,
+                    uniqueVisitors = 0
+                };
+            })
+            .ToList();
+
+        var liveWindowStart = now.AddMinutes(-5);
+        var liveVisitorsNow = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= liveWindowStart)
+            .Select(v => v.VisitorKey)
+            .Distinct()
+            .CountAsync();
+
+        var locationWindowStart = now.AddDays(-30);
+        var topCountries = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= locationWindowStart && (v.EventType == "pageview" || v.EventType == null))
+            .GroupBy(v => string.IsNullOrWhiteSpace(v.CountryCode) ? "UN" : v.CountryCode!)
+            .Select(g => new
+            {
+                countryCode = g.Key,
+                views = g.Count(),
+                uniqueVisitors = g.Select(x => x.VisitorKey).Distinct().Count()
+            })
+            .OrderByDescending(x => x.views)
+            .Take(10)
+            .ToListAsync();
+
+        var topCities = await _db.VisitEvents
+            .AsNoTracking()
+            .Where(v => v.VisitedAt >= locationWindowStart
+                && (v.EventType == "pageview" || v.EventType == null)
+                && !string.IsNullOrWhiteSpace(v.City))
+            .GroupBy(v => new { CountryCode = string.IsNullOrWhiteSpace(v.CountryCode) ? "UN" : v.CountryCode!, City = v.City! })
+            .Select(g => new
+            {
+                countryCode = g.Key.CountryCode,
+                city = g.Key.City,
+                views = g.Count(),
+                uniqueVisitors = g.Select(x => x.VisitorKey).Distinct().Count()
+            })
+            .OrderByDescending(x => x.views)
+            .Take(10)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            generatedAtUtc = now,
+            liveVisitorsNow,
+            viewsByDay,
+            viewsByMonth,
+            viewsByYear,
+            topCountries,
+            topCities
         });
     }
 
