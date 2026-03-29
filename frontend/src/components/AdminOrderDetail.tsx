@@ -1037,7 +1037,7 @@ function buildAdminActionFlow(
           t("admin.order.actionFlow.pendingQuote.steps.addQuoteMessage"),
           t("admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation"),
         ],
-        checks: [baseChecks[0], baseChecks[1], baseChecks[2]],
+        checks: [baseChecks[0], baseChecks[2]],
         suggestedStatus: "quoted",
       };
 
@@ -1062,7 +1062,7 @@ function buildAdminActionFlow(
           t("admin.order.actionFlow.expiredQuote.steps.requestRefresh"),
           t("admin.order.actionFlow.expiredQuote.steps.recalculate"),
         ],
-        checks: [baseChecks[0], baseChecks[1]],
+        checks: [baseChecks[0], baseChecks[2]],
         suggestedStatus: "pending_quote",
       };
 

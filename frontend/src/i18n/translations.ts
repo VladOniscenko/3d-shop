@@ -319,7 +319,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.actionFlow.pendingQuote.steps.setDeliveryPrice":
       "Set delivery price and apply discount only if needed.",
     "admin.order.actionFlow.pendingQuote.steps.addQuoteMessage":
-      "Add a clear quote message and verify shipping details.",
+      "Add a clear quote message; shipping details can be collected later.",
     "admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation":
       "Send quote confirmation and update status to Quoted.",
     "admin.order.actionFlow.quoted.title": "Await customer payment",
@@ -1320,7 +1320,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.actionFlow.pendingQuote.steps.setDeliveryPrice":
       "Stel bezorgkosten in en pas alleen indien nodig korting toe.",
     "admin.order.actionFlow.pendingQuote.steps.addQuoteMessage":
-      "Voeg een duidelijke offertetekst toe en controleer de verzendgegevens.",
+      "Voeg een duidelijke offertetekst toe; verzendgegevens kunnen later worden verzameld.",
     "admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation":
       "Verzend offertebevestiging en zet status op Offerte uitgebracht.",
     "admin.order.actionFlow.quoted.title": "Wacht op betaling van klant",
