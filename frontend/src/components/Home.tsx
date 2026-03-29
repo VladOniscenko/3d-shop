@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import HowItWorks from "./HowItWorks";
+import ModelDiscoveryCards from "./ModelDiscoveryCards";
 import MaterialsSection from "./MaterialsSection";
 import RecentPrints from "./RecentPrints";
 import Footer from "./Footer";
@@ -42,6 +43,7 @@ export default function Home() {
       <Navbar />
       <main className="site-main px-2 sm:px-4 py-10 space-y-10">
         <Hero />
+        <ModelDiscoveryCards />
         {promotion?.isActive && bannerText ? (
           <section className="rounded-2xl border border-[#bfd8cc] bg-gradient-to-r from-[#eaf8f1] via-[#f3fbf7] to-[#e8f5ff] p-4 sm:p-5 shadow-sm">
             <p className="text-xs uppercase tracking-[0.12em] font-semibold text-[#2b5a47]">

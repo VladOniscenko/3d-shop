@@ -19,6 +19,7 @@ import type { OrderItem, Filament } from "../types";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
+import ModelDiscoveryCards from "./ModelDiscoveryCards";
 
 const ALLOWED_UPLOAD_ACCEPT =
   ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
@@ -214,6 +215,10 @@ export default function Quote() {
             {t("quote.title")}
           </h2>
           <p className="site-subheading text-lg">{t("quote.subtitle")}</p>
+        </div>
+
+        <div className="mb-8">
+          <ModelDiscoveryCards compact lowEmphasis inlineMinimal />
         </div>
 
         <form

@@ -43,6 +43,26 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Home
     "home.footer": "© 2026 PrintCraft Collective. All rights reserved.",
     "home.promo.badge": "Quote Offer",
+    "home.modelFinder.badge": "Model Starter",
+    "home.modelFinder.title": "Need a 3D model first? Start here",
+    "home.modelFinder.subtitle":
+      "Explore trusted libraries to find printable files, then upload your favorite model to request a quote.",
+    "home.modelFinder.makerworld.title": "MakerWorld",
+    "home.modelFinder.makerworld.desc":
+      "Curated designs from the Bambu community, organized by printer-friendly quality and trending builds.",
+    "home.modelFinder.makerworld.cta": "Browse models",
+    "home.modelFinder.printables.title": "Printables",
+    "home.modelFinder.printables.desc":
+      "A huge model catalog with practical parts, cosplay files, miniatures, and home tools.",
+    "home.modelFinder.printables.cta": "Find files",
+    "home.modelFinder.thingiverse.title": "Thingiverse",
+    "home.modelFinder.thingiverse.desc":
+      "Classic open model platform with millions of community uploads and remix-ready projects.",
+    "home.modelFinder.thingiverse.cta": "Explore library",
+    "home.modelFinder.custom.title": "Need custom help?",
+    "home.modelFinder.custom.desc":
+      "If you cannot find the right file, describe your idea and we can help turn it into a printable model.",
+    "home.modelFinder.custom.cta": "Request a quote",
 
     // Hero
     "hero.titleLine1": "Custom 3D Prints,",
@@ -1129,6 +1149,26 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Home
     "home.footer": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
     "home.promo.badge": "Offerte-aanbieding",
+    "home.modelFinder.badge": "Model Startpunt",
+    "home.modelFinder.title": "Eerst een 3D-model nodig? Begin hier",
+    "home.modelFinder.subtitle":
+      "Ontdek betrouwbare bibliotheken om printbare bestanden te vinden en upload daarna je favoriete model voor een offerte.",
+    "home.modelFinder.makerworld.title": "MakerWorld",
+    "home.modelFinder.makerworld.desc":
+      "Geselecteerde ontwerpen uit de Bambu-community, met focus op printkwaliteit en populaire builds.",
+    "home.modelFinder.makerworld.cta": "Bekijk modellen",
+    "home.modelFinder.printables.title": "Printables",
+    "home.modelFinder.printables.desc":
+      "Een grote modelcatalogus met praktische onderdelen, cosplay-bestanden, miniaturen en tools.",
+    "home.modelFinder.printables.cta": "Zoek bestanden",
+    "home.modelFinder.thingiverse.title": "Thingiverse",
+    "home.modelFinder.thingiverse.desc":
+      "Klassiek open modelplatform met miljoenen community-uploads en remixbare projecten.",
+    "home.modelFinder.thingiverse.cta": "Verken bibliotheek",
+    "home.modelFinder.custom.title": "Hulp nodig op maat?",
+    "home.modelFinder.custom.desc":
+      "Kun je het juiste bestand niet vinden? Beschrijf je idee en wij helpen je naar een printbaar model.",
+    "home.modelFinder.custom.cta": "Vraag offerte aan",
 
     // Hero
     "hero.titleLine1": "Maatwerk 3D Prints,",
