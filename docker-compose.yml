@@ -24,14 +24,14 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       FrontendBaseUrl: ${FrontendBaseUrl:?FrontendBaseUrl is required}
       BackendBaseUrl: ${BackendBaseUrl:?BackendBaseUrl is required}
       JwtSecret: ${JwtSecret}
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
-      Discord__WebhookUrl: ${Discord__WebhookUrl}
+      Discord__ErrorWebhookUrl: ${Discord__ErrorWebhookUrl}
       Discord__QuoteWebhookUrl: ${Discord__QuoteWebhookUrl}
       Discord__BookingWebhookUrl: ${Discord__BookingWebhookUrl}
       Discord__PaymentReceivedWebhookUrl: ${Discord__PaymentReceivedWebhookUrl}

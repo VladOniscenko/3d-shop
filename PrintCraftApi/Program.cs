@@ -15,6 +15,9 @@ LoadDotEnv(
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Explicitly add environment variables with double underscore support
+builder.Configuration.AddEnvironmentVariables();
+
 // --- SERVICES ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))

@@ -151,9 +151,12 @@ public class OrdersController : ControllerBase
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(order.Id, null, order.Status, "customer", "Quote requested");
 
+        _logger.LogInformation("About to send Discord quote notification for order {OrderId}", order.Id);
         try
         {
+            _logger.LogInformation("Discord webhook service is available, calling SendQuoteRequestedAsync");
             await _discordWebhookService.SendQuoteRequestedAsync(order, user);
+            _logger.LogInformation("Discord webhook call completed for order {OrderId}", order.Id);
         }
         catch (Exception ex)
         {

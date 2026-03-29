@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PrintCraftApi.Models;
 
 namespace PrintCraftApi.Services;
@@ -30,99 +31,142 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
 
     public Task SendUnhandledExceptionAsync(HttpContext context, Exception exception, CancellationToken cancellationToken = default)
     {
-        var webhookUrl = _configuration["Discord__WebhookUrl"];
+        var webhookUrl = _configuration["Discord:ErrorWebhookUrl"];
         if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
 
         var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-        var message = $"Unhandled exception in PrintCraft API\n" +
-            $"Method: {context.Request.Method}\n" +
-            $"Path: {context.Request.Path}\n" +
-            $"UserId: {userId}\n" +
-            $"TraceId: {context.TraceIdentifier}\n" +
-            $"Exception: {exception.GetType().Name}\n" +
-            $"Message: {exception.Message}\n" +
-            $"Stack: {exception.StackTrace}";
+        
+        var embed = new DiscordEmbed
+        {
+            Title = "⚠️ Unhandled Exception",
+            Color = 15158332, // Red
+            Fields = new[]
+            {
+                new DiscordField { Name = "Method", Value = context.Request.Method, Inline = true },
+                new DiscordField { Name = "Path", Value = context.Request.Path.ToString(), Inline = true },
+                new DiscordField { Name = "User ID", Value = userId, Inline = true },
+                new DiscordField { Name = "Exception Type", Value = exception.GetType().Name, Inline = true },
+                new DiscordField { Name = "Message", Value = exception.Message, Inline = false },
+                new DiscordField { Name = "Stack Trace", Value = $"```{exception.StackTrace?.Substring(0, Math.Min(500, exception.StackTrace?.Length ?? 0))}...```", Inline = false },
+                new DiscordField { Name = "Trace ID", Value = context.TraceIdentifier, Inline = false },
+            },
+            Timestamp = DateTime.UtcNow.ToString("o")
+        };
 
-        return PostToWebhookAsync(webhookUrl, message, "global exception", cancellationToken);
+        return PostToWebhookAsync(webhookUrl, embed, "global exception", cancellationToken);
     }
 
-    public Task SendQuoteRequestedAsync(Order order, User user, CancellationToken cancellationToken = default)
+    public async Task SendQuoteRequestedAsync(Order order, User user, CancellationToken cancellationToken = default)
     {
-        var webhookUrl = _configuration["Discord__QuoteWebhookUrl"];
-        if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
+        _logger.LogInformation("=== SendQuoteRequestedAsync START for order {OrderId} ===", order.Id);
+        
+        var webhookUrl = _configuration["Discord:QuoteWebhookUrl"];
+        _logger.LogInformation("Quote webhook URL from config: {Url}", webhookUrl ?? "NULL");
 
-        var message = $"🧾 New quote request\n" +
-            $"orderId: {order.Id}\n" +
-            $"createdAt: {order.CreatedAt:O}\n" +
-            $"status: {order.Status}\n" +
-            $"type: {order.OrderType}\n" +
-            $"userId: {user.Id}\n" +
-            $"name: {user.Name}\n" +
-            $"email: {user.Email}\n" +
-            $"itemCount: {order.Items.Count}\n" +
-            $"items:\n{BuildItemLines(order.Items)}";
+        if (string.IsNullOrWhiteSpace(webhookUrl))
+        {
+            var fallbackWebhookUrl = _configuration["Discord:ErrorWebhookUrl"];
+            _logger.LogWarning("Discord quote webhook is not configured. Fallback URL: {FallbackUrl}", fallbackWebhookUrl ?? "NULL");
+            if (string.IsNullOrWhiteSpace(fallbackWebhookUrl))
+            {
+                _logger.LogWarning("No fallback webhook available. Aborting notification.");
+                return;
+            }
 
-        return PostToWebhookAsync(webhookUrl, message, "quote notification", cancellationToken);
+            _logger.LogWarning("Discord quote webhook is not configured. Falling back to error webhook channel.");
+            webhookUrl = fallbackWebhookUrl;
+        }
+
+        var embed = new DiscordEmbed
+        {
+            Title = "🧾 New Quote Request",
+            Color = 3066993, // Blue-green
+            Fields = new[]
+            {
+                new DiscordField { Name = "Order ID", Value = order.Id.ToString(), Inline = true },
+                new DiscordField { Name = "Created", Value = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss UTC"), Inline = true },
+                new DiscordField { Name = "Status", Value = order.Status, Inline = true },
+                new DiscordField { Name = "Customer Name", Value = user.Name ?? "Unknown", Inline = true },
+                new DiscordField { Name = "Email", Value = user.Email, Inline = true },
+                new DiscordField { Name = "Item Count", Value = order.Items.Count.ToString(), Inline = true },
+                new DiscordField { Name = "Items", Value = BuildItemsForEmbed(order.Items), Inline = false },
+            },
+            Timestamp = DateTime.UtcNow.ToString("o")
+        };
+
+        await PostToWebhookAsync(webhookUrl, embed, "quote notification", cancellationToken);
     }
 
     public Task SendBookingCreatedAsync(Order order, User? user, CancellationToken cancellationToken = default)
     {
-        var webhookUrl = _configuration["Discord__BookingWebhookUrl"];
+        var webhookUrl = _configuration["Discord:BookingWebhookUrl"];
         if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
 
         var userName = user?.Name ?? order.FullName;
         var userEmail = user?.Email ?? "unknown";
 
-        var message = $"📦 New booking created\n" +
-            $"orderId: {order.Id}\n" +
-            $"createdAt: {order.CreatedAt:O}\n" +
-            $"status: {order.Status}\n" +
-            $"type: {order.OrderType}\n" +
-            $"userId: {(order.UserId?.ToString() ?? "unknown")}\n" +
-            $"name: {userName}\n" +
-            $"email: {userEmail}\n" +
-            $"phone: {order.PhoneNumber}\n" +
-            $"address: {order.AddressLine1}, {order.City}, {order.PostalCode}\n" +
-            $"deliveryPrice: {order.DeliveryPrice:F2}\n" +
-            $"subtotal: {order.SubtotalAmount:F2}\n" +
-            $"itemCount: {order.Items.Count}\n" +
-            $"items:\n{BuildItemLines(order.Items)}";
+        var embed = new DiscordEmbed
+        {
+            Title = "📦 New Booking Created",
+            Color = 15844367, // Orange
+            Fields = new[]
+            {
+                new DiscordField { Name = "Order ID", Value = order.Id.ToString(), Inline = true },
+                new DiscordField { Name = "Created", Value = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss UTC"), Inline = true },
+                new DiscordField { Name = "Status", Value = order.Status, Inline = true },
+                new DiscordField { Name = "Customer Name", Value = userName, Inline = true },
+                new DiscordField { Name = "Email", Value = userEmail, Inline = true },
+                new DiscordField { Name = "Phone", Value = order.PhoneNumber ?? "N/A", Inline = true },
+                new DiscordField { Name = "Address", Value = $"{order.AddressLine1}, {order.City}, {order.PostalCode}", Inline = false },
+                new DiscordField { Name = "Item Count", Value = order.Items.Count.ToString(), Inline = true },
+                new DiscordField { Name = "Subtotal", Value = $"€{order.SubtotalAmount:F2}", Inline = true },
+                new DiscordField { Name = "Delivery Price", Value = $"€{order.DeliveryPrice:F2}", Inline = true },
+                new DiscordField { Name = "Items", Value = BuildItemsForEmbed(order.Items), Inline = false },
+            },
+            Timestamp = DateTime.UtcNow.ToString("o")
+        };
 
-        return PostToWebhookAsync(webhookUrl, message, "booking notification", cancellationToken);
+        return PostToWebhookAsync(webhookUrl, embed, "booking notification", cancellationToken);
     }
 
     public Task SendPaymentReceivedAsync(Order order, User? user, decimal paidAmount, CancellationToken cancellationToken = default)
     {
-        var webhookUrl = _configuration["Discord__PaymentReceivedWebhookUrl"];
+        var webhookUrl = _configuration["Discord:PaymentReceivedWebhookUrl"];
         if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
 
         var userName = user?.Name ?? order.FullName;
         var userEmail = user?.Email ?? "unknown";
 
-        var message = "✅ Payment received\n" +
-            $"orderId: {order.Id}\n" +
-            $"paidAt: {DateTime.UtcNow:O}\n" +
-            $"status: {order.Status}\n" +
-            $"type: {order.OrderType}\n" +
-            $"userId: {(order.UserId?.ToString() ?? "unknown")}\n" +
-            $"name: {userName}\n" +
-            $"email: {userEmail}\n" +
-            $"amountPaid: {paidAmount:F2}\n" +
-            $"deliveryPrice: {order.DeliveryPrice:F2}\n" +
-            $"itemCount: {order.Items.Count}\n" +
-            $"items:\n{BuildItemLines(order.Items)}";
+        var embed = new DiscordEmbed
+        {
+            Title = "✅ Payment Received",
+            Color = 3066993, // Green-ish
+            Fields = new[]
+            {
+                new DiscordField { Name = "Order ID", Value = order.Id.ToString(), Inline = true },
+                new DiscordField { Name = "Paid At", Value = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"), Inline = true },
+                new DiscordField { Name = "Status", Value = order.Status, Inline = true },
+                new DiscordField { Name = "Customer Name", Value = userName, Inline = true },
+                new DiscordField { Name = "Email", Value = userEmail, Inline = true },
+                new DiscordField { Name = "Amount Paid", Value = $"€{paidAmount:F2}", Inline = true },
+                new DiscordField { Name = "Delivery Price", Value = $"€{order.DeliveryPrice:F2}", Inline = true },
+                new DiscordField { Name = "Item Count", Value = order.Items.Count.ToString(), Inline = true },
+                new DiscordField { Name = "Items", Value = BuildItemsForEmbed(order.Items), Inline = false },
+            },
+            Timestamp = DateTime.UtcNow.ToString("o")
+        };
 
-        return PostToWebhookAsync(webhookUrl, message, "payment received notification", cancellationToken);
+        return PostToWebhookAsync(webhookUrl, embed, "payment received notification", cancellationToken);
     }
 
-    private async Task PostToWebhookAsync(string webhookUrl, string content, string logContext, CancellationToken cancellationToken)
+    private async Task PostToWebhookAsync(string webhookUrl, DiscordEmbed embed, string logContext, CancellationToken cancellationToken)
     {
         try
         {
-            var payload = new { content = TruncateForDiscord(content, 1900) };
+            var payload = new { embeds = new[] { embed } };
             using var request = new HttpRequestMessage(HttpMethod.Post, webhookUrl)
             {
-                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                Content = new StringContent(JsonSerializer.Serialize(payload, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }), Encoding.UTF8, "application/json")
             };
 
             var client = _httpClientFactory.CreateClient();
@@ -131,7 +175,10 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
             {
                 var body = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogWarning("Discord {Context} failed. Status: {StatusCode}. Body: {Body}", logContext, (int)response.StatusCode, body);
+                return;
             }
+
+            _logger.LogInformation("Discord {Context} sent successfully with status code {StatusCode}", logContext, (int)response.StatusCode);
         }
         catch (Exception ex)
         {
@@ -139,21 +186,49 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
         }
     }
 
-    private static string BuildItemLines(IEnumerable<OrderItem> items)
+    private static string BuildItemsForEmbed(IEnumerable<OrderItem> items)
     {
-        return string.Join("\n", items.Select((item, index) =>
+        if (!items.Any()) return "No items";
+        
+        var itemList = string.Join("\n", items.Select((item, index) =>
         {
             var model = !string.IsNullOrWhiteSpace(item.fileName)
                 ? item.fileName
-                : (!string.IsNullOrWhiteSpace(item.FileUrl) ? "uploaded_file" : "text_description");
-            var notes = string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes.Trim();
-            return $"{index + 1}. model={model}, material={item.Material}, color={item.Color}, qty={Math.Max(item.Count, 1)}, notes={notes}";
+                : (!string.IsNullOrWhiteSpace(item.FileUrl) ? "📁 Uploaded file" : "📝 Description");
+            var notes = string.IsNullOrWhiteSpace(item.Notes) ? "(no notes)" : item.Notes.Trim();
+            return $"`{index + 1}.` {model} | {item.Material} | {item.Color} | qty: {Math.Max(item.Count, 1)}\n     └─ {notes}";
         }));
+        
+        return itemList.Length > 1024 ? itemList.Substring(0, 1020) + "..." : itemList;
     }
+}
 
-    private static string TruncateForDiscord(string input, int maxLen)
-    {
-        if (string.IsNullOrEmpty(input) || input.Length <= maxLen) return input;
-        return input[..(maxLen - 3)] + "...";
-    }
+public class DiscordEmbed
+{
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("color")]
+    public int? Color { get; set; }
+
+    [JsonPropertyName("fields")]
+    public DiscordField[]? Fields { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public string? Timestamp { get; set; }
+}
+
+public class DiscordField
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("value")]
+    public string? Value { get; set; }
+
+    [JsonPropertyName("inline")]
+    public bool Inline { get; set; } = false;
 }

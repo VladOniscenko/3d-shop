@@ -331,7 +331,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPut("orders/{id:guid}/quote")]
-    public async Task<IActionResult> DoQuote([FromRoute] Guid id, [FromBody] QuoteRequest payload)
+    public async Task<IActionResult> DoQuote([FromRoute] Guid id, [FromBody] AdminQuoteRequest payload)
     {
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
@@ -674,7 +674,7 @@ public class AdminController : ControllerBase
         }
     }
 
-    public record QuoteRequest(decimal Price, string Message);
+    public record AdminQuoteRequest(decimal Price, string Message);
     public record NotesRequest(string? InternalNotes, string? CustomerNotes);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
