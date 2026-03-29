@@ -32,6 +32,7 @@ export default function Quote() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -54,50 +55,101 @@ export default function Quote() {
   );
   const availableColors = Array.from(new Set(filaments.map((f) => f.color)));
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
+  const uploadSelectedFiles = async (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
 
     setIsUploading(true);
+    let failedCount = 0;
+    let firstErrorMessage: string | null = null;
+    const uploadedItems: OrderItem[] = [];
+
     try {
-      const res = await api.post("/upload", formData);
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
 
-      const defaultMat = availableMaterials[0] || "Custom";
-      const defaultColor = availableColors[0] || "Custom";
+        try {
+          const res = await api.post("/upload", formData);
 
-      const newItem: OrderItem = {
-        fileUrl: res.data.url,
-        fileName: file.name,
-        notes: "",
-        imageUrl: "",
-        material: defaultMat,
-        color: defaultColor,
-        price: 0,
-        count: 1,
-      };
-      setItems([...items, newItem]);
-    } catch (err: any) {
-      const backendMessage = err?.response?.data?.message;
-      const isUnsupportedType =
-        typeof backendMessage === "string" &&
-        /unsupported file type|unsupported content type/i.test(backendMessage);
+          const defaultMat = availableMaterials[0] || "Custom";
+          const defaultColor = availableColors[0] || "Custom";
 
-      if (isUnsupportedType) {
-        notifyError(
-          `${t("quote.uploadUnsupportedType")} ${t("quote.allowedFilesInline")}`,
-        );
-      } else if (backendMessage) {
-        notifyError(backendMessage);
-      } else {
-        notifyError(t("quote.uploadFailed"));
+          const newItem: OrderItem = {
+            fileUrl: res.data.url,
+            fileName: file.name,
+            notes: "",
+            imageUrl: "",
+            material: defaultMat,
+            color: defaultColor,
+            price: 0,
+            count: 1,
+          };
+
+          uploadedItems.push(newItem);
+        } catch (err: any) {
+          failedCount += 1;
+
+          if (!firstErrorMessage) {
+            const backendMessage = err?.response?.data?.message;
+            const isUnsupportedType =
+              typeof backendMessage === "string" &&
+              /unsupported file type|unsupported content type/i.test(
+                backendMessage,
+              );
+
+            if (isUnsupportedType) {
+              firstErrorMessage = `${t("quote.uploadUnsupportedType")} ${t("quote.allowedFilesInline")}`;
+            } else {
+              firstErrorMessage = backendMessage || t("quote.uploadFailed");
+            }
+          }
+        }
+      }
+
+      if (uploadedItems.length > 0) {
+        setItems((prev) => [...prev, ...uploadedItems]);
+      }
+
+      if (failedCount > 0) {
+        const hasSuccessfulUploads = uploadedItems.length > 0;
+        if (hasSuccessfulUploads) {
+          notifyError(
+            `${t("quote.uploadPartialFailed")} (${failedCount}/${selectedFiles.length})`,
+          );
+        } else {
+          notifyError(firstErrorMessage || t("quote.uploadFailed"));
+        }
       }
     } finally {
       setIsUploading(false);
-      e.target.value = "";
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? []);
+    await uploadSelectedFiles(selectedFiles);
+    e.target.value = "";
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!isUploading) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isUploading) return;
+
+    const droppedFiles = Array.from(e.dataTransfer.files ?? []);
+    await uploadSelectedFiles(droppedFiles);
   };
 
   const removeItem = (index: number) => {
@@ -185,6 +237,7 @@ export default function Quote() {
                     {t("quote.addFile")}
                     <input
                       type="file"
+                      multiple
                       accept={ALLOWED_UPLOAD_ACCEPT}
                       className="hidden"
                       onChange={handleFileUpload}
@@ -204,11 +257,26 @@ export default function Quote() {
               <p className="mb-4 text-xs text-[#5f736d]">
                 {t("quote.allowedFilesInline")}
               </p>
+              <p className="mb-4 text-xs text-amber-700">
+                {t("quote.materialAvailabilityDisclaimer")}
+              </p>
 
               {items.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-200 rounded-xl py-12 text-center">
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-xl py-12 text-center transition-colors ${
+                    isDragOver
+                      ? "border-emerald-400 bg-emerald-50/50"
+                      : "border-gray-200"
+                  } ${isUploading ? "opacity-70" : ""}`}
+                >
                   <Upload className="mx-auto text-gray-300 mb-2" size={32} />
                   <p className="text-gray-400">{t("quote.noFiles")}</p>
+                  <p className="mt-2 text-xs text-[#5f736d]">
+                    {t("quote.dragDropHint")}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">

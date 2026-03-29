@@ -870,8 +870,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.title": "Request a Quote",
     "quote.subtitle": "Upload models and choose from our live inventory.",
     "quote.models": "Your 3D Models",
-    "quote.addFile": "Add File",
+    "quote.addFile": "Add Files",
     "quote.noFiles": "No files added yet.",
+    "quote.dragDropHint": "Drag and drop files here",
     "quote.allowedFilesInline":
       "Allowed files: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
     "quote.shipping": "Shipping Info",
@@ -879,8 +880,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.secure": "Safe & Secure 3D Printing",
     "quote.uploadUnsupportedType": "Unsupported file type.",
     "quote.uploadFailed": "Upload failed. Please try again.",
+    "quote.uploadPartialFailed":
+      "Some files could not be uploaded. Please review and try again.",
     "quote.invalidShipping": "Please fix shipping info before submitting.",
     "quote.submitFailed": "Failed to submit quote. Check your connection.",
+    "quote.materialAvailabilityDisclaimer":
+      "Requested materials or colors may not always be available. We will confirm suitable alternatives with you if needed.",
     "quote.material": "Material",
     "quote.color": "Color",
     "quote.quantity": "Quantity",
@@ -1968,8 +1973,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.title": "Vraag een Offerte Aan",
     "quote.subtitle": "Upload modellen en kies uit onze actuele voorraad.",
     "quote.models": "Jouw 3D Modellen",
-    "quote.addFile": "Bestand Toevoegen",
+    "quote.addFile": "Bestanden Toevoegen",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
+    "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":
       "Toegestane bestanden: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
     "quote.shipping": "Verzendgegevens",
@@ -1977,10 +1983,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.secure": "Veilig & Betrouwbaar 3D Printen",
     "quote.uploadUnsupportedType": "Niet-ondersteund bestandstype.",
     "quote.uploadFailed": "Upload mislukt. Probeer opnieuw.",
+    "quote.uploadPartialFailed":
+      "Sommige bestanden konden niet worden geupload. Controleer en probeer opnieuw.",
     "quote.invalidShipping":
       "Controleer je verzendgegevens voordat je verzendt.",
     "quote.submitFailed":
       "Offerte verzenden mislukt. Controleer je verbinding.",
+    "quote.materialAvailabilityDisclaimer":
+      "Aangevraagde materialen of kleuren zijn mogelijk niet altijd beschikbaar. We stemmen indien nodig geschikte alternatieven met je af.",
     "quote.material": "Materiaal",
     "quote.color": "Kleur",
     "quote.quantity": "Aantal",
