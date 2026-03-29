@@ -22,17 +22,20 @@ public class PaymentsController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly PaymentClient _paymentClient;
     private readonly IEmailService _emailService;
+    private readonly IDiscordWebhookService _discordWebhookService;
     private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
         PrintCraftDb db,
         IConfiguration configuration,
         IEmailService emailService,
+        IDiscordWebhookService discordWebhookService,
         ILogger<PaymentsController> logger)
     {
         _db = db;
         _configuration = configuration;
         _emailService = emailService;
+        _discordWebhookService = discordWebhookService;
         _logger = logger;
         var mollieKey = GetRequiredConfig("MollieKey");
         _paymentClient = new PaymentClient(mollieKey);
@@ -197,6 +200,19 @@ public class PaymentsController : ControllerBase
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(newOrder.Id, null, newOrder.Status, "system", "Online checkout order created");
 
+        try
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                await _discordWebhookService.SendBookingCreatedAsync(newOrder, user);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed sending booking Discord notification for order {OrderId}", newOrder.Id);
+        }
+
         var paymentRequest = new PaymentRequest()
         {
             Amount = new Amount(Currency.EUR, finalTotal.ToString("F2")),
@@ -257,12 +273,15 @@ public class PaymentsController : ControllerBase
                         if (!wasAlreadyPaid)
                         {
                             var user = await _db.Users.FindAsync(order.UserId);
+                            var paidAmount = order.QuotedPrice
+                                ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+
                             if (user != null)
                             {
-                                var paidAmount = order.QuotedPrice
-                                    ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
                                 await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
                             }
+
+                            await _discordWebhookService.SendPaymentReceivedAsync(order, user, paidAmount);
                         }
 
                         await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Payment marked as paid");

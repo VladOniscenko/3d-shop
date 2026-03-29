@@ -32,6 +32,9 @@ services:
       JwtIssuer: ${JwtIssuer}
       JwtAudience: ${JwtAudience}
       Discord__WebhookUrl: ${Discord__WebhookUrl}
+      Discord__QuoteWebhookUrl: ${Discord__QuoteWebhookUrl}
+      Discord__BookingWebhookUrl: ${Discord__BookingWebhookUrl}
+      Discord__PaymentReceivedWebhookUrl: ${Discord__PaymentReceivedWebhookUrl}
       MollieKey: ${MollieKey:?MollieKey is required}
       Email__SenderName: ${Email__SenderName}
       Email__SenderEmail: ${Email__SenderEmail}

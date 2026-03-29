@@ -17,17 +17,20 @@ public class OrdersController : ControllerBase
     private readonly PrintCraftDb _db;
     private readonly IWebHostEnvironment _env;
     private readonly IEmailService _emailService;
+    private readonly IDiscordWebhookService _discordWebhookService;
     private readonly ILogger<OrdersController> _logger;
 
     public OrdersController(
         PrintCraftDb db,
         IWebHostEnvironment env,
         IEmailService emailService,
+        IDiscordWebhookService discordWebhookService,
         ILogger<OrdersController> logger)
     {
         _db = db;
         _env = env;
         _emailService = emailService;
+        _discordWebhookService = discordWebhookService;
         _logger = logger;
     }
 
@@ -147,6 +150,15 @@ public class OrdersController : ControllerBase
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(order.Id, null, order.Status, "customer", "Quote requested");
+
+        try
+        {
+            await _discordWebhookService.SendQuoteRequestedAsync(order, user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed sending quote Discord notification for order {OrderId}", order.Id);
+        }
 
         try
         {
@@ -309,6 +321,7 @@ public class OrdersController : ControllerBase
             System.IO.File.Delete(filePath);
         }
     }
+
 }
 
 public record QuoteRequest(List<QuoteItemRequest> Items);

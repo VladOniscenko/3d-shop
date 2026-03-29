@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +35,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["BackendBaseUrl"]))
 var frontendBaseUrl = builder.Configuration["FrontendBaseUrl"]!.TrimEnd('/');
 
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionString));
+builder.Services.AddSingleton<IDiscordWebhookService, DiscordWebhookService>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -189,9 +189,10 @@ app.UseExceptionHandler(errorApp =>
             var logger = context.RequestServices
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("GlobalExceptionHandler");
+            var discordWebhookService = context.RequestServices.GetRequiredService<IDiscordWebhookService>();
 
             logger.LogError(exception, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
-            await SendDiscordExceptionAsync(context, exception, logger);
+            await discordWebhookService.SendUnhandledExceptionAsync(context, exception);
         }
 
         if (!context.Response.HasStarted)
@@ -248,52 +249,4 @@ static void LoadDotEnv(params string[] candidatePaths)
             }
         }
     }
-}
-
-static async Task SendDiscordExceptionAsync(HttpContext context, Exception exception, ILogger logger)
-{
-    try
-    {
-        var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
-        var webhookUrl = configuration["Discord__WebhookUrl"];
-        if (string.IsNullOrWhiteSpace(webhookUrl)) return;
-
-        var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-        var method = context.Request.Method;
-        var path = context.Request.Path.ToString();
-        var traceId = context.TraceIdentifier;
-        var message = $"Unhandled exception in PrintCraft API\\n" +
-            $"Method: {method}\\n" +
-            $"Path: {path}\\n" +
-            $"UserId: {userId}\\n" +
-            $"TraceId: {traceId}\\n" +
-            $"Exception: {exception.GetType().Name}\\n" +
-            $"Message: {exception.Message}\\n" +
-            $"Stack: {exception.StackTrace}";
-
-        var payload = new
-        {
-            content = TruncateForDiscord(message, 1900)
-        };
-
-        var clientFactory = context.RequestServices.GetRequiredService<IHttpClientFactory>();
-        var client = clientFactory.CreateClient();
-        using var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        using var response = await client.PostAsync(webhookUrl, body);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Discord webhook notification failed with status code {StatusCode}", (int)response.StatusCode);
-        }
-    }
-    catch (Exception notifyEx)
-    {
-        logger.LogWarning(notifyEx, "Failed to send exception notification to Discord webhook.");
-    }
-}
-
-static string TruncateForDiscord(string input, int maxLen)
-{
-    if (string.IsNullOrEmpty(input) || input.Length <= maxLen) return input;
-    return input[..(maxLen - 3)] + "...";
 }
