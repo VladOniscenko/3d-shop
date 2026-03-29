@@ -16,7 +16,9 @@ export default function Home() {
   useEffect(() => {
     const fetchPromotion = async () => {
       try {
-        const res = await api.get<ActiveQuotePromotion>("/promotions/quote/active");
+        const res = await api.get<ActiveQuotePromotion>(
+          "/promotions/quote/active",
+        );
         if (res.data?.isActive) {
           setPromotion(res.data);
         } else {

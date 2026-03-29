@@ -96,13 +96,14 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const [res, commsRes, statusRes, paymentsRes, promotionRes] = await Promise.all([
-          api.get(`/admin/orders/${id}`),
-          api.get(`/admin/orders/${id}/communications`),
-          api.get(`/admin/orders/${id}/status-history`),
-          api.get(`/admin/orders/${id}/payments`),
-          api.get(`/admin/promotions/quote`),
-        ]);
+        const [res, commsRes, statusRes, paymentsRes, promotionRes] =
+          await Promise.all([
+            api.get(`/admin/orders/${id}`),
+            api.get(`/admin/orders/${id}/communications`),
+            api.get(`/admin/orders/${id}/status-history`),
+            api.get(`/admin/orders/${id}/payments`),
+            api.get(`/admin/promotions/quote`),
+          ]);
         applyOrderData(res.data);
         setCommunications(commsRes.data || []);
         setStatusHistory(statusRes.data || []);

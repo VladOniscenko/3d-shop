@@ -246,7 +246,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.promotion.secondPercent": "Second item discount (%)",
     "admin.promotion.bannerTextEn": "Banner text (English)",
     "admin.promotion.bannerTextNl": "Banner text (Dutch)",
-    "admin.promotion.bannerTextEnPlaceholder": "e.g. Buy 1 get 1 free on quote orders",
+    "admin.promotion.bannerTextEnPlaceholder":
+      "e.g. Buy 1 get 1 free on quote orders",
     "admin.promotion.bannerTextNlPlaceholder":
       "bijv. Koop 1 krijg 1 gratis op offerte-orders",
     "admin.promotion.activeRule": "Active rule",

@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
-import type { Filament, Order, Product, QuotePromotionSettings } from "../types";
+import type {
+  Filament,
+  Order,
+  Product,
+  QuotePromotionSettings,
+} from "../types";
 import { formatOrderStatusLabel } from "../utils/orderStatus";
 import { useI18n } from "../i18n/I18nContext";
 import { formatCurrencyAmount } from "../utils/currency";
@@ -78,17 +83,16 @@ export default function AdminDashboard() {
           productsRes,
           filamentsRes,
           promotionRes,
-        ] =
-          await Promise.all([
-            api.get<Summary>("/admin/summary"),
-            api.get<OrdersResponse>(
-              "/admin/orders?page=1&pageSize=5000&sortBy=createdAt&sortDir=desc",
-            ),
-            api.get<{ totalCount: number }>("/admin/users?page=1&pageSize=1"),
-            api.get<Product[]>("/products"),
-            api.get<Filament[]>("/filaments"),
-            api.get<QuotePromotionSettings>("/admin/promotions/quote"),
-          ]);
+        ] = await Promise.all([
+          api.get<Summary>("/admin/summary"),
+          api.get<OrdersResponse>(
+            "/admin/orders?page=1&pageSize=5000&sortBy=createdAt&sortDir=desc",
+          ),
+          api.get<{ totalCount: number }>("/admin/users?page=1&pageSize=1"),
+          api.get<Product[]>("/products"),
+          api.get<Filament[]>("/filaments"),
+          api.get<QuotePromotionSettings>("/admin/promotions/quote"),
+        ]);
 
         setData({
           summary: summaryRes.data,
@@ -272,15 +276,21 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-semibold mb-1 text-[#16251f]">
           {t("admin.promotion.title")}
         </h2>
-        <p className="text-sm text-[#5f736d] mb-4">{t("admin.promotion.subtitle")}</p>
+        <p className="text-sm text-[#5f736d] mb-4">
+          {t("admin.promotion.subtitle")}
+        </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.promotion.enabled")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.enabled")}
+            </span>
             <select
               className="admin-field"
               value={data.promotion.isEnabled ? "yes" : "no"}
-              onChange={(e) => updatePromotionField("isEnabled", e.target.value === "yes")}
+              onChange={(e) =>
+                updatePromotionField("isEnabled", e.target.value === "yes")
+              }
             >
               <option value="no">{t("admin.promotion.no")}</option>
               <option value="yes">{t("admin.promotion.yes")}</option>
@@ -288,12 +298,17 @@ export default function AdminDashboard() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">{t("admin.promotion.bannerEnabled")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.bannerEnabled")}
+            </span>
             <select
               className="admin-field"
               value={data.promotion.showBannerOnHome ? "yes" : "no"}
               onChange={(e) =>
-                updatePromotionField("showBannerOnHome", e.target.value === "yes")
+                updatePromotionField(
+                  "showBannerOnHome",
+                  e.target.value === "yes",
+                )
               }
             >
               <option value="no">{t("admin.promotion.no")}</option>
@@ -302,7 +317,9 @@ export default function AdminDashboard() {
           </label>
 
           <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">{t("admin.promotion.ruleType")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.ruleType")}
+            </span>
             <select
               className="admin-field"
               value={data.promotion.promotionType}
@@ -313,7 +330,9 @@ export default function AdminDashboard() {
                 )
               }
             >
-              <option value="buy_x_get_y">{t("admin.promotion.rule.buyXGetY")}</option>
+              <option value="buy_x_get_y">
+                {t("admin.promotion.rule.buyXGetY")}
+              </option>
               <option value="second_item_percent">
                 {t("admin.promotion.rule.secondPercent")}
               </option>
@@ -323,33 +342,45 @@ export default function AdminDashboard() {
           {data.promotion.promotionType === "buy_x_get_y" ? (
             <>
               <label className="admin-label">
-                <span className="font-semibold">{t("admin.promotion.buyQty")}</span>
+                <span className="font-semibold">
+                  {t("admin.promotion.buyQty")}
+                </span>
                 <input
                   type="number"
                   min={1}
                   className="admin-field"
                   value={data.promotion.buyQuantity}
                   onChange={(e) =>
-                    updatePromotionField("buyQuantity", parseInt(e.target.value, 10) || 1)
+                    updatePromotionField(
+                      "buyQuantity",
+                      parseInt(e.target.value, 10) || 1,
+                    )
                   }
                 />
               </label>
               <label className="admin-label">
-                <span className="font-semibold">{t("admin.promotion.freeQty")}</span>
+                <span className="font-semibold">
+                  {t("admin.promotion.freeQty")}
+                </span>
                 <input
                   type="number"
                   min={1}
                   className="admin-field"
                   value={data.promotion.freeQuantity}
                   onChange={(e) =>
-                    updatePromotionField("freeQuantity", parseInt(e.target.value, 10) || 1)
+                    updatePromotionField(
+                      "freeQuantity",
+                      parseInt(e.target.value, 10) || 1,
+                    )
                   }
                 />
               </label>
             </>
           ) : (
             <label className="admin-label lg:col-span-2">
-              <span className="font-semibold">{t("admin.promotion.secondPercent")}</span>
+              <span className="font-semibold">
+                {t("admin.promotion.secondPercent")}
+              </span>
               <input
                 type="number"
                 min={1}
@@ -367,20 +398,28 @@ export default function AdminDashboard() {
           )}
 
           <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">{t("admin.promotion.bannerTextEn")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.bannerTextEn")}
+            </span>
             <input
               className="admin-field"
               value={data.promotion.bannerTextEn || ""}
-              onChange={(e) => updatePromotionField("bannerTextEn", e.target.value)}
+              onChange={(e) =>
+                updatePromotionField("bannerTextEn", e.target.value)
+              }
               placeholder={t("admin.promotion.bannerTextEnPlaceholder")}
             />
           </label>
           <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">{t("admin.promotion.bannerTextNl")}</span>
+            <span className="font-semibold">
+              {t("admin.promotion.bannerTextNl")}
+            </span>
             <input
               className="admin-field"
               value={data.promotion.bannerTextNl || ""}
-              onChange={(e) => updatePromotionField("bannerTextNl", e.target.value)}
+              onChange={(e) =>
+                updatePromotionField("bannerTextNl", e.target.value)
+              }
               placeholder={t("admin.promotion.bannerTextNlPlaceholder")}
             />
           </label>
@@ -393,10 +432,13 @@ export default function AdminDashboard() {
             onClick={savePromotion}
             disabled={savingPromotion}
           >
-            {savingPromotion ? t("admin.promotion.saving") : t("admin.promotion.save")}
+            {savingPromotion
+              ? t("admin.promotion.saving")
+              : t("admin.promotion.save")}
           </button>
           <p className="text-sm text-[#5f736d]">
-            {t("admin.promotion.activeRule")}: {data.promotion.ruleSummary || "-"}
+            {t("admin.promotion.activeRule")}:{" "}
+            {data.promotion.ruleSummary || "-"}
           </p>
         </div>
         {promotionMessage ? (

@@ -272,7 +272,11 @@ export default function OrderPricingPanel({
               type="button"
               className="admin-btn admin-btn-secondary mt-3"
               onClick={() => onApplyQuotePromotion?.()}
-              disabled={pricingLocked || applyingQuotePromotion || !onApplyQuotePromotion}
+              disabled={
+                pricingLocked ||
+                applyingQuotePromotion ||
+                !onApplyQuotePromotion
+              }
             >
               {applyingQuotePromotion
                 ? t("admin.orderDetail.promotionApplying")
