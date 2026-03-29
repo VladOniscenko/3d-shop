@@ -296,8 +296,105 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     "admin.order.quoteExpires": "Quote Expires",
     "admin.order.actionFlowTitle": "Recommended Action Flow",
+    "admin.order.loading": "Loading...",
+    "admin.order.titlePrefix": "Order",
     "admin.order.checkOk": "OK",
     "admin.order.checkTodo": "TODO",
+    "admin.order.actionFlow.checks.allItemPricesSet": "All item prices set",
+    "admin.order.actionFlow.checks.shippingDetailsComplete":
+      "Shipping details complete",
+    "admin.order.actionFlow.checks.quoteMessagePresent":
+      "Quote message present",
+    "admin.order.actionFlow.checks.paymentAttemptExists":
+      "Payment attempt exists",
+    "admin.order.actionFlow.checks.paidPaymentConfirmed":
+      "Paid payment confirmed",
+    "admin.order.actionFlow.checks.trackingCodeAdded": "Tracking code added",
+    "admin.order.actionFlow.pendingQuote.title":
+      "Prepare quote before customer confirmation",
+    "admin.order.actionFlow.pendingQuote.steps.reviewModels":
+      "Review uploaded model files and customer instructions carefully.",
+    "admin.order.actionFlow.pendingQuote.steps.setItemPrice":
+      "Set price per item based on complexity, print time, and material.",
+    "admin.order.actionFlow.pendingQuote.steps.setDeliveryPrice":
+      "Set delivery price and apply discount only if needed.",
+    "admin.order.actionFlow.pendingQuote.steps.addQuoteMessage":
+      "Add a clear quote message and verify shipping details.",
+    "admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation":
+      "Send quote confirmation and update status to Quoted.",
+    "admin.order.actionFlow.quoted.title": "Await customer payment",
+    "admin.order.actionFlow.quoted.steps.keepPricingStable":
+      "Keep pricing stable unless customer requests a revision.",
+    "admin.order.actionFlow.quoted.steps.monitorExpiry":
+      "Monitor quote expiry date and payment attempts.",
+    "admin.order.actionFlow.quoted.steps.waitForPayment":
+      "Do not start production before payment is confirmed.",
+    "admin.order.actionFlow.quoted.steps.repriceIfChanged":
+      "If changes are requested, move back to Pending Quote and reprice.",
+    "admin.order.actionFlow.expiredQuote.title": "Quote expired, request refresh",
+    "admin.order.actionFlow.expiredQuote.steps.noFulfillment":
+      "Do not print or ship while quote is expired.",
+    "admin.order.actionFlow.expiredQuote.steps.requestRefresh":
+      "Ask customer to request a new quote from their order page.",
+    "admin.order.actionFlow.expiredQuote.steps.recalculate":
+      "Re-check model scope, recalculate pricing, and send updated quote.",
+    "admin.order.actionFlow.pendingPayment.title": "Payment in progress",
+    "admin.order.actionFlow.pendingPayment.steps.checkAttempts":
+      "Check payment attempts and webhook result in payment history.",
+    "admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid":
+      "If paid is confirmed, move forward with production flow.",
+    "admin.order.actionFlow.pendingPayment.steps.returnToQuote":
+      "If payment fails or expires, return to quote flow.",
+    "admin.order.actionFlow.paid.title": "Ready to start production",
+    "admin.order.actionFlow.paid.steps.confirmPayment":
+      "Confirm payment amount/reference and selected print specs.",
+    "admin.order.actionFlow.paid.steps.confirmCapacity":
+      "Confirm printer availability and material stock.",
+    "admin.order.actionFlow.paid.steps.startProduction":
+      "Start production and update status to Printing.",
+    "admin.order.actionFlow.printing.title": "Production and shipment prep",
+    "admin.order.actionFlow.printing.steps.completeQualityChecks":
+      "Complete print and quality checks before packaging.",
+    "admin.order.actionFlow.printing.steps.createLabel":
+      "Create shipping label and enter track and trace.",
+    "admin.order.actionFlow.printing.steps.sendTracking":
+      "Send tracking email and update status to Sent or Shipped.",
+    "admin.order.actionFlow.shipped.title": "In transit follow-up",
+    "admin.order.actionFlow.shipped.steps.verifyTracking":
+      "Ensure tracking code and URL are correct.",
+    "admin.order.actionFlow.shipped.steps.monitorCarrier":
+      "Monitor carrier updates and delivery confirmation.",
+    "admin.order.actionFlow.shipped.steps.markDelivered":
+      "Update status to Delivered when handoff is confirmed.",
+    "admin.order.actionFlow.delivered.title": "Post-delivery completion",
+    "admin.order.actionFlow.delivered.steps.confirmDelivery":
+      "Confirm delivery with tracking evidence.",
+    "admin.order.actionFlow.delivered.steps.handleSupport":
+      "Handle support issues if customer reports problems.",
+    "admin.order.actionFlow.delivered.steps.closeOrder":
+      "Close order as Completed when no pending actions remain.",
+    "admin.order.actionFlow.completed.title": "Order closed",
+    "admin.order.actionFlow.completed.steps.noActionRequired":
+      "No operational action required.",
+    "admin.order.actionFlow.completed.steps.reopenIfNeeded":
+      "Only reopen status if a verified correction is needed.",
+    "admin.order.actionFlow.failed.title": "Resolve payment or process failure",
+    "admin.order.actionFlow.failed.steps.reviewErrors":
+      "Review payment errors and communication history.",
+    "admin.order.actionFlow.failed.steps.contactCustomer":
+      "Contact customer with clear next steps.",
+    "admin.order.actionFlow.failed.steps.returnFlow":
+      "If customer retries, move back to quote/payment flow.",
+    "admin.order.actionFlow.cancelled.title": "Order cancelled",
+    "admin.order.actionFlow.cancelled.steps.noFulfillment":
+      "No fulfillment action should be taken.",
+    "admin.order.actionFlow.cancelled.steps.documentReason":
+      "Keep cancellation reason documented in notes.",
+    "admin.order.actionFlow.default.title": "Review order before next action",
+    "admin.order.actionFlow.default.steps.checkDetails":
+      "Check order details, pricing, and payment history.",
+    "admin.order.actionFlow.default.steps.selectAfterChecks":
+      "Select the next status only after prerequisites are verified.",
     "admin.order.suggestedNextStatus": "Suggested next status",
     "admin.order.quoteValidity": "Quote Validity",
     "admin.order.expiresOn": "Expires on",
@@ -1197,8 +1294,108 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     "admin.order.quoteExpires": "Offerte verloopt",
     "admin.order.actionFlowTitle": "Aanbevolen actiestroom",
+    "admin.order.loading": "Laden...",
+    "admin.order.titlePrefix": "Order",
     "admin.order.checkOk": "OK",
     "admin.order.checkTodo": "TODO",
+    "admin.order.actionFlow.checks.allItemPricesSet":
+      "Alle itemprijzen zijn ingesteld",
+    "admin.order.actionFlow.checks.shippingDetailsComplete":
+      "Verzendgegevens compleet",
+    "admin.order.actionFlow.checks.quoteMessagePresent":
+      "Offertebericht aanwezig",
+    "admin.order.actionFlow.checks.paymentAttemptExists":
+      "Betaalpoging aanwezig",
+    "admin.order.actionFlow.checks.paidPaymentConfirmed":
+      "Betaalde betaling bevestigd",
+    "admin.order.actionFlow.checks.trackingCodeAdded": "Track & trace toegevoegd",
+    "admin.order.actionFlow.pendingQuote.title":
+      "Bereid de offerte voor voordat de klant bevestigt",
+    "admin.order.actionFlow.pendingQuote.steps.reviewModels":
+      "Controleer geuploade modelbestanden en klantinstructies zorgvuldig.",
+    "admin.order.actionFlow.pendingQuote.steps.setItemPrice":
+      "Stel prijs per item in op basis van complexiteit, printtijd en materiaal.",
+    "admin.order.actionFlow.pendingQuote.steps.setDeliveryPrice":
+      "Stel bezorgkosten in en pas alleen indien nodig korting toe.",
+    "admin.order.actionFlow.pendingQuote.steps.addQuoteMessage":
+      "Voeg een duidelijke offertetekst toe en controleer de verzendgegevens.",
+    "admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation":
+      "Verzend offertebevestiging en zet status op Offerte uitgebracht.",
+    "admin.order.actionFlow.quoted.title": "Wacht op betaling van klant",
+    "admin.order.actionFlow.quoted.steps.keepPricingStable":
+      "Houd prijzen stabiel tenzij de klant om een wijziging vraagt.",
+    "admin.order.actionFlow.quoted.steps.monitorExpiry":
+      "Controleer vervaldatum van offerte en betaalpogingen.",
+    "admin.order.actionFlow.quoted.steps.waitForPayment":
+      "Start de productie niet voordat betaling is bevestigd.",
+    "admin.order.actionFlow.quoted.steps.repriceIfChanged":
+      "Bij wijzigingsverzoek: terug naar Offerte in behandeling en herprijs.",
+    "admin.order.actionFlow.expiredQuote.title":
+      "Offerte verlopen, vraag vernieuwing aan",
+    "admin.order.actionFlow.expiredQuote.steps.noFulfillment":
+      "Niet printen of verzenden zolang de offerte verlopen is.",
+    "admin.order.actionFlow.expiredQuote.steps.requestRefresh":
+      "Vraag de klant om vanuit de orderpagina een nieuwe offerte aan te vragen.",
+    "admin.order.actionFlow.expiredQuote.steps.recalculate":
+      "Controleer scope opnieuw, herbereken prijs en verstuur bijgewerkte offerte.",
+    "admin.order.actionFlow.pendingPayment.title": "Betaling in uitvoering",
+    "admin.order.actionFlow.pendingPayment.steps.checkAttempts":
+      "Controleer betaalpogingen en webhookresultaat in betaalgeschiedenis.",
+    "admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid":
+      "Ga verder met productieflow zodra betaald is bevestigd.",
+    "admin.order.actionFlow.pendingPayment.steps.returnToQuote":
+      "Bij mislukte of verlopen betaling: terug naar offerteflow.",
+    "admin.order.actionFlow.paid.title": "Klaar om productie te starten",
+    "admin.order.actionFlow.paid.steps.confirmPayment":
+      "Controleer betaalbedrag/referentie en gekozen printspecificaties.",
+    "admin.order.actionFlow.paid.steps.confirmCapacity":
+      "Controleer printerbeschikbaarheid en materiaalvoorraad.",
+    "admin.order.actionFlow.paid.steps.startProduction":
+      "Start productie en zet status op Printen.",
+    "admin.order.actionFlow.printing.title":
+      "Productie en voorbereiding verzending",
+    "admin.order.actionFlow.printing.steps.completeQualityChecks":
+      "Rond print- en kwaliteitscontroles af voor het verpakken.",
+    "admin.order.actionFlow.printing.steps.createLabel":
+      "Maak verzendlabel aan en vul track & trace in.",
+    "admin.order.actionFlow.printing.steps.sendTracking":
+      "Verstuur trackingmail en zet status op Verzonden.",
+    "admin.order.actionFlow.shipped.title": "Opvolging tijdens transport",
+    "admin.order.actionFlow.shipped.steps.verifyTracking":
+      "Controleer of track & trace-code en URL correct zijn.",
+    "admin.order.actionFlow.shipped.steps.monitorCarrier":
+      "Volg vervoerdersupdates en afleverbevestiging.",
+    "admin.order.actionFlow.shipped.steps.markDelivered":
+      "Zet status op Geleverd zodra overdracht is bevestigd.",
+    "admin.order.actionFlow.delivered.title": "Afronding na levering",
+    "admin.order.actionFlow.delivered.steps.confirmDelivery":
+      "Bevestig levering met trackingbewijs.",
+    "admin.order.actionFlow.delivered.steps.handleSupport":
+      "Behandel supportvragen als klant problemen meldt.",
+    "admin.order.actionFlow.delivered.steps.closeOrder":
+      "Sluit order als Voltooid wanneer er geen open acties meer zijn.",
+    "admin.order.actionFlow.completed.title": "Order gesloten",
+    "admin.order.actionFlow.completed.steps.noActionRequired":
+      "Geen operationele actie vereist.",
+    "admin.order.actionFlow.completed.steps.reopenIfNeeded":
+      "Heropen status alleen als een geverifieerde correctie nodig is.",
+    "admin.order.actionFlow.failed.title": "Los betaal- of procesfout op",
+    "admin.order.actionFlow.failed.steps.reviewErrors":
+      "Controleer betaalfouten en communicatiegeschiedenis.",
+    "admin.order.actionFlow.failed.steps.contactCustomer":
+      "Neem contact op met de klant met duidelijke vervolgstappen.",
+    "admin.order.actionFlow.failed.steps.returnFlow":
+      "Bij nieuwe poging van klant: terug naar offerte/betaalflow.",
+    "admin.order.actionFlow.cancelled.title": "Order geannuleerd",
+    "admin.order.actionFlow.cancelled.steps.noFulfillment":
+      "Er mag geen fulfillmentactie worden uitgevoerd.",
+    "admin.order.actionFlow.cancelled.steps.documentReason":
+      "Leg annuleringsreden vast in notities.",
+    "admin.order.actionFlow.default.title": "Controleer order voor volgende actie",
+    "admin.order.actionFlow.default.steps.checkDetails":
+      "Controleer orderdetails, prijzen en betaalgeschiedenis.",
+    "admin.order.actionFlow.default.steps.selectAfterChecks":
+      "Kies volgende status pas nadat vereisten zijn gecontroleerd.",
     "admin.order.suggestedNextStatus": "Aanbevolen volgende status",
     "admin.order.quoteValidity": "Offertegeldigheid",
     "admin.order.expiresOn": "Verloopt op",

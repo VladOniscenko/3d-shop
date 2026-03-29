@@ -304,7 +304,7 @@ export default function AdminOrderDetail() {
   if (loading) {
     return (
       <div className="admin-shell flex items-center justify-center">
-        Loading...
+        {t("admin.order.loading")}
       </div>
     );
   }
@@ -407,20 +407,23 @@ export default function AdminOrderDetail() {
     payments.some(
       (payment) => String(payment.status || "").toLowerCase() === "paid",
     );
-  const actionFlow = buildAdminActionFlow({
-    status: currentStatus,
-    hasUnpricedItems,
-    hasShippingInfo,
-    hasQuoteMessage,
-    hasPaymentAttempts,
-    hasPaidPayment,
-    hasTrackingInfo,
-  });
+  const actionFlow = buildAdminActionFlow(
+    {
+      status: currentStatus,
+      hasUnpricedItems,
+      hasShippingInfo,
+      hasQuoteMessage,
+      hasPaymentAttempts,
+      hasPaidPayment,
+      hasTrackingInfo,
+    },
+    t,
+  );
 
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title={`Order ${order.id.slice(0, 8)}`}
+        title={`${t("admin.order.titlePrefix")} ${order.id.slice(0, 8)}`}
         items={[
           { label: t("breadcrumb.admin"), to: "/admin" },
           { label: t("breadcrumb.orders"), to: "/admin/orders" },
@@ -992,26 +995,47 @@ type AdminActionFlow = {
   suggestedStatus: string;
 };
 
-function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
+function buildAdminActionFlow(
+  input: AdminActionFlowInput,
+  t: (key: string) => string,
+): AdminActionFlow {
   const baseChecks = [
-    { label: "All item prices set", ok: !input.hasUnpricedItems },
-    { label: "Shipping details complete", ok: input.hasShippingInfo },
-    { label: "Quote message present", ok: input.hasQuoteMessage },
-    { label: "Payment attempt exists", ok: input.hasPaymentAttempts },
-    { label: "Paid payment confirmed", ok: input.hasPaidPayment },
-    { label: "Tracking code added", ok: input.hasTrackingInfo },
+    {
+      label: t("admin.order.actionFlow.checks.allItemPricesSet"),
+      ok: !input.hasUnpricedItems,
+    },
+    {
+      label: t("admin.order.actionFlow.checks.shippingDetailsComplete"),
+      ok: input.hasShippingInfo,
+    },
+    {
+      label: t("admin.order.actionFlow.checks.quoteMessagePresent"),
+      ok: input.hasQuoteMessage,
+    },
+    {
+      label: t("admin.order.actionFlow.checks.paymentAttemptExists"),
+      ok: input.hasPaymentAttempts,
+    },
+    {
+      label: t("admin.order.actionFlow.checks.paidPaymentConfirmed"),
+      ok: input.hasPaidPayment,
+    },
+    {
+      label: t("admin.order.actionFlow.checks.trackingCodeAdded"),
+      ok: input.hasTrackingInfo,
+    },
   ];
 
   switch (input.status) {
     case "pending_quote":
       return {
-        title: "Prepare quote before customer confirmation",
+        title: t("admin.order.actionFlow.pendingQuote.title"),
         steps: [
-          "Review uploaded model files and customer instructions carefully.",
-          "Set price per item based on complexity, print time, and material.",
-          "Set delivery price and apply discount only if needed.",
-          "Add a clear quote message and verify shipping details.",
-          "Send quote confirmation and update status to Quoted.",
+          t("admin.order.actionFlow.pendingQuote.steps.reviewModels"),
+          t("admin.order.actionFlow.pendingQuote.steps.setItemPrice"),
+          t("admin.order.actionFlow.pendingQuote.steps.setDeliveryPrice"),
+          t("admin.order.actionFlow.pendingQuote.steps.addQuoteMessage"),
+          t("admin.order.actionFlow.pendingQuote.steps.sendQuoteConfirmation"),
         ],
         checks: [baseChecks[0], baseChecks[1], baseChecks[2]],
         suggestedStatus: "quoted",
@@ -1019,12 +1043,12 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "quoted":
       return {
-        title: "Await customer payment",
+        title: t("admin.order.actionFlow.quoted.title"),
         steps: [
-          "Keep pricing stable unless customer requests a revision.",
-          "Monitor quote expiry date and payment attempts.",
-          "Do not start production before payment is confirmed.",
-          "If changes are requested, move back to Pending Quote and reprice.",
+          t("admin.order.actionFlow.quoted.steps.keepPricingStable"),
+          t("admin.order.actionFlow.quoted.steps.monitorExpiry"),
+          t("admin.order.actionFlow.quoted.steps.waitForPayment"),
+          t("admin.order.actionFlow.quoted.steps.repriceIfChanged"),
         ],
         checks: [baseChecks[3], baseChecks[4]],
         suggestedStatus: input.hasPaidPayment ? "paid" : "quoted",
@@ -1032,11 +1056,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "expired_quote":
       return {
-        title: "Quote expired, request refresh",
+        title: t("admin.order.actionFlow.expiredQuote.title"),
         steps: [
-          "Do not print or ship while quote is expired.",
-          "Ask customer to request a new quote from their order page.",
-          "Re-check model scope, recalculate pricing, and send updated quote.",
+          t("admin.order.actionFlow.expiredQuote.steps.noFulfillment"),
+          t("admin.order.actionFlow.expiredQuote.steps.requestRefresh"),
+          t("admin.order.actionFlow.expiredQuote.steps.recalculate"),
         ],
         checks: [baseChecks[0], baseChecks[1]],
         suggestedStatus: "pending_quote",
@@ -1044,11 +1068,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "pending_payment":
       return {
-        title: "Payment in progress",
+        title: t("admin.order.actionFlow.pendingPayment.title"),
         steps: [
-          "Check payment attempts and webhook result in payment history.",
-          "If paid is confirmed, move forward with production flow.",
-          "If payment fails or expires, return to quote flow.",
+          t("admin.order.actionFlow.pendingPayment.steps.checkAttempts"),
+          t("admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid"),
+          t("admin.order.actionFlow.pendingPayment.steps.returnToQuote"),
         ],
         checks: [baseChecks[3], baseChecks[4]],
         suggestedStatus: input.hasPaidPayment ? "paid" : "pending_payment",
@@ -1056,11 +1080,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "paid":
       return {
-        title: "Ready to start production",
+        title: t("admin.order.actionFlow.paid.title"),
         steps: [
-          "Confirm payment amount/reference and selected print specs.",
-          "Confirm printer availability and material stock.",
-          "Start production and update status to Printing.",
+          t("admin.order.actionFlow.paid.steps.confirmPayment"),
+          t("admin.order.actionFlow.paid.steps.confirmCapacity"),
+          t("admin.order.actionFlow.paid.steps.startProduction"),
         ],
         checks: [baseChecks[4]],
         suggestedStatus: "printing",
@@ -1068,11 +1092,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "printing":
       return {
-        title: "Production and shipment prep",
+        title: t("admin.order.actionFlow.printing.title"),
         steps: [
-          "Complete print and quality checks before packaging.",
-          "Create shipping label and enter track and trace.",
-          "Send tracking email and update status to Sent or Shipped.",
+          t("admin.order.actionFlow.printing.steps.completeQualityChecks"),
+          t("admin.order.actionFlow.printing.steps.createLabel"),
+          t("admin.order.actionFlow.printing.steps.sendTracking"),
         ],
         checks: [baseChecks[5]],
         suggestedStatus: input.hasTrackingInfo ? "sent" : "printing",
@@ -1081,11 +1105,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
     case "sent":
     case "shipped":
       return {
-        title: "In transit follow-up",
+        title: t("admin.order.actionFlow.shipped.title"),
         steps: [
-          "Ensure tracking code and URL are correct.",
-          "Monitor carrier updates and delivery confirmation.",
-          "Update status to Delivered when handoff is confirmed.",
+          t("admin.order.actionFlow.shipped.steps.verifyTracking"),
+          t("admin.order.actionFlow.shipped.steps.monitorCarrier"),
+          t("admin.order.actionFlow.shipped.steps.markDelivered"),
         ],
         checks: [baseChecks[5]],
         suggestedStatus: "delivered",
@@ -1093,11 +1117,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "delivered":
       return {
-        title: "Post-delivery completion",
+        title: t("admin.order.actionFlow.delivered.title"),
         steps: [
-          "Confirm delivery with tracking evidence.",
-          "Handle support issues if customer reports problems.",
-          "Close order as Completed when no pending actions remain.",
+          t("admin.order.actionFlow.delivered.steps.confirmDelivery"),
+          t("admin.order.actionFlow.delivered.steps.handleSupport"),
+          t("admin.order.actionFlow.delivered.steps.closeOrder"),
         ],
         checks: [baseChecks[5]],
         suggestedStatus: "completed",
@@ -1105,10 +1129,10 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "completed":
       return {
-        title: "Order closed",
+        title: t("admin.order.actionFlow.completed.title"),
         steps: [
-          "No operational action required.",
-          "Only reopen status if a verified correction is needed.",
+          t("admin.order.actionFlow.completed.steps.noActionRequired"),
+          t("admin.order.actionFlow.completed.steps.reopenIfNeeded"),
         ],
         checks: [],
         suggestedStatus: "completed",
@@ -1116,11 +1140,11 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "failed":
       return {
-        title: "Resolve payment or process failure",
+        title: t("admin.order.actionFlow.failed.title"),
         steps: [
-          "Review payment errors and communication history.",
-          "Contact customer with clear next steps.",
-          "If customer retries, move back to quote/payment flow.",
+          t("admin.order.actionFlow.failed.steps.reviewErrors"),
+          t("admin.order.actionFlow.failed.steps.contactCustomer"),
+          t("admin.order.actionFlow.failed.steps.returnFlow"),
         ],
         checks: [baseChecks[3]],
         suggestedStatus: "pending_quote",
@@ -1128,10 +1152,10 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     case "cancelled":
       return {
-        title: "Order cancelled",
+        title: t("admin.order.actionFlow.cancelled.title"),
         steps: [
-          "No fulfillment action should be taken.",
-          "Keep cancellation reason documented in notes.",
+          t("admin.order.actionFlow.cancelled.steps.noFulfillment"),
+          t("admin.order.actionFlow.cancelled.steps.documentReason"),
         ],
         checks: [],
         suggestedStatus: "cancelled",
@@ -1139,10 +1163,10 @@ function buildAdminActionFlow(input: AdminActionFlowInput): AdminActionFlow {
 
     default:
       return {
-        title: "Review order before next action",
+        title: t("admin.order.actionFlow.default.title"),
         steps: [
-          "Check order details, pricing, and payment history.",
-          "Select the next status only after prerequisites are verified.",
+          t("admin.order.actionFlow.default.steps.checkDetails"),
+          t("admin.order.actionFlow.default.steps.selectAfterChecks"),
         ],
         checks: [baseChecks[0], baseChecks[3], baseChecks[4]],
         suggestedStatus: "pending_quote",
