@@ -44,6 +44,9 @@ public class OrdersController : ControllerBase
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
 
         var orders = await _db.Orders
             .Where(o => o.UserId == userId)
@@ -61,6 +64,9 @@ public class OrdersController : ControllerBase
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
 
         var order = await _db.Orders
             .Include(o => o.Items)
@@ -97,6 +103,8 @@ public class OrdersController : ControllerBase
 
         var userId = Guid.Parse(userIdStr);
         var user = await _db.Users.FindAsync(userId);
+        if (user == null)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
 
         var order = new Order
         {
@@ -109,7 +117,7 @@ public class OrdersController : ControllerBase
             IsPaid = false,
             QuotedPrice = null,
             QuoteMessage = null,
-            FullName = user?.Name?.Trim() ?? string.Empty,
+            FullName = user.Name?.Trim() ?? string.Empty,
             PhoneNumber = string.Empty,
             AddressLine1 = string.Empty,
             City = string.Empty,
@@ -142,15 +150,13 @@ public class OrdersController : ControllerBase
 
         try
         {
-            if (user != null)
-            {
-                await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
-                await LogOrderCommunicationAsync(
-                    order.Id,
-                    "quote_requested",
-                    "Quote request received",
-                    user.Email);
-            }
+            var userName = string.IsNullOrWhiteSpace(user.Name) ? user.Email : user.Name;
+            await _emailService.SendQuoteRequestedEmailAsync(user.Email, userName, order.Id);
+            await LogOrderCommunicationAsync(
+                order.Id,
+                "quote_requested",
+                "Quote request received",
+                user.Email);
         }
         catch (Exception ex)
         {
@@ -167,6 +173,9 @@ public class OrdersController : ControllerBase
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
 
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
         if (order == null)
@@ -213,6 +222,9 @@ public class OrdersController : ControllerBase
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
 
         var order = await _db.Orders
             .Include(o => o.Items)

@@ -1,6 +1,8 @@
-import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
+import axios from "axios";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import SeoManager from "./components/SeoManager";
+import api from "./services/api";
 
 const Home = lazy(() => import("./components/Home.tsx"));
 const Login = lazy(() => import("./components/Login.tsx"));
@@ -47,9 +49,50 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <Navigate to="/" replace />;
 }
 
+function AuthSessionGuard() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const validateSession = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await api.get("/auth/me");
+        if (cancelled) return;
+        if (res?.data) {
+          localStorage.setItem("user", JSON.stringify(res.data));
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (axios.isAxiosError(err)) {
+          const status = err.response?.status;
+          if (status === 401 || status === 404) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login", { replace: true, state: { from: location } });
+          }
+        }
+      }
+    };
+
+    void validateSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location, navigate]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthSessionGuard />
       <SeoManager />
       <Suspense
         fallback={
