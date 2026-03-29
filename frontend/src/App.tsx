@@ -1,6 +1,13 @@
 import { Suspense, lazy, useEffect } from "react";
 import axios from "axios";
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import SeoManager from "./components/SeoManager";
 import api from "./services/api";
 
@@ -18,10 +25,14 @@ const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
 const Cart = lazy(() => import("./components/Cart.tsx"));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx"));
 const AdminOrders = lazy(() => import("./components/AdminOrders.tsx"));
-const AdminOrderDetail = lazy(() => import("./components/AdminOrderDetail.tsx"));
+const AdminOrderDetail = lazy(
+  () => import("./components/AdminOrderDetail.tsx"),
+);
 const AdminUsers = lazy(() => import("./components/AdminUsers.tsx"));
 const AdminProducts = lazy(() => import("./components/AdminProducts.tsx"));
-const AdminProductEdit = lazy(() => import("./components/AdminProductEdit.tsx"));
+const AdminProductEdit = lazy(
+  () => import("./components/AdminProductEdit.tsx"),
+);
 const AdminFilaments = lazy(() => import("./components/AdminFilaments.tsx"));
 const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy.tsx"));
 const TermsOfService = lazy(() => import("./components/TermsOfService.tsx"));
