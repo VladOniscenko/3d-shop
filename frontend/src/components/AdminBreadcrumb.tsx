@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useI18n } from "../i18n/I18nContext";
 
 type BreadcrumbItem = {
   label: string;
@@ -13,11 +14,12 @@ type AdminBreadcrumbProps = {
 };
 
 const adminNavLinks = [
-  { label: "Dashboard", to: "/admin" },
-  { label: "Orders", to: "/admin/orders" },
-  { label: "Users", to: "/admin/users" },
-  { label: "Products", to: "/admin/products" },
-  { label: "Filaments", to: "/admin/filaments" },
+  { labelKey: "admin.nav.dashboard", to: "/admin" },
+  { labelKey: "admin.nav.orders", to: "/admin/orders" },
+  { labelKey: "admin.nav.payments", to: "/admin/payments" },
+  { labelKey: "admin.nav.users", to: "/admin/users" },
+  { labelKey: "admin.nav.products", to: "/admin/products" },
+  { labelKey: "admin.nav.filaments", to: "/admin/filaments" },
 ];
 
 export default function AdminBreadcrumb({
@@ -26,6 +28,7 @@ export default function AdminBreadcrumb({
   rightSlot,
 }: AdminBreadcrumbProps) {
   const { pathname } = useLocation();
+  const { t } = useI18n();
 
   const isActive = (to: string) => {
     if (to === "/admin") return pathname === "/admin";
@@ -89,7 +92,7 @@ export default function AdminBreadcrumb({
                       : "text-[#314842] hover:bg-[#eaf4f1] hover:text-[#0f766e]"
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               </li>
             );

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
-import type { Order } from "../types";
+import type { Order, PaymentAttempt } from "../types";
 import { useNotify } from "../context/NotifyContext";
 import { useI18n } from "../i18n/I18nContext";
 import type {
@@ -55,6 +55,11 @@ export default function AdminOrderDetail() {
     [],
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [payments, setPayments] = useState<PaymentAttempt[]>([]);
+  const [paymentSearch, setPaymentSearch] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+  const [paymentFromDate, setPaymentFromDate] = useState("");
+  const [paymentToDate, setPaymentToDate] = useState("");
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
 
@@ -87,14 +92,16 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const [res, commsRes, statusRes] = await Promise.all([
+        const [res, commsRes, statusRes, paymentsRes] = await Promise.all([
           api.get(`/admin/orders/${id}`),
           api.get(`/admin/orders/${id}/communications`),
           api.get(`/admin/orders/${id}/status-history`),
+          api.get(`/admin/orders/${id}/payments`),
         ]);
         applyOrderData(res.data);
         setCommunications(commsRes.data || []);
         setStatusHistory(statusRes.data || []);
+        setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -121,16 +128,18 @@ export default function AdminOrderDetail() {
 
   const refresh = async () => {
     if (!id) return;
-    const [res, commsRes, statusRes] = await Promise.all([
+    const [res, commsRes, statusRes, paymentsRes] = await Promise.all([
       api.get(`/admin/orders/${id}`),
       api.get(`/admin/orders/${id}/communications`),
       api.get(`/admin/orders/${id}/status-history`),
+      api.get(`/admin/orders/${id}/payments`),
     ]);
     setOrder(res.data);
     setTrackingCode(res.data.trackingCode || "");
     setTrackingUrl(res.data.trackingUrl || "");
     setCommunications(commsRes.data || []);
     setStatusHistory(statusRes.data || []);
+    setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
   };
 
   const saveTracking = async () => {
@@ -343,6 +352,27 @@ export default function AdminOrderDetail() {
       ];
   const isStatusUnchanged =
     normalizeOrderStatus(selectedStatus) === normalizeOrderStatus(order.status);
+  const normalizedPaymentSearch = paymentSearch.trim().toLowerCase();
+  const filteredPayments = payments.filter((payment) => {
+    const statusMatch =
+      paymentStatusFilter === "all" ||
+      String(payment.status || "").toLowerCase() === paymentStatusFilter;
+
+    const searchMatch =
+      normalizedPaymentSearch.length === 0 ||
+      String(payment.reference || "").toLowerCase().includes(normalizedPaymentSearch) ||
+      String(payment.providerPaymentId || "").toLowerCase().includes(normalizedPaymentSearch);
+
+    const createdDate = new Date(payment.createdAt);
+    const fromMatch =
+      !paymentFromDate ||
+      createdDate >= new Date(`${paymentFromDate}T00:00:00`);
+    const toMatch =
+      !paymentToDate ||
+      createdDate <= new Date(`${paymentToDate}T23:59:59`);
+
+    return statusMatch && searchMatch && fromMatch && toMatch;
+  });
 
   return (
     <AdminLayout>
@@ -713,6 +743,89 @@ export default function AdminOrderDetail() {
                 {t("admin.order.saveNotesButton")}
               </button>
             </div>
+          </article>
+
+          <article className="admin-panel p-4">
+            <h3 className="font-bold mb-2 text-[#1b2b25]">Payment Attempts</h3>
+            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <input
+                value={paymentSearch}
+                onChange={(e) => setPaymentSearch(e.target.value)}
+                className="admin-field"
+                placeholder="Search reference or provider ID"
+              />
+              <select
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                className="admin-select"
+              >
+                <option value="all">All statuses</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="expired">Expired</option>
+                <option value="canceled">Canceled</option>
+                <option value="pending">Pending</option>
+                <option value="open">Open</option>
+              </select>
+              <input
+                type="date"
+                value={paymentFromDate}
+                onChange={(e) => setPaymentFromDate(e.target.value)}
+                className="admin-field"
+              />
+              <input
+                type="date"
+                value={paymentToDate}
+                onChange={(e) => setPaymentToDate(e.target.value)}
+                className="admin-field"
+              />
+            </div>
+            {payments.length === 0 ? (
+              <p className="text-sm text-[#5b706a]">No payment attempts yet.</p>
+            ) : filteredPayments.length === 0 ? (
+              <p className="text-sm text-[#5b706a]">
+                No payment attempts match current filters.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {filteredPayments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="rounded-lg border border-[#dce7e2] bg-[#f7fbf9] p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-[#2e423d]">
+                        {payment.reference}
+                      </p>
+                      <span className="text-xs uppercase rounded-full bg-white border border-[#c9d8d1] px-2 py-0.5 text-[#29433a]">
+                        {payment.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-[#2e423d]">
+                      {payment.currency} {Number(payment.amount || 0).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-[#6c817a] mt-1">
+                      Attempts: {payment.webhookAttemptCount || 0}
+                    </p>
+                    {payment.providerPaymentId && (
+                      <p className="text-xs text-[#6c817a] mt-1 break-all">
+                        Provider ID: {payment.providerPaymentId}
+                      </p>
+                    )}
+                    {payment.lastWebhookPayloadHash && (
+                      <p className="text-xs text-[#6c817a] mt-1 break-all">
+                        Payload hash: {payment.lastWebhookPayloadHash}
+                      </p>
+                    )}
+                    {payment.lastWebhookError && (
+                      <p className="text-xs text-rose-700 mt-1 break-words">
+                        Last error: {payment.lastWebhookError}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </article>
 
           <article className="admin-panel p-4">

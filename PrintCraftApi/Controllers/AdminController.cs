@@ -145,6 +145,105 @@ public class AdminController : ControllerBase
         });
     }
 
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetPayments(
+        [FromQuery] Guid? orderId,
+        [FromQuery] string? provider,
+        [FromQuery] string? status,
+        [FromQuery] string? reference,
+        [FromQuery] string? providerPaymentId,
+        [FromQuery] DateTime? fromUtc,
+        [FromQuery] DateTime? toUtc,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0) pageSize = 50;
+        if (pageSize > 200) pageSize = 200;
+
+        var query = _db.Payments
+            .AsNoTracking()
+            .Include(p => p.Order)
+            .AsQueryable();
+
+        if (orderId.HasValue)
+            query = query.Where(p => p.OrderId == orderId.Value);
+
+        if (!string.IsNullOrWhiteSpace(provider))
+        {
+            var providerNorm = provider.Trim().ToLower();
+            query = query.Where(p => p.Provider.ToLower() == providerNorm);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var statusNorm = status.Trim().ToLower();
+            query = query.Where(p => p.Status.ToLower() == statusNorm);
+        }
+
+        if (!string.IsNullOrWhiteSpace(reference))
+        {
+            var referenceNorm = reference.Trim().ToLower();
+            query = query.Where(p => p.Reference.ToLower().Contains(referenceNorm));
+        }
+
+        if (!string.IsNullOrWhiteSpace(providerPaymentId))
+        {
+            var providerPaymentNorm = providerPaymentId.Trim().ToLower();
+            query = query.Where(p => p.ProviderPaymentId != null && p.ProviderPaymentId.ToLower().Contains(providerPaymentNorm));
+        }
+
+        if (fromUtc.HasValue)
+            query = query.Where(p => p.CreatedAt >= fromUtc.Value);
+
+        if (toUtc.HasValue)
+            query = query.Where(p => p.CreatedAt <= toUtc.Value);
+
+        var totalCount = await query.CountAsync();
+
+        var results = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new
+            {
+                p.Id,
+                p.OrderId,
+                p.Provider,
+                p.Reference,
+                p.ProviderPaymentId,
+                p.Currency,
+                p.Amount,
+                p.Status,
+                p.CheckoutUrl,
+                p.Method,
+                p.FailureReason,
+                p.PaidAt,
+                p.CanceledAt,
+                p.ExpiredAt,
+                p.FailedAt,
+                p.LastWebhookAt,
+                p.WebhookAttemptCount,
+                p.LastWebhookPayloadHash,
+                p.LastWebhookError,
+                p.CreatedAt,
+                p.UpdatedAt,
+                Order = p.Order == null
+                    ? null
+                    : new
+                    {
+                        p.Order.Id,
+                        p.Order.Status,
+                        p.Order.UserId,
+                        p.Order.FullName,
+                        p.Order.OrderType
+                    }
+            })
+            .ToListAsync();
+
+        return Ok(new { results, totalCount, page, pageSize });
+    }
+
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders(
         [FromQuery] string? search,
@@ -238,6 +337,20 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         return Ok(entries);
+    }
+
+    [HttpGet("orders/{id:guid}/payments")]
+    public async Task<IActionResult> GetOrderPayments([FromRoute] Guid id)
+    {
+        var exists = await _db.Orders.AnyAsync(o => o.Id == id);
+        if (!exists) return NotFound(new { message = "Order not found" });
+
+        var payments = await _db.Payments
+            .Where(p => p.OrderId == id)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        return Ok(payments);
     }
 
     [HttpPut("orders/{id:guid}")]

@@ -20,7 +20,7 @@ const Gallery = lazy(() => import("./components/Gallery.tsx"));
 const ProductDetail = lazy(() => import("./components/ProductDetail.tsx"));
 const HowItWorksPage = lazy(() => import("./components/HowItWorksPage.tsx"));
 const FAQ = lazy(() => import("./components/FAQ.tsx"));
-const Orders = lazy(() => import("./components/Orders.tsx"));
+const Orders = lazy(() => import("./components/Orders"));
 const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
 const Cart = lazy(() => import("./components/Cart.tsx"));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx"));
@@ -28,6 +28,7 @@ const AdminOrders = lazy(() => import("./components/AdminOrders.tsx"));
 const AdminOrderDetail = lazy(
   () => import("./components/AdminOrderDetail.tsx"),
 );
+const AdminPayments = lazy(() => import("./components/AdminPayments.tsx"));
 const AdminUsers = lazy(() => import("./components/AdminUsers.tsx"));
 const AdminProducts = lazy(() => import("./components/AdminProducts.tsx"));
 const AdminProductEdit = lazy(
@@ -188,6 +189,14 @@ export default function App() {
             element={
               <AdminRoute>
                 <AdminOrderDetail />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/payments"
+            element={
+              <AdminRoute>
+                <AdminPayments />
               </AdminRoute>
             }
           />

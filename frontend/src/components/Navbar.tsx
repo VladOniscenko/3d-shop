@@ -26,7 +26,7 @@ const Navbar = () => {
         setUserRole(null);
       }
     }
-  }, []);
+  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -49,9 +49,7 @@ const Navbar = () => {
     ? [
         ...navLinks,
         { name: t("nav.myOrders"), path: "/orders" },
-        ...(userRole === "admin"
-          ? [{ name: t("nav.admin"), path: "/admin" }]
-          : []),
+        ...(userRole === "admin" ? [{ name: t("nav.admin"), path: "/admin" }] : []),
       ]
     : navLinks;
 

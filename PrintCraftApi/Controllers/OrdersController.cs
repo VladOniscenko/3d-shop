@@ -80,6 +80,29 @@ public class OrdersController : ControllerBase
         return order != null ? Ok(order) : NotFound(new { message = "Order not found or access denied." });
     }
 
+    [HttpGet("{id:guid}/payments")]
+    public async Task<IActionResult> GetPayments([FromRoute] Guid id)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Unauthorized(new { message = "User account no longer exists. Please log in again." });
+
+        var orderExists = await _db.Orders.AnyAsync(o => o.Id == id && o.UserId == userId);
+        if (!orderExists)
+            return NotFound(new { message = "Order not found or access denied." });
+
+        var payments = await _db.Payments
+            .Where(p => p.OrderId == id)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        return Ok(payments);
+    }
+
     [HttpPost("quote")]
     public async Task<IActionResult> CreateQuote([FromBody] QuoteRequest request)
     {

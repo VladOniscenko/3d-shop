@@ -46,6 +46,14 @@ public class Payment
     public DateTime? ExpiredAt { get; set; }
     public DateTime? FailedAt { get; set; }
     public DateTime? LastWebhookAt { get; set; }
+    public int WebhookAttemptCount { get; set; }
+
+    [MaxLength(128)]
+    public string? LastWebhookPayloadHash { get; set; }
+
+    [MaxLength(1024)]
+    public string? LastWebhookError { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

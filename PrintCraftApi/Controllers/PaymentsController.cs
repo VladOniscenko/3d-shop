@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -239,6 +241,15 @@ public class PaymentsController : ControllerBase
     {
         try
         {
+            Request.EnableBuffering();
+            string? rawPayload = null;
+            using (var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true))
+            {
+                rawPayload = await reader.ReadToEndAsync();
+                Request.Body.Position = 0;
+            }
+
+            var payloadHash = ComputeSha256Hex(rawPayload);
             var form = await Request.ReadFormAsync();
             string? paymentId = form["id"];
 
@@ -276,7 +287,20 @@ public class PaymentsController : ControllerBase
                 return Ok();
             }
 
-            ApplyPaymentStatus(trackedPayment, molliePayment);
+            RegisterWebhookAttempt(trackedPayment, payloadHash);
+
+            try
+            {
+                ApplyPaymentStatus(trackedPayment, molliePayment);
+                trackedPayment.LastWebhookError = null;
+            }
+            catch (Exception ex)
+            {
+                trackedPayment.LastWebhookError = TruncateError(ex.Message);
+                trackedPayment.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                throw;
+            }
 
             var order = trackedPayment.Order;
             if (order != null)
@@ -440,7 +464,6 @@ public class PaymentsController : ControllerBase
         var now = DateTime.UtcNow;
         trackedPayment.Status = NormalizePaymentStatus(molliePayment.Status);
         trackedPayment.Method = molliePayment.Method?.ToString();
-        trackedPayment.LastWebhookAt = now;
         trackedPayment.UpdatedAt = now;
 
         if (molliePayment.Status == PaymentStatus.Paid)
@@ -543,6 +566,30 @@ public class PaymentsController : ControllerBase
 
     private static string BuildPaymentReference(Guid orderId)
         => $"PC-{orderId.ToString("N")[..8]}-{Guid.NewGuid().ToString("N")[..12]}";
+
+    private static void RegisterWebhookAttempt(Payment payment, string payloadHash)
+    {
+        payment.WebhookAttemptCount += 1;
+        payment.LastWebhookAt = DateTime.UtcNow;
+        payment.LastWebhookPayloadHash = payloadHash;
+        payment.UpdatedAt = DateTime.UtcNow;
+    }
+
+    private static string ComputeSha256Hex(string? input)
+    {
+        input ??= string.Empty;
+        var bytes = Encoding.UTF8.GetBytes(input);
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static string TruncateError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return "Unknown webhook processing error.";
+
+        return error.Length > 1024 ? error[..1024] : error;
+    }
 }
 
 public record CheckoutRequest(

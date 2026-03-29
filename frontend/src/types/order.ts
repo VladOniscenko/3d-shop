@@ -35,6 +35,31 @@ export interface Order {
   updatedAt?: string;
   createdAt: string;
   items: OrderItem[];
+  payments?: PaymentAttempt[];
+}
+
+export interface PaymentAttempt {
+  id: string;
+  orderId: string;
+  provider: string;
+  reference: string;
+  providerPaymentId?: string;
+  currency: string;
+  amount: number;
+  status: string;
+  checkoutUrl?: string;
+  method?: string;
+  failureReason?: string;
+  paidAt?: string;
+  canceledAt?: string;
+  expiredAt?: string;
+  failedAt?: string;
+  lastWebhookAt?: string;
+  webhookAttemptCount?: number;
+  lastWebhookPayloadHash?: string;
+  lastWebhookError?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface OrderItem {
