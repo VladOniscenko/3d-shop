@@ -52,6 +52,32 @@ export default function Orders() {
     (order) => normalizeOrderStatus(order.status) !== "cancelled",
   );
 
+  const isMeaningfulField = (value?: string) => {
+    const normalized = String(value ?? "").trim().toLowerCase();
+    return (
+      normalized !== "" &&
+      normalized !== "0" &&
+      normalized !== "null" &&
+      normalized !== "undefined" &&
+      normalized !== "n/a" &&
+      normalized !== "na" &&
+      normalized !== "-"
+    );
+  };
+
+  const getShippingCity = (order: Order) => {
+    const city = String(order.city ?? "").trim();
+    const hasCity = isMeaningfulField(city);
+    const hasAddressLine = isMeaningfulField(order.addressLine1);
+    const hasPostalCode = isMeaningfulField(order.postalCode);
+    const isPendingQuote = normalizeOrderStatus(order.status) === "pending_quote";
+
+    if (!hasCity) return null;
+    if (isPendingQuote && (!hasAddressLine || !hasPostalCode)) return null;
+
+    return city;
+  };
+
   return (
     <div className="site-shell">
       <Navbar />
@@ -112,73 +138,78 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-6">
-            {visibleOrders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl hover:shadow-gray-200/50 transition-all group"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  {/* Status & Date */}
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-4 rounded-2xl border ${getOrderStatusBadgeClass(order.status)}`}
-                    >
-                      <BoxIcon status={order.status} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">
-                          {t("orders.project")} #{order.id.slice(0, 8)}
-                        </h3>
-                        <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getOrderStatusBadgeClass(order.status)}`}
-                        >
-                          {getStatusLabel(order.status)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-400">
-                        {t("orders.placedOn")}{" "}
-                        {new Date(order.createdAt).toLocaleDateString(
-                          undefined,
-                          { dateStyle: "long" },
-                        )}
-                      </p>
-                    </div>
-                  </div>
+            {visibleOrders.map((order) => {
+              const shippingCity = getShippingCity(order);
 
-                  {/* Summary of items */}
-                  <div className="flex-1 lg:px-10 border-gray-100 lg:border-x">
-                    <div className="flex items-center gap-2 text-gray-600 mb-1 text-sm font-bold">
-                      <Package size={14} />
-                      {order.items?.length || 0}{" "}
-                      {order.items?.length === 1
-                        ? t("orders.model")
-                        : t("orders.models")}
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl hover:shadow-gray-200/50 transition-all group"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    {/* Status & Date */}
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`p-4 rounded-2xl border ${getOrderStatusBadgeClass(order.status)}`}
+                      >
+                        <BoxIcon status={order.status} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">
+                            {t("orders.project")} #{order.id.slice(0, 8)}
+                          </h3>
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase ${getOrderStatusBadgeClass(order.status)}`}
+                          >
+                            {getStatusLabel(order.status)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          {t("orders.placedOn")} {" "}
+                          {new Date(order.createdAt).toLocaleDateString(
+                            undefined,
+                            { dateStyle: "long" },
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <MapPin size={12} /> {t("orders.shippingTo")} {order.city}
-                    </p>
-                    {order.orderDiscountAmount &&
-                      order.orderDiscountAmount > 0 &&
-                      normalizeOrderStatus(order.status) !==
-                        "pending_quote" && (
-                        <p className="text-xs text-emerald-700 font-semibold mt-1">
-                          {t("orderDetail.discount")}: -€
-                          {order.orderDiscountAmount.toFixed(2)}
+
+                    {/* Summary of items */}
+                    <div className="flex-1 lg:px-10 border-gray-100 lg:border-x">
+                      <div className="flex items-center gap-2 text-gray-600 mb-1 text-sm font-bold">
+                        <Package size={14} />
+                        {order.items?.length || 0} {" "}
+                        {order.items?.length === 1
+                          ? t("orders.model")
+                          : t("orders.models")}
+                      </div>
+                      {shippingCity && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <MapPin size={12} /> {t("orders.shippingTo")} {shippingCity}
                         </p>
                       )}
-                  </div>
+                      {Number(order.orderDiscountAmount ?? 0) > 0 &&
+                        normalizeOrderStatus(order.status) !==
+                          "pending_quote" && (
+                          <p className="text-xs text-emerald-700 font-semibold mt-1">
+                            {t("orderDetail.discount")}: -€
+                            {Number(order.orderDiscountAmount).toFixed(2)}
+                          </p>
+                        )}
+                    </div>
 
-                  {/* View Button */}
-                  <Link
-                    to={`/orders/${order.id}`}
-                    className="flex items-center justify-center gap-2 bg-gray-50 text-gray-900 px-6 py-3 rounded-xl font-bold text-sm group-hover:bg-emerald-600 group-hover:text-white transition-all"
-                  >
-                    {t("orders.manage")} <ChevronRight size={18} />
-                  </Link>
+                    {/* View Button */}
+                    <Link
+                      to={`/orders/${order.id}`}
+                      className="flex items-center justify-center gap-2 bg-gray-50 text-gray-900 px-6 py-3 rounded-xl font-bold text-sm group-hover:bg-emerald-600 group-hover:text-white transition-all"
+                    >
+                      {t("orders.manage")} <ChevronRight size={18} />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
