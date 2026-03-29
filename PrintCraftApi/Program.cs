@@ -48,7 +48,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// 2. Updated SwaggerGen to handle JWT Lock icons
+// 2. Updated SwaggerGen to handle JWT with email/password login
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
