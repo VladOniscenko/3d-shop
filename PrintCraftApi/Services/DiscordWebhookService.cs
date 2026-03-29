@@ -35,7 +35,7 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
         if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
 
         var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-        
+
         var embed = new DiscordEmbed
         {
             Title = "⚠️ Unhandled Exception",
@@ -59,7 +59,7 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
     public async Task SendQuoteRequestedAsync(Order order, User user, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("=== SendQuoteRequestedAsync START for order {OrderId} ===", order.Id);
-        
+
         var webhookUrl = _configuration["Discord:QuoteWebhookUrl"];
         _logger.LogInformation("Quote webhook URL from config: {Url}", webhookUrl ?? "NULL");
 
@@ -189,7 +189,7 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
     private static string BuildItemsForEmbed(IEnumerable<OrderItem> items)
     {
         if (!items.Any()) return "No items";
-        
+
         var itemList = string.Join("\n", items.Select((item, index) =>
         {
             var model = !string.IsNullOrWhiteSpace(item.fileName)
@@ -198,7 +198,7 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
             var notes = string.IsNullOrWhiteSpace(item.Notes) ? "(no notes)" : item.Notes.Trim();
             return $"`{index + 1}.` {model} | {item.Material} | {item.Color} | qty: {Math.Max(item.Count, 1)}\n     └─ {notes}";
         }));
-        
+
         return itemList.Length > 1024 ? itemList.Substring(0, 1020) + "..." : itemList;
     }
 }

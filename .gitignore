@@ -59,5 +59,4 @@ pnpm-debug.log*
 *.tmp
 *.cache/
 
-printcraft.db*
-wwwroot
+wwwroot/uploads*
