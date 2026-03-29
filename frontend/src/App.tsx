@@ -47,6 +47,9 @@ const ModelFilesBrowser = lazy(
 const OrderModelViewerPage = lazy(
   () => import("./components/OrderModelViewerPage.tsx"),
 );
+const AdminUploadedModelViewerPage = lazy(
+  () => import("./components/AdminUploadedModelViewerPage.tsx"),
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
@@ -219,6 +222,14 @@ export default function App() {
             element={
               <AdminRoute>
                 <ModelFilesBrowser />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/models/view/:fileName"
+            element={
+              <AdminRoute>
+                <AdminUploadedModelViewerPage />
               </AdminRoute>
             }
           />

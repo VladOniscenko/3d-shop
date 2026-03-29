@@ -168,6 +168,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "models.open": "Open",
     "models.order": "Order",
     "models.view3d": "Bekijk 3D",
+    "models.delete": "Delete",
+    "models.deleting": "Deleting...",
+    "models.backToFiles": "Back to files",
+    "models.deleteConfirm": "Delete this file? This cannot be undone.",
+    "models.deleteFailed": "Could not delete file.",
+    "models.deleteBlocked":
+      "Cannot delete: file is linked to a product or an active order.",
     "models.loadFailed": "Could not load model files.",
     "models.table.file": "File",
     "models.table.type": "Type",
@@ -1243,6 +1250,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "models.open": "Openen",
     "models.order": "Order",
     "models.view3d": "Bekijk 3D",
+    "models.delete": "Verwijderen",
+    "models.deleting": "Verwijderen...",
+    "models.backToFiles": "Terug naar bestanden",
+    "models.deleteConfirm":
+      "Dit bestand verwijderen? Dit kan niet ongedaan worden gemaakt.",
+    "models.deleteFailed": "Bestand kon niet worden verwijderd.",
+    "models.deleteBlocked":
+      "Kan niet verwijderen: bestand is gekoppeld aan een product of actieve order.",
     "models.loadFailed": "Kon 3D-modelbestanden niet laden.",
     "models.table.file": "Bestand",
     "models.table.type": "Type",

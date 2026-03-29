@@ -15,6 +15,9 @@ type ModelFile = {
   url: string;
   orderId?: string | null;
   itemIndex?: number | null;
+  linkedToProduct?: boolean;
+  linkedToActiveOrder?: boolean;
+  canDelete?: boolean;
 };
 
 function formatBytes(bytes: number): string {
@@ -29,6 +32,7 @@ export default function ModelFilesBrowser() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [files, setFiles] = useState<ModelFile[]>([]);
+  const [deletingFileName, setDeletingFileName] = useState<string | null>(null);
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -46,6 +50,29 @@ export default function ModelFilesBrowser() {
   useEffect(() => {
     void fetchFiles();
   }, []);
+
+  const deleteFile = async (file: ModelFile) => {
+    const canDelete = file.canDelete ?? false;
+    if (!canDelete) return;
+
+    const confirmed = window.confirm(t("models.deleteConfirm"));
+    if (!confirmed) return;
+
+    setDeletingFileName(file.fileName);
+    setError(null);
+
+    try {
+      await api.delete("/upload/models", {
+        params: { fileName: file.fileName },
+      });
+      await fetchFiles();
+    } catch (err: any) {
+      const message = err?.response?.data?.message || t("models.deleteFailed");
+      setError(message);
+    } finally {
+      setDeletingFileName(null);
+    }
+  };
 
   const visibleFiles = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -176,12 +203,9 @@ export default function ModelFilesBrowser() {
                             </Link>
                           ) : null}
 
-                          {file.orderId !== null &&
-                          file.orderId !== undefined &&
-                          file.itemIndex !== null &&
-                          file.itemIndex !== undefined ? (
+                          {file.fileName ? (
                             <Link
-                              to={`/admin/orders/${file.orderId}/models/${file.itemIndex}`}
+                              to={`/admin/models/view/${encodeURIComponent(file.fileName)}`}
                               className="inline-flex items-center rounded-lg border border-[#cfd9ff] px-3 py-1.5 font-semibold text-[#3048a0] hover:bg-[#eef1ff]"
                             >
                               {t("models.view3d")}
@@ -197,6 +221,25 @@ export default function ModelFilesBrowser() {
                             {t("models.open")}
                             <ExternalLink size={14} />
                           </a>
+
+                          <button
+                            type="button"
+                            onClick={() => void deleteFile(file)}
+                            disabled={
+                              !(file.canDelete ?? false) ||
+                              deletingFileName === file.fileName
+                            }
+                            title={
+                              file.canDelete
+                                ? t("models.delete")
+                                : t("models.deleteBlocked")
+                            }
+                            className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-transparent"
+                          >
+                            {deletingFileName === file.fileName
+                              ? t("models.deleting")
+                              : t("models.delete")}
+                          </button>
                         </div>
                       </td>
                     </tr>

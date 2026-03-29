@@ -21,6 +21,11 @@ public class UploadController : ControllerBase
         ".stl", ".obj", ".3mf", ".step", ".stp"
     };
 
+    private static readonly HashSet<string> DoneOrderStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "completed", "delivered", "cancelled", "failed"
+    };
+
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".stl", ".obj", ".3mf", ".step", ".stp",
@@ -126,6 +131,26 @@ public class UploadController : ControllerBase
         if (!Directory.Exists(uploadsFolder))
             return Ok(Array.Empty<object>());
 
+        var productFileNames = _db.Products
+            .AsNoTracking()
+            .Select(p => p.FileUrl)
+            .AsEnumerable()
+            .Select(ExtractFileNameFromAssetUrl)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var activeOrderFileNames = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .AsEnumerable()
+            .Where(order => !IsOrderDone(order.Status))
+            .SelectMany(order => order.Items
+                .Select(item => ExtractFileNameFromAssetUrl(item.FileUrl)))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var orderLinksByFileName = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
@@ -153,6 +178,8 @@ public class UploadController : ControllerBase
             .Select(info =>
             {
                 orderLinksByFileName.TryGetValue(info.Name, out var link);
+                var linkedToProduct = productFileNames.Contains(info.Name);
+                var linkedToActiveOrder = activeOrderFileNames.Contains(info.Name);
 
                 return new
                 {
@@ -163,11 +190,67 @@ public class UploadController : ControllerBase
                     url = $"/uploads/{info.Name}",
                     orderId = link?.orderId,
                     itemIndex = link?.itemIndex,
+                    linkedToProduct,
+                    linkedToActiveOrder,
+                    canDelete = !linkedToProduct && !linkedToActiveOrder,
                 };
             })
             .ToArray();
 
         return Ok(files);
+    }
+
+    [HttpDelete("models")]
+    [Authorize(Roles = "admin")]
+    [EnableRateLimiting("AuthBurst")]
+    public IActionResult DeleteUploadedModel([FromQuery] string? fileName)
+    {
+        var trimmed = (fileName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return BadRequest(new { message = "File name is required." });
+
+        var normalizedFileName = Path.GetFileName(trimmed);
+        if (!string.Equals(normalizedFileName, trimmed, StringComparison.Ordinal))
+            return BadRequest(new { message = "Invalid file name." });
+
+        var extension = Path.GetExtension(normalizedFileName);
+        if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
+            return BadRequest(new { message = "Only model files can be deleted from this endpoint." });
+
+        var linkedToProduct = _db.Products
+            .AsNoTracking()
+            .Select(p => p.FileUrl)
+            .AsEnumerable()
+            .Any(url => string.Equals(
+                ExtractFileNameFromAssetUrl(url),
+                normalizedFileName,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (linkedToProduct)
+            return Conflict(new { message = "File is linked to a product and cannot be deleted." });
+
+        var linkedToActiveOrder = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .AsEnumerable()
+            .Where(order => !IsOrderDone(order.Status))
+            .SelectMany(order => order.Items)
+            .Any(item => string.Equals(
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                normalizedFileName,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (linkedToActiveOrder)
+            return Conflict(new { message = "File is linked to an order that is not completed yet." });
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        var filePath = Path.Combine(uploadsFolder, normalizedFileName);
+
+        if (!System.IO.File.Exists(filePath))
+            return NotFound(new { message = "File not found." });
+
+        System.IO.File.Delete(filePath);
+        return Ok(new { message = "File deleted." });
     }
 
     private static string? ExtractFileNameFromAssetUrl(string? rawUrl)
@@ -179,6 +262,12 @@ public class UploadController : ControllerBase
         if (string.IsNullOrWhiteSpace(withoutQuery)) return null;
 
         return Path.GetFileName(withoutQuery);
+    }
+
+    private static bool IsOrderDone(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status)) return false;
+        return DoneOrderStatuses.Contains(status.Trim());
     }
 
     private static bool IsAllowedContentType(string extension, string? contentType)
