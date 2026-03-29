@@ -55,7 +55,7 @@ export default function AdminFilaments() {
       setStockEdits(nextStockEdits);
     } catch (err) {
       console.error(err);
-      notifyError("Could not load filaments.");
+      notifyError(t("admin.filaments.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -84,10 +84,10 @@ export default function AdminFilaments() {
       setStockQuantity(0);
       setDescription("");
       fetchFilaments();
-      notifySuccess("Filament added.");
+      notifySuccess(t("admin.filaments.added"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not create filament. Ensure you are admin.");
+      notifyError(t("admin.filaments.createFailed"));
     }
   };
 
@@ -99,18 +99,18 @@ export default function AdminFilaments() {
     const nextStock = stockEdits[id] ?? 0;
 
     if (!nextName || !nextMaterial || !nextColor) {
-      notifyError("Name, material and color are required.");
+      notifyError(t("admin.filaments.requiredFields"));
       return;
     }
 
     if (nextPrice < 0 || nextStock < 0) {
-      notifyError("Price and stock cannot be negative.");
+      notifyError(t("admin.filaments.priceStockNegative"));
       return;
     }
 
     const previous = filaments.find((f) => f.id === id);
     if (!previous) {
-      notifyError("Filament not found.");
+      notifyError(t("admin.filaments.notFound"));
       return;
     }
 
@@ -139,7 +139,7 @@ export default function AdminFilaments() {
         pricePerGram: nextPrice,
         stockQuantity: nextStock,
       });
-      notifySuccess("Filament updated.");
+      notifySuccess(t("admin.filaments.updated"));
     } catch (err) {
       console.error(err);
       // Rollback on failure.
@@ -152,14 +152,14 @@ export default function AdminFilaments() {
 
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401 || err.response?.status === 403) {
-          notifyError("You must be logged in as admin to update filaments.");
+          notifyError(t("admin.filaments.updateAuthError"));
         } else if (err.response?.status === 404) {
-          notifyError("Filament not found on server.");
+          notifyError(t("admin.filaments.notFoundServer"));
         } else {
-          notifyError("Could not update filament.");
+          notifyError(t("admin.filaments.updateFailed"));
         }
       } else {
-        notifyError("Could not update filament.");
+        notifyError(t("admin.filaments.updateFailed"));
       }
     } finally {
       setSavingId(null);
@@ -167,7 +167,7 @@ export default function AdminFilaments() {
   };
 
   const deleteFilament = async (id: string) => {
-    if (!confirm("Delete this filament?")) return;
+    if (!confirm(t("admin.filaments.confirmDelete"))) return;
 
     const previous = filaments;
 
@@ -202,7 +202,7 @@ export default function AdminFilaments() {
     setDeletingId(id);
     try {
       await api.delete(`/filaments/${id}`);
-      notifySuccess("Filament deleted.");
+      notifySuccess(t("admin.filaments.deleted"));
     } catch (err) {
       console.error(err);
       // Rollback on failure.
@@ -227,14 +227,14 @@ export default function AdminFilaments() {
 
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401 || err.response?.status === 403) {
-          notifyError("You must be logged in as admin to delete filaments.");
+          notifyError(t("admin.filaments.deleteAuthError"));
         } else if (err.response?.status === 404) {
-          notifyError("Filament not found on server.");
+          notifyError(t("admin.filaments.notFoundServer"));
         } else {
-          notifyError("Could not delete filament.");
+          notifyError(t("admin.filaments.deleteFailed"));
         }
       } else {
-        notifyError("Could not delete filament.");
+        notifyError(t("admin.filaments.deleteFailed"));
       }
     } finally {
       setDeletingId(null);
@@ -244,8 +244,11 @@ export default function AdminFilaments() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="Filament Management"
-        items={[{ label: "Admin", to: "/admin" }, { label: "Filaments" }]}
+        title={t("admin.filaments.managementTitle")}
+        items={[
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("admin.nav.filaments") },
+        ]}
       />
 
       <form
@@ -428,14 +431,18 @@ export default function AdminFilaments() {
                         disabled={savingId === f.id || deletingId === f.id}
                         className="admin-btn admin-btn-primary"
                       >
-                        {savingId === f.id ? "Saving..." : "Save"}
+                        {savingId === f.id
+                          ? t("admin.order.savingButton")
+                          : t("admin.orderDetail.saveButton")}
                       </button>
                       <button
                         onClick={() => deleteFilament(f.id)}
                         disabled={savingId === f.id || deletingId === f.id}
                         className="admin-btn admin-btn-danger"
                       >
-                        {deletingId === f.id ? "Deleting..." : "Delete"}
+                        {deletingId === f.id
+                          ? t("admin.products.deleting")
+                          : t("admin.products.delete")}
                       </button>
                     </div>
                   </td>

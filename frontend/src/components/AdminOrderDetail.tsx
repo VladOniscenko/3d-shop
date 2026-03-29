@@ -117,11 +117,11 @@ export default function AdminOrderDetail() {
         status: selectedStatus,
       });
       await refresh();
-      notifySuccess("Order status updated.");
+      notifySuccess(t("admin.order.statusUpdated"));
     } catch (err: any) {
       console.error(err);
       notifyError(
-        err?.response?.data?.message || "Could not update order status.",
+        err?.response?.data?.message || t("admin.order.statusUpdateFailed"),
       );
     }
   };
@@ -145,7 +145,7 @@ export default function AdminOrderDetail() {
   const saveTracking = async () => {
     if (!id) return;
     if (!trackingCode.trim()) {
-      notifyError("Tracking code is required.");
+      notifyError(t("admin.order.trackingRequired"));
       return;
     }
 
@@ -156,10 +156,10 @@ export default function AdminOrderDetail() {
         trackingUrl: trackingUrl.trim() || null,
       });
       await refresh();
-      notifySuccess("Tracking saved on order.");
+      notifySuccess(t("admin.order.trackingSaved"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not save tracking details.");
+      notifyError(t("admin.order.trackingSaveFailed"));
     } finally {
       setSavingTracking(false);
     }
@@ -171,10 +171,10 @@ export default function AdminOrderDetail() {
     try {
       await api.put(`/admin/orders/${id}/items/${itemId}`, { price });
       await refresh();
-      notifySuccess("Item price updated.");
+      notifySuccess(t("admin.order.itemPriceUpdated"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not update item price.");
+      notifyError(t("admin.order.itemPriceUpdateFailed"));
     } finally {
       setSavingItemId(null);
     }
@@ -188,10 +188,10 @@ export default function AdminOrderDetail() {
         deliveryPrice: price,
       });
       await refresh();
-      notifySuccess("Delivery price updated.");
+      notifySuccess(t("admin.order.deliveryPriceUpdated"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not update delivery price.");
+      notifyError(t("admin.order.deliveryPriceUpdateFailed"));
     } finally {
       setSavingDelivery(false);
     }
@@ -200,7 +200,7 @@ export default function AdminOrderDetail() {
   const updateOrderDiscount = async (discount: number) => {
     if (!id) return;
     if (discount < 0) {
-      notifyError("Order discount cannot be negative.");
+      notifyError(t("admin.order.discountNegative"));
       return;
     }
 
@@ -210,10 +210,10 @@ export default function AdminOrderDetail() {
         orderDiscountAmount: discount,
       });
       await refresh();
-      notifySuccess("Order discount updated.");
+      notifySuccess(t("admin.order.discountUpdated"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not update order discount.");
+      notifyError(t("admin.order.discountUpdateFailed"));
     } finally {
       setSavingOrderDiscount(false);
     }
@@ -223,11 +223,11 @@ export default function AdminOrderDetail() {
     if (!id) return;
     try {
       await api.delete(`/admin/orders/${id}`);
-      notifySuccess("Order deleted.");
+      notifySuccess(t("admin.order.deleted"));
       navigate("/admin/orders");
     } catch (err: any) {
       console.error(err);
-      notifyError(err?.response?.data?.message || "Could not delete order.");
+      notifyError(err?.response?.data?.message || t("admin.order.deleteFailed"));
     }
   };
 
@@ -239,10 +239,10 @@ export default function AdminOrderDetail() {
         customerNotes,
       });
       await refresh();
-      notifySuccess("Notes saved.");
+      notifySuccess(t("admin.order.notesSaved"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not save notes.");
+      notifyError(t("admin.order.notesSaveFailed"));
     }
   };
 
@@ -259,11 +259,11 @@ export default function AdminOrderDetail() {
       });
       await refresh();
       setEditingCustomer(false);
-      notifySuccess("Customer info updated.");
+      notifySuccess(t("admin.order.customerUpdated"));
     } catch (err: any) {
       console.error(err);
       notifyError(
-        err?.response?.data?.message || "Could not update customer info.",
+        err?.response?.data?.message || t("admin.order.customerUpdateFailed"),
       );
     }
   };
@@ -272,7 +272,7 @@ export default function AdminOrderDetail() {
     if (!id) return;
 
     if (emailType === "order_sent_tracking" && !trackingCode.trim()) {
-      notifyError("Tracking code is required for sent email.");
+      notifyError(t("admin.order.trackingRequiredForEmail"));
       return;
     }
 
@@ -287,11 +287,11 @@ export default function AdminOrderDetail() {
         trackingUrl:
           emailType === "order_sent_tracking" ? trackingUrl.trim() : null,
       });
-      notifySuccess("Email sent to customer.");
+      notifySuccess(t("admin.order.emailSent"));
     } catch (err: any) {
       console.error(err);
       notifyError(
-        err?.response?.data?.message || "Could not send customer email.",
+        err?.response?.data?.message || t("admin.order.emailSendFailed"),
       );
     } finally {
       setSendingEmail(false);
@@ -401,7 +401,9 @@ export default function AdminOrderDetail() {
   const hasPaymentAttempts = payments.length > 0;
   const hasPaidPayment =
     !!order.isPaid ||
-    payments.some((payment) => String(payment.status || "").toLowerCase() === "paid");
+    payments.some(
+      (payment) => String(payment.status || "").toLowerCase() === "paid",
+    );
   const actionFlow = buildAdminActionFlow({
     status: currentStatus,
     hasUnpricedItems,
@@ -457,7 +459,9 @@ export default function AdminOrderDetail() {
           </p>
         </article>
         <article className="admin-panel p-4">
-          <p className="text-xs uppercase text-[#6c817a]">Quote Expires</p>
+          <p className="text-xs uppercase text-[#6c817a]">
+            {t("admin.order.quoteExpires")}
+          </p>
           <p className="mt-2 text-sm text-[#2e423d]">
             {hasQuoteExpiry ? quoteExpiresAt.toLocaleString() : "-"}
           </p>
@@ -605,7 +609,7 @@ export default function AdminOrderDetail() {
 
             <div className="mb-4 rounded-xl border border-[#dce7e2] bg-[#f7fbf9] p-3">
               <p className="text-xs uppercase tracking-wide text-[#5f736d]">
-                Recommended Action Flow
+                {t("admin.order.actionFlowTitle")}
               </p>
               <p className="mt-1 text-sm font-semibold text-[#1b2b25]">
                 {actionFlow.title}
@@ -626,13 +630,14 @@ export default function AdminOrderDetail() {
                     key={check.label}
                     className={`text-xs ${check.ok ? "text-emerald-700" : "text-amber-700"}`}
                   >
-                    {check.ok ? "OK" : "TODO"} - {check.label}
+                    {check.ok ? t("admin.order.checkOk") : t("admin.order.checkTodo")} - {check.label}
                   </p>
                 ))}
               </div>
 
               <p className="mt-3 text-xs text-[#5f736d]">
-                Suggested next status: <strong>{actionFlow.suggestedStatus}</strong>
+                {t("admin.order.suggestedNextStatus")}:{" "}
+                <strong>{actionFlow.suggestedStatus}</strong>
               </p>
             </div>
 
@@ -737,20 +742,21 @@ export default function AdminOrderDetail() {
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Quote Validity</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">
+              {t("admin.order.quoteValidity")}
+            </h3>
             {hasQuoteExpiry ? (
               <p className="text-sm text-[#2e423d]">
-                Expires on {quoteExpiresAt.toLocaleString()}
+                {t("admin.order.expiresOn")} {quoteExpiresAt.toLocaleString()}
               </p>
             ) : (
               <p className="text-sm text-[#5b706a]">
-                No quote expiry date recorded.
+                {t("admin.order.noQuoteExpiry")}
               </p>
             )}
             {normalizeOrderStatus(order.status) === "expired_quote" && (
               <p className="mt-2 text-sm text-rose-700">
-                Quote expired after 7 days. Set status to Pending Quote for a
-                refreshed quote cycle.
+                {t("admin.order.quoteExpiredHelp")}
               </p>
             )}
           </article>
@@ -843,26 +849,28 @@ export default function AdminOrderDetail() {
           </article>
 
           <article className="admin-panel p-4">
-            <h3 className="font-bold mb-2 text-[#1b2b25]">Payment Attempts</h3>
+            <h3 className="font-bold mb-2 text-[#1b2b25]">
+              {t("admin.order.paymentAttempts")}
+            </h3>
             <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <input
                 value={paymentSearch}
                 onChange={(e) => setPaymentSearch(e.target.value)}
                 className="admin-field"
-                placeholder="Search reference or provider ID"
+                placeholder={t("admin.order.paymentSearchPlaceholder")}
               />
               <select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value)}
                 className="admin-select"
               >
-                <option value="all">All statuses</option>
-                <option value="paid">Paid</option>
-                <option value="failed">Failed</option>
-                <option value="expired">Expired</option>
-                <option value="canceled">Canceled</option>
-                <option value="pending">Pending</option>
-                <option value="open">Open</option>
+                <option value="all">{t("admin.payments.status.all")}</option>
+                <option value="paid">{t("admin.payments.status.paid")}</option>
+                <option value="failed">{t("admin.payments.status.failed")}</option>
+                <option value="expired">{t("admin.payments.status.expired")}</option>
+                <option value="canceled">{t("admin.payments.status.canceled")}</option>
+                <option value="pending">{t("admin.payments.status.pending")}</option>
+                <option value="open">{t("admin.payments.status.open")}</option>
               </select>
               <input
                 type="date"
@@ -878,10 +886,12 @@ export default function AdminOrderDetail() {
               />
             </div>
             {payments.length === 0 ? (
-              <p className="text-sm text-[#5b706a]">No payment attempts yet.</p>
+              <p className="text-sm text-[#5b706a]">
+                {t("admin.order.noPaymentAttempts")}
+              </p>
             ) : filteredPayments.length === 0 ? (
               <p className="text-sm text-[#5b706a]">
-                No payment attempts match current filters.
+                {t("admin.order.noPaymentAttemptsFiltered")}
               </p>
             ) : (
               <div className="space-y-3">
@@ -903,21 +913,21 @@ export default function AdminOrderDetail() {
                       {Number(payment.amount || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-[#6c817a] mt-1">
-                      Attempts: {payment.webhookAttemptCount || 0}
+                      {t("admin.order.webhookAttempts")}: {payment.webhookAttemptCount || 0}
                     </p>
                     {payment.providerPaymentId && (
                       <p className="text-xs text-[#6c817a] mt-1 break-all">
-                        Provider ID: {payment.providerPaymentId}
+                        {t("admin.order.providerId")}: {payment.providerPaymentId}
                       </p>
                     )}
                     {payment.lastWebhookPayloadHash && (
                       <p className="text-xs text-[#6c817a] mt-1 break-all">
-                        Payload hash: {payment.lastWebhookPayloadHash}
+                        {t("admin.order.payloadHash")}: {payment.lastWebhookPayloadHash}
                       </p>
                     )}
                     {payment.lastWebhookError && (
                       <p className="text-xs text-rose-700 mt-1 break-words">
-                        Last error: {payment.lastWebhookError}
+                        {t("admin.order.lastError")}: {payment.lastWebhookError}
                       </p>
                     )}
                   </div>

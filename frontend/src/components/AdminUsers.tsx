@@ -66,10 +66,10 @@ export default function AdminUsers() {
       });
       fetchUsers();
       cancelEdit();
-      notifySuccess("User updated.");
+      notifySuccess(t("admin.users.userUpdated"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not update user.");
+      notifyError(t("admin.users.updateFailed"));
     }
   };
 
@@ -78,10 +78,15 @@ export default function AdminUsers() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="User Management"
-        items={[{ label: "Admin", to: "/admin" }, { label: "Users" }]}
+        title={t("admin.users.managementTitle")}
+        items={[
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("admin.nav.users") },
+        ]}
         rightSlot={
-          <p className="text-sm text-[#5f736d]">Total: {totalCount}</p>
+          <p className="text-sm text-[#5f736d]">
+            {t("admin.users.totalLabel")}: {totalCount}
+          </p>
         }
       />
 
@@ -96,7 +101,7 @@ export default function AdminUsers() {
           onClick={() => setPage(1)}
           className="admin-btn admin-btn-primary"
         >
-          Refresh
+          {t("admin.users.refreshButton")}
         </button>
       </div>
 
@@ -154,7 +159,7 @@ export default function AdminUsers() {
               onClick={cancelEdit}
               className="admin-btn admin-btn-secondary"
             >
-              Cancel
+              {t("admin.order.cancelButton")}
             </button>
           </div>
         </div>
@@ -189,13 +194,13 @@ export default function AdminUsers() {
           </tbody>
         </table>
         {users.length === 0 && !loading && (
-          <p className="admin-empty">No users found.</p>
+          <p className="admin-empty">{t("admin.users.noUsers")}</p>
         )}
       </div>
 
       <div className="flex justify-between items-center mt-4">
         <span className="text-sm text-[#60736d]">
-          Page {page} of {totalPages}
+          {t("admin.common.page")} {page} {t("admin.common.of")} {totalPages}
         </span>
         <div className="flex gap-2">
           <button
@@ -203,14 +208,14 @@ export default function AdminUsers() {
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Prev
+            {t("admin.common.prev")}
           </button>
           <button
             className="admin-btn admin-btn-secondary"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >
-            Next
+            {t("admin.common.next")}
           </button>
         </div>
       </div>

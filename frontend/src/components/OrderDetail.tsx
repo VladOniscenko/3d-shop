@@ -311,7 +311,9 @@ export default function OrderDetail() {
               Payment Attempts
             </h3>
             {paymentAttempts.length === 0 ? (
-              <p className="text-sm text-gray-500">No payment attempts yet.</p>
+              <p className="text-sm text-gray-500">
+                {t("orderDetail.noPaymentAttempts")}
+              </p>
             ) : (
               <div className="space-y-3">
                 {paymentAttempts.map((payment) => (

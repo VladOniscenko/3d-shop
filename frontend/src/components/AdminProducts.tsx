@@ -59,7 +59,7 @@ export default function AdminProducts() {
       setProducts(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
-      notifyError("Could not load products.");
+      notifyError(t("admin.products.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function AdminProducts() {
     e.preventDefault();
 
     if (price < PRICE_MIN) {
-      notifyError("Price cannot be negative.");
+      notifyError(t("admin.products.priceNegative"));
       return;
     }
 
@@ -94,14 +94,12 @@ export default function AdminProducts() {
       discountPercentage < DISCOUNT_MIN ||
       discountPercentage > DISCOUNT_MAX
     ) {
-      notifyError(
-        `Discount must be between ${DISCOUNT_MIN} and ${DISCOUNT_MAX}.`,
-      );
+      notifyError(t("admin.products.discountRangeError"));
       return;
     }
 
     if (stockQuantity < STOCK_MIN) {
-      notifyError("Stock cannot be negative.");
+      notifyError(t("admin.products.stockNegative"));
       return;
     }
 
@@ -148,29 +146,29 @@ export default function AdminProducts() {
       setIsActive(true);
 
       await fetchProducts();
-      notifySuccess("Product created.");
+      notifySuccess(t("admin.products.created"));
     } catch (err) {
       console.error(err);
       notifyError(
         getApiErrorMessage(
           err,
-          "Could not create product. Ensure you are admin.",
+          t("admin.products.createFailed"),
         ),
       );
     }
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?") || !id) return;
+    if (!confirm(t("admin.products.confirmDelete")) || !id) return;
 
     setDeletingId(id);
     try {
       await api.delete(`/products/${id}`);
       await fetchProducts();
-      notifySuccess("Product deleted.");
+      notifySuccess(t("admin.products.deleted"));
     } catch (err) {
       console.error(err);
-      notifyError("Could not delete product.");
+      notifyError(t("admin.products.deleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -179,8 +177,11 @@ export default function AdminProducts() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="Product Catalog Admin"
-        items={[{ label: "Admin", to: "/admin" }, { label: "Products" }]}
+        title={t("admin.products.catalogTitle")}
+        items={[
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("admin.nav.products") },
+        ]}
       />
 
       <form
@@ -371,7 +372,7 @@ export default function AdminProducts() {
                           />
                         ) : (
                           <span className="text-xs text-[#60736d]">
-                            No image
+                            {t("admin.products.noImage")}
                           </span>
                         )}
                       </td>
@@ -386,11 +387,11 @@ export default function AdminProducts() {
                       <td>
                         {product.isActive ? (
                           <span className="text-emerald-700 font-semibold">
-                            Active
+                            {t("admin.products.activeState")}
                           </span>
                         ) : (
                           <span className="text-slate-600 font-semibold">
-                            Inactive
+                            {t("admin.products.inactiveState")}
                           </span>
                         )}
                       </td>
@@ -409,8 +410,8 @@ export default function AdminProducts() {
                             className="admin-btn admin-btn-danger"
                           >
                             {deletingId === product.id
-                              ? "Deleting..."
-                              : "Delete"}
+                              ? t("admin.products.deleting")
+                              : t("admin.products.delete")}
                           </button>
                         </div>
                       </td>

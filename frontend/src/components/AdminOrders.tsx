@@ -12,7 +12,7 @@ import {
 } from "../utils/orderStatus";
 
 const STATUS_OPTIONS = [
-  { value: "All", label: "All" },
+  { value: "All", label: "admin.orders.statusAll" },
   ...ADMIN_ORDER_STATUS_OPTIONS,
 ];
 const SORT_FIELDS = ["createdAt", "status", "quotedPrice"];
@@ -58,8 +58,11 @@ export default function AdminOrders() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="Order Management"
-        items={[{ label: "Admin", to: "/admin" }, { label: "Orders" }]}
+        title={t("admin.orders.managementTitle")}
+        items={[
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("breadcrumb.orders") },
+        ]}
       />
 
       <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5 p-4">
@@ -76,7 +79,7 @@ export default function AdminOrders() {
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s.value} value={s.value}>
-              {s.label}
+              {s.label.startsWith("admin.") ? t(s.label) : s.label}
             </option>
           ))}
         </select>
@@ -87,7 +90,7 @@ export default function AdminOrders() {
         >
           {SORT_FIELDS.map((field) => (
             <option key={field} value={field}>
-              {field}
+              {t(`admin.orders.sort.${field}`)}
             </option>
           ))}
         </select>
@@ -95,7 +98,7 @@ export default function AdminOrders() {
           onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
           className="admin-btn admin-btn-secondary"
         >
-          Sort: {sortDir.toUpperCase()}
+          {t("admin.orders.sortLabel")}: {sortDir.toUpperCase()}
         </button>
       </div>
 
@@ -135,7 +138,7 @@ export default function AdminOrders() {
                   <td>
                     {order.quotedPrice
                       ? `€${order.quotedPrice.toFixed(2)}`
-                      : "n/a"}
+                      : t("admin.orders.notAvailable")}
                   </td>
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                 </tr>
@@ -147,7 +150,7 @@ export default function AdminOrders() {
 
       <div className="flex items-center justify-between mt-4">
         <span className="text-sm text-[#60736d]">
-          Page {page} of {totalPages}
+          {t("admin.common.page")} {page} {t("admin.common.of")} {totalPages}
         </span>
         <div className="flex gap-2">
           <button
@@ -155,14 +158,14 @@ export default function AdminOrders() {
             disabled={page <= 1}
             className="admin-btn admin-btn-secondary"
           >
-            Prev
+            {t("admin.common.prev")}
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
             className="admin-btn admin-btn-secondary"
           >
-            Next
+            {t("admin.common.next")}
           </button>
         </div>
       </div>

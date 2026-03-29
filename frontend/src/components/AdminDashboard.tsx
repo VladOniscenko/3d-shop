@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Filament, Order, Product } from "../types";
 import { formatOrderStatusLabel } from "../utils/orderStatus";
+import { useI18n } from "../i18n/I18nContext";
 
 interface Summary {
   totalUsers: number;
@@ -45,6 +46,7 @@ function StatCard({
 }
 
 export default function AdminDashboard() {
+  const { t } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,19 +74,19 @@ export default function AdminDashboard() {
         });
       } catch (err) {
         console.error(err);
-        setError("Unable to load admin dashboard data. Are you authorized?");
+        setError(t("admin.dashboard.loadError"));
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
       <div className="admin-shell flex items-center justify-center">
-        <div>Loading dashboard...</div>
+        <div>{t("admin.loadingDashboard")}</div>
       </div>
     );
   }
@@ -176,135 +178,150 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <AdminBreadcrumb title="Admin Dashboard" items={[{ label: "Admin" }]} />
+      <AdminBreadcrumb
+        title={t("admin.dashboard.title")}
+        items={[{ label: t("breadcrumb.admin") }]}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          label="Total Users"
+          label={t("admin.dashboard.totalUsers")}
           value={usersCount || summary.totalUsers}
-          hint="Registered accounts"
+          hint={t("admin.dashboard.hintRegisteredAccounts")}
         />
         <StatCard
-          label="Total Orders"
+          label={t("admin.dashboard.totalOrders")}
           value={summary.totalOrders}
-          hint="All time"
+          hint={t("admin.dashboard.hintAllTime")}
         />
         <StatCard
-          label="Pending Orders"
+          label={t("admin.dashboard.pendingOrders")}
           value={summary.pendingOrders}
-          hint="Needs review/action"
+          hint={t("admin.dashboard.hintNeedsAction")}
         />
         <StatCard
-          label="Paid Orders"
+          label={t("admin.dashboard.paidOrders")}
           value={paidOrders}
-          hint="Confirmed payments"
+          hint={t("admin.dashboard.hintConfirmedPayments")}
         />
         <StatCard
-          label="Quoted Orders"
+          label={t("admin.dashboard.quotedOrders")}
           value={quotedOrders}
-          hint="Quote sent"
+          hint={t("admin.dashboard.hintQuoteSent")}
         />
         <StatCard
-          label="Printing Orders"
+          label={t("admin.dashboard.printingOrders")}
           value={printingOrders}
-          hint="In production"
+          hint={t("admin.dashboard.hintInProduction")}
         />
-        <StatCard label="Sent Orders" value={sentOrders} hint="Shipped" />
         <StatCard
-          label="Delivered Orders"
+          label={t("admin.dashboard.sentOrders")}
+          value={sentOrders}
+          hint={t("admin.dashboard.hintShipped")}
+        />
+        <StatCard
+          label={t("admin.dashboard.deliveredOrders")}
           value={deliveredOrders}
-          hint="Reached customer"
+          hint={t("admin.dashboard.hintReachedCustomer")}
         />
         <StatCard
-          label="Completed Orders"
+          label={t("admin.dashboard.completedOrders")}
           value={completedOrders}
-          hint="Completed lifecycle"
+          hint={t("admin.dashboard.hintCompletedLifecycle")}
         />
         <StatCard
-          label="Cancelled Orders"
+          label={t("admin.dashboard.cancelledOrders")}
           value={cancelledOrders}
-          hint="Cancelled by admin/user"
+          hint={t("admin.dashboard.hintCancelledByAdminUser")}
         />
-        <StatCard label="Orders (24h)" value={ordersToday} hint="Last day" />
-        <StatCard label="Orders (7d)" value={ordersThisWeek} hint="Last week" />
         <StatCard
-          label="Orders (30d)"
+          label={t("admin.dashboard.orders24h")}
+          value={ordersToday}
+          hint={t("admin.dashboard.hintLastDay")}
+        />
+        <StatCard
+          label={t("admin.dashboard.orders7d")}
+          value={ordersThisWeek}
+          hint={t("admin.dashboard.hintLastWeek")}
+        />
+        <StatCard
+          label={t("admin.dashboard.orders30d")}
           value={ordersThisMonth}
-          hint="Last month"
+          hint={t("admin.dashboard.hintLastMonth")}
         />
         <StatCard
-          label="Unique Customers"
+          label={t("admin.dashboard.uniqueCustomers")}
           value={uniqueCustomers}
-          hint="Customers with orders"
+          hint={t("admin.dashboard.hintCustomersWithOrders")}
         />
         <StatCard
-          label="Total Item Qty"
+          label={t("admin.dashboard.totalItemQty")}
           value={totalOrderItems}
-          hint="Units across all orders"
+          hint={t("admin.dashboard.hintUnitsAcrossOrders")}
         />
         <StatCard
-          label="Avg Items / Order"
+          label={t("admin.dashboard.avgItemsPerOrder")}
           value={avgItemsPerOrder.toFixed(2)}
-          hint="Operational complexity"
+          hint={t("admin.dashboard.hintOperationalComplexity")}
         />
         <StatCard
-          label="Quoted Revenue"
+          label={t("admin.dashboard.quotedRevenue")}
           value={`EUR ${quotedRevenue.toFixed(2)}`}
-          hint="Sum of quoted prices"
+          hint={t("admin.dashboard.hintSumQuotedPrices")}
         />
         <StatCard
-          label="Paid Revenue"
+          label={t("admin.dashboard.paidRevenue")}
           value={`EUR ${paidRevenue.toFixed(2)}`}
-          hint="Revenue from paid orders"
+          hint={t("admin.dashboard.hintRevenuePaidOrders")}
         />
         <StatCard
-          label="Avg Quote Value"
+          label={t("admin.dashboard.avgQuoteValue")}
           value={`EUR ${averageQuotedValue.toFixed(2)}`}
-          hint="Average quoted order"
+          hint={t("admin.dashboard.hintAverageQuotedOrder")}
         />
         <StatCard
-          label="Products"
+          label={t("admin.dashboard.products")}
           value={products.length}
-          hint="Catalog size"
+          hint={t("admin.dashboard.hintCatalogSize")}
         />
         <StatCard
-          label="Filament SKUs"
+          label={t("admin.dashboard.filamentSkus")}
           value={filaments.length}
-          hint="Material-color entries"
+          hint={t("admin.dashboard.hintMaterialColorEntries")}
         />
         <StatCard
-          label="In-stock Filaments"
+          label={t("admin.dashboard.inStockFilaments")}
           value={inStockFilaments}
-          hint="Available right now"
+          hint={t("admin.dashboard.hintAvailableNow")}
         />
         <StatCard
-          label="Low-stock Filaments"
+          label={t("admin.dashboard.lowStockFilaments")}
           value={lowStockFilaments}
-          hint="1-100 units"
+          hint={t("admin.dashboard.hintOneToHundred")}
         />
         <StatCard
-          label="Out-of-stock Filaments"
+          label={t("admin.dashboard.outOfStockFilaments")}
           value={outOfStockFilaments}
-          hint="Needs restock"
+          hint={t("admin.dashboard.hintNeedsRestock")}
         />
         <StatCard
-          label="Materials"
+          label={t("admin.dashboard.materials")}
           value={uniqueMaterials}
-          hint="Distinct filament materials"
+          hint={t("admin.dashboard.hintDistinctFilamentMaterials")}
         />
         <StatCard
-          label="Avg Filament Price/g"
+          label={t("admin.dashboard.avgFilamentPricePerGram")}
           value={`EUR ${averageFilamentPrice.toFixed(4)}`}
-          hint="Across filament SKUs"
+          hint={t("admin.dashboard.hintAcrossFilamentSkus")}
         />
       </div>
 
       <section className="admin-panel p-6">
         <h2 className="text-xl font-semibold mb-4 text-[#16251f]">
-          Recent Orders
+          {t("admin.dashboard.recentOrders")}
         </h2>
         {summary.recentOrders.length === 0 ? (
-          <p className="admin-note">No recent orders found.</p>
+          <p className="admin-note">{t("admin.noRecentOrders")}</p>
         ) : (
           <div className="space-y-3">
             {summary.recentOrders.map((order) => (

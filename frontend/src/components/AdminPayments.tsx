@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../services/api";
+import { useI18n } from "../i18n/I18nContext";
 
 type AdminPaymentRecord = {
   id: string;
@@ -50,6 +51,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function AdminPayments() {
+  const { t } = useI18n();
   const [payments, setPayments] = useState<AdminPaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -99,14 +101,17 @@ export default function AdminPayments() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="Payment Tracking"
-        items={[{ label: "Admin", to: "/admin" }, { label: "Payments" }]}
+        title={t("admin.payments.title")}
+        items={[
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("admin.nav.payments") },
+        ]}
       />
 
       <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-5 p-4">
         <input
           className="admin-field lg:col-span-2"
-          placeholder="Reference or provider payment id"
+          placeholder={t("admin.payments.searchPlaceholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -124,14 +129,14 @@ export default function AdminPayments() {
         >
           {STATUS_OPTIONS.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {t(`admin.payments.status.${option}`)}
             </option>
           ))}
         </select>
 
         <input
           className="admin-field"
-          placeholder="Provider"
+          placeholder={t("admin.payments.providerPlaceholder")}
           value={provider}
           onChange={(e) => {
             setProvider(e.target.value);
@@ -162,21 +167,21 @@ export default function AdminPayments() {
       </div>
 
       {loading ? (
-        <p className="admin-note">Loading payments...</p>
+        <p className="admin-note">{t("admin.payments.loading")}</p>
       ) : payments.length === 0 ? (
-        <p className="admin-note">No payments match your filters.</p>
+        <p className="admin-note">{t("admin.payments.noMatches")}</p>
       ) : (
         <div className="admin-panel admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Created</th>
-                <th>Order</th>
-                <th>Reference</th>
-                <th>Provider Payment ID</th>
-                <th>Status</th>
-                <th>Amount</th>
-                <th>Webhook Attempts</th>
+                <th>{t("admin.payments.columnCreated")}</th>
+                <th>{t("admin.payments.columnOrder")}</th>
+                <th>{t("admin.payments.columnReference")}</th>
+                <th>{t("admin.payments.columnProviderPaymentId")}</th>
+                <th>{t("admin.payments.columnStatus")}</th>
+                <th>{t("admin.payments.columnAmount")}</th>
+                <th>{t("admin.payments.columnWebhookAttempts")}</th>
               </tr>
             </thead>
             <tbody>
@@ -214,7 +219,7 @@ export default function AdminPayments() {
 
       <div className="flex items-center justify-between mt-4">
         <span className="text-sm text-[#60736d]">
-          Page {page} of {totalPages}
+          {t("admin.common.page")} {page} {t("admin.common.of")} {totalPages}
         </span>
         <div className="flex gap-2">
           <button
@@ -222,14 +227,14 @@ export default function AdminPayments() {
             disabled={page <= 1}
             className="admin-btn admin-btn-secondary"
           >
-            Prev
+            {t("admin.common.prev")}
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
             className="admin-btn admin-btn-secondary"
           >
-            Next
+            {t("admin.common.next")}
           </button>
         </div>
       </div>

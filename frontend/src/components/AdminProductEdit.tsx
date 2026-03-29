@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import api from "../services/api";
 import type { Product } from "../types";
 import { useNotify } from "../context/NotifyContext";
+import { useI18n } from "../i18n/I18nContext";
 import { resolveAssetUrl } from "../utils/assetUrl";
 import {
   PRODUCT_TYPE_LABELS,
@@ -27,6 +28,7 @@ export default function AdminProductEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { notifyError, notifySuccess } = useNotify();
+  const { t } = useI18n();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -74,7 +76,7 @@ export default function AdminProductEdit() {
 
   useEffect(() => {
     if (!id) {
-      notifyError("Missing product id.");
+      notifyError(t("admin.products.missingProductId"));
       navigate("/admin/products");
       return;
     }
@@ -98,7 +100,7 @@ export default function AdminProductEdit() {
         setImagesText(productImages(next).join("\n"));
       } catch (err) {
         console.error(err);
-        notifyError(getApiErrorMessage(err, "Could not load product."));
+        notifyError(getApiErrorMessage(err, t("admin.products.loadFailed")));
         navigate("/admin/products");
       } finally {
         setLoading(false);
@@ -106,7 +108,7 @@ export default function AdminProductEdit() {
     };
 
     load();
-  }, [id, navigate, notifyError]);
+  }, [id, navigate, notifyError, t]);
 
   const addImage = () => {
     const next = imageDraft.trim();
@@ -138,12 +140,12 @@ export default function AdminProductEdit() {
     const nextDescription = description.trim();
 
     if (!nextName || !nextCategory) {
-      notifyError("Name and category are required.");
+      notifyError(t("admin.productEdit.nameCategoryRequired"));
       return;
     }
 
     if (price < 0) {
-      notifyError("Price cannot be negative.");
+      notifyError(t("admin.products.priceNegative"));
       return;
     }
 
@@ -151,14 +153,12 @@ export default function AdminProductEdit() {
       discountPercentage < DISCOUNT_MIN ||
       discountPercentage > DISCOUNT_MAX
     ) {
-      notifyError(
-        `Discount must be between ${DISCOUNT_MIN} and ${DISCOUNT_MAX}.`,
-      );
+      notifyError(t("admin.products.discountRangeError"));
       return;
     }
 
     if (stockQuantity < STOCK_MIN) {
-      notifyError("Stock cannot be negative.");
+      notifyError(t("admin.products.stockNegative"));
       return;
     }
 
@@ -180,11 +180,11 @@ export default function AdminProductEdit() {
       };
 
       await api.put(`/products/${id}`, payload);
-      notifySuccess("Product updated.");
+      notifySuccess(t("admin.productEdit.updated"));
       navigate("/admin/products");
     } catch (err) {
       console.error(err);
-      notifyError(getApiErrorMessage(err, "Could not update product."));
+      notifyError(getApiErrorMessage(err, t("admin.productEdit.updateFailed")));
     } finally {
       setSaving(false);
     }
@@ -194,14 +194,14 @@ export default function AdminProductEdit() {
     return (
       <AdminLayout>
         <AdminBreadcrumb
-          title="Edit Product"
+          title={t("admin.productEdit.title")}
           items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Products", to: "/admin/products" },
-            { label: "Loading..." },
+            { label: t("breadcrumb.admin"), to: "/admin" },
+            { label: t("admin.nav.products"), to: "/admin/products" },
+            { label: t("admin.productEdit.loadingCrumb") },
           ]}
         />
-        <p className="admin-note">Loading product...</p>
+        <p className="admin-note">{t("admin.products.loadingProduct")}</p>
       </AdminLayout>
     );
   }
@@ -210,14 +210,14 @@ export default function AdminProductEdit() {
     return (
       <AdminLayout>
         <AdminBreadcrumb
-          title="Edit Product"
+          title={t("admin.productEdit.title")}
           items={[
-            { label: "Admin", to: "/admin" },
-            { label: "Products", to: "/admin/products" },
-            { label: "Missing" },
+            { label: t("breadcrumb.admin"), to: "/admin" },
+            { label: t("admin.nav.products"), to: "/admin/products" },
+            { label: t("admin.productEdit.missingCrumb") },
           ]}
         />
-        <p className="admin-note">Product not found.</p>
+        <p className="admin-note">{t("admin.products.productNotFound")}</p>
       </AdminLayout>
     );
   }
@@ -225,11 +225,11 @@ export default function AdminProductEdit() {
   return (
     <AdminLayout>
       <AdminBreadcrumb
-        title="Edit Product"
+        title={t("admin.productEdit.title")}
         items={[
-          { label: "Admin", to: "/admin" },
-          { label: "Products", to: "/admin/products" },
-          { label: product.name || "Edit" },
+          { label: t("breadcrumb.admin"), to: "/admin" },
+          { label: t("admin.nav.products"), to: "/admin/products" },
+          { label: product.name || t("admin.products.edit") },
         ]}
       />
 
@@ -237,13 +237,13 @@ export default function AdminProductEdit() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-[#1b2b25]">{product.name}</h2>
           <Link to="/admin/products" className="admin-btn">
-            Back to list
+            {t("admin.productEdit.backToList")}
           </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <label className="admin-label">
-            <span className="font-semibold">Name</span>
+            <span className="font-semibold">{t("admin.products.nameLabel")}</span>
             <input
               className="admin-field"
               value={name}
@@ -252,7 +252,7 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Category</span>
+            <span className="font-semibold">{t("admin.products.categoryLabel")}</span>
             <input
               className="admin-field"
               value={category}
@@ -261,7 +261,7 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Product Type</span>
+            <span className="font-semibold">{t("admin.products.productTypeLabel")}</span>
             <select
               className="admin-field"
               value={productType}
@@ -276,19 +276,19 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Active</span>
+            <span className="font-semibold">{t("admin.products.activeLabel")}</span>
             <select
               className="admin-field"
               value={isActive ? "true" : "false"}
               onChange={(e) => setIsActive(e.target.value === "true")}
             >
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="true">{t("admin.products.activeYes")}</option>
+              <option value="false">{t("admin.products.activeNo")}</option>
             </select>
           </label>
 
           <label className="admin-label lg:col-span-2">
-            <span className="font-semibold">Description</span>
+            <span className="font-semibold">{t("admin.products.descriptionLabel")}</span>
             <textarea
               rows={4}
               className="admin-textarea"
@@ -300,7 +300,7 @@ export default function AdminProductEdit() {
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
           <label className="admin-label">
-            <span className="font-semibold">Price</span>
+            <span className="font-semibold">{t("admin.products.priceLabel")}</span>
             <input
               type="number"
               min="0"
@@ -312,7 +312,7 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Discount (%)</span>
+            <span className="font-semibold">{t("admin.products.discountLabel")}</span>
             <input
               type="number"
               min={DISCOUNT_MIN}
@@ -327,19 +327,19 @@ export default function AdminProductEdit() {
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Track Inventory</span>
+            <span className="font-semibold">{t("admin.products.trackInventoryLabel")}</span>
             <select
               className="admin-field"
               value={trackInventory ? "true" : "false"}
               onChange={(e) => setTrackInventory(e.target.value === "true")}
             >
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="true">{t("admin.products.trackInventoryYes")}</option>
+              <option value="false">{t("admin.products.trackInventoryNo")}</option>
             </select>
           </label>
 
           <label className="admin-label">
-            <span className="font-semibold">Stock Quantity</span>
+            <span className="font-semibold">{t("admin.products.stockQuantityLabel")}</span>
             <input
               type="number"
               min={STOCK_MIN}
@@ -354,7 +354,7 @@ export default function AdminProductEdit() {
           </label>
 
           <div className="admin-label">
-            <span className="font-semibold">Final Price</span>
+            <span className="font-semibold">{t("admin.products.finalPrice")}</span>
             <div className="admin-field flex items-center font-bold text-[#1b2b25]">
               EUR {finalPrice.toFixed(2)}
             </div>
@@ -362,17 +362,17 @@ export default function AdminProductEdit() {
         </div>
 
         <div className="mt-4 admin-label">
-          <span className="font-semibold">Images</span>
+          <span className="font-semibold">{t("admin.products.imagesUrlLabel")}</span>
 
           <div className="flex gap-2">
             <input
               className="admin-field"
-              placeholder="Paste image URL and click Add"
+              placeholder={t("admin.products.imagePlaceholder")}
               value={imageDraft}
               onChange={(e) => setImageDraft(e.target.value)}
             />
             <button type="button" className="admin-btn" onClick={addImage}>
-              Add
+              {t("admin.products.addImageButton")}
             </button>
           </div>
 
@@ -381,7 +381,7 @@ export default function AdminProductEdit() {
             className="admin-textarea mt-2"
             value={imagesText}
             onChange={(e) => setImagesText(e.target.value)}
-            placeholder="One image URL per line"
+            placeholder={t("admin.products.imagesTextarea")}
           />
 
           {editedImages.length > 0 ? (
@@ -411,14 +411,14 @@ export default function AdminProductEdit() {
                     className="admin-btn admin-btn-danger mt-2 w-full"
                     onClick={() => removeImage(index)}
                   >
-                    Remove
+                    {t("admin.products.delete")}
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-xs text-[#60736d] mt-2">
-              No images configured for this product yet.
+              {t("admin.productEdit.noImagesConfigured")}
             </p>
           )}
         </div>
@@ -430,10 +430,10 @@ export default function AdminProductEdit() {
             disabled={saving}
             className="admin-btn admin-btn-primary"
           >
-            {saving ? "Saving..." : "Save Product"}
+            {saving ? t("admin.order.savingButton") : t("admin.productEdit.saveProduct")}
           </button>
           <Link to="/admin/products" className="admin-btn">
-            Cancel
+            {t("admin.order.cancelButton")}
           </Link>
         </div>
       </div>
