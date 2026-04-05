@@ -57,6 +57,10 @@ export default function Quote() {
   );
   const availableColors = Array.from(new Set(filaments.map((f) => f.color)));
 
+  const finalMaterials =
+    availableMaterials.length > 0 ? availableMaterials : ["PLA"];
+  const finalColors = availableColors.length > 0 ? availableColors : ["Black"];
+
   const uploadSelectedFiles = async (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
 
@@ -73,8 +77,8 @@ export default function Quote() {
         try {
           const res = await api.post("/upload", formData);
 
-          const defaultMat = availableMaterials[0] || "Custom";
-          const defaultColor = availableColors[0] || "Custom";
+          const defaultMat = finalMaterials[0];
+          const defaultColor = finalColors[0];
 
           const newItem: OrderItem = {
             fileUrl: res.data.url,
@@ -181,8 +185,8 @@ export default function Quote() {
   };
 
   const addTextOnlyItem = () => {
-    const defaultMat = availableMaterials[0] || "Custom";
-    const defaultColor = availableColors[0] || "Custom";
+    const defaultMat = finalMaterials[0];
+    const defaultColor = finalColors[0];
 
     const newItem: OrderItem = {
       fileUrl: "",
@@ -366,30 +370,38 @@ export default function Quote() {
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Layers size={12} /> {t("quote.material")}
                           </label>
-                          <input
-                            list="quote-material-suggestions"
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                          <select
+                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                             value={item.material}
                             onChange={(e) =>
                               updateItem(idx, "material", e.target.value)
                             }
-                            placeholder={t("quote.materialPlaceholder")}
-                          />
+                          >
+                            {finalMaterials.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                             <Palette size={12} /> {t("quote.color")}
                           </label>
-                          <input
-                            list="quote-color-suggestions"
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                          <select
+                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                             value={item.color}
                             onChange={(e) =>
                               updateItem(idx, "color", e.target.value)
                             }
-                            placeholder={t("quote.colorPlaceholder")}
-                          />
+                          >
+                            {finalColors.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         <div className="space-y-1">
@@ -431,16 +443,6 @@ export default function Quote() {
                 </div>
               )}
             </div>
-            <datalist id="quote-material-suggestions">
-              {availableMaterials.map((m) => (
-                <option key={m} value={m} />
-              ))}
-            </datalist>
-            <datalist id="quote-color-suggestions">
-              {availableColors.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
           </div>
 
           <div className="space-y-6">
