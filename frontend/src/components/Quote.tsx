@@ -62,6 +62,14 @@ export default function Quote() {
   const finalColors =
     availableColors.length > 0 ? availableColors : ["Black", "White"];
 
+  const getColorsForMaterial = (selectedMaterial: string) => {
+    const matchingFilaments = filaments.filter(
+      (f) => f.material === selectedMaterial,
+    );
+    const colors = Array.from(new Set(matchingFilaments.map((f) => f.name)));
+    return colors.length > 0 ? colors : finalColors;
+  };
+
   const uploadSelectedFiles = async (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
 
@@ -79,7 +87,7 @@ export default function Quote() {
           const res = await api.post("/upload", formData);
 
           const defaultMat = finalMaterials[0];
-          const defaultColor = finalColors[0];
+          const defaultColor = getColorsForMaterial(defaultMat)[0];
 
           const newItem: OrderItem = {
             fileUrl: res.data.url,
@@ -187,7 +195,7 @@ export default function Quote() {
 
   const addTextOnlyItem = () => {
     const defaultMat = finalMaterials[0];
-    const defaultColor = finalColors[0];
+    const defaultColor = getColorsForMaterial(defaultMat)[0];
 
     const newItem: OrderItem = {
       fileUrl: "",
@@ -374,9 +382,20 @@ export default function Quote() {
                           <select
                             className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                             value={item.material}
-                            onChange={(e) =>
-                              updateItem(idx, "material", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const newMaterial = e.target.value;
+                              const validColors =
+                                getColorsForMaterial(newMaterial);
+
+                              const newItems = [...items];
+                              newItems[idx].material = newMaterial;
+
+                              if (!validColors.includes(newItems[idx].color)) {
+                                newItems[idx].color = validColors[0];
+                              }
+
+                              setItems(newItems);
+                            }}
                           >
                             {finalMaterials.map((m) => (
                               <option key={m} value={m}>
@@ -397,7 +416,7 @@ export default function Quote() {
                               updateItem(idx, "color", e.target.value)
                             }
                           >
-                            {finalColors.map((c) => (
+                            {getColorsForMaterial(item.material).map((c) => (
                               <option key={c} value={c}>
                                 {c}
                               </option>
