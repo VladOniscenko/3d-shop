@@ -240,14 +240,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <Cart />
-              </ProtectedRoute>
-            }
-          />
 
           {ALLOWED_PRODUCT_ORDER && (
             <>
