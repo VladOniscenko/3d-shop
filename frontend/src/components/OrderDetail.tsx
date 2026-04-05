@@ -339,9 +339,9 @@ export default function OrderDetail() {
             t={t}
           />
 
-          {/* <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="text-sm font-black uppercase tracking-wide text-gray-900 mb-3">
-              Payment Attempts
+              {t("orderDetail.paymentAttempt")}
             </h3>
             {paymentAttempts.length === 0 ? (
               <p className="text-sm text-gray-500">
@@ -380,7 +380,7 @@ export default function OrderDetail() {
                 ))}
               </div>
             )}
-          </section> */}
+          </section>
         </div>
       </main>
 

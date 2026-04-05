@@ -1010,6 +1010,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "notFound.loadingModel": "Loading 3D model...",
 
     // Order detail
+    "orderDetail.paymentAttempts": "Payment Attempts",
     "orderDetail.notFound": "Order not found",
     "orderDetail.back": "Back to Projects",
     "orderDetail.deleteQuote": "Delete Quote",
@@ -2171,6 +2172,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "notFound.loadingModel": "3D-model laden...",
 
     // Order detail
+    "orderDetail.paymentAttempts": "Betalingspogingen",
     "orderDetail.notFound": "Order niet gevonden",
     "orderDetail.back": "Terug naar Projecten",
     "orderDetail.deleteQuote": "Offerte Verwijderen",
