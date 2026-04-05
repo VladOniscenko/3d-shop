@@ -12,9 +12,9 @@ on:
     branches: [main]
 
 jobs:
-  # Job: Run tests and build artifacts
+  # Job 1: Run tests (Stays entirely on GitHub's cloud)
   test:
-    name: Test and Build
+    name: Test Code
     runs-on: ubuntu-latest
 
     steps:
@@ -40,69 +40,9 @@ jobs:
       - name: Run backend tests
         run: dotnet test PrintCraftApi.Tests/PrintCraftApi.Tests.csproj --no-build --verbosity normal --configuration Release
 
-      # Frontend: Setup Node.js environment
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+      # (Optional) You can add Frontend tests here if you have them!
 
-      # Frontend: Install dependencies
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: frontend
-
-      # Frontend: Build the application
-      - name: Build frontend
-        run: npm run build
-        working-directory: frontend
-
-      # Docker: Setup Buildx for building images
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Docker: Build backend image
-      - name: Build backend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: PrintCraftApi/Dockerfile
-          load: true
-          tags: printcraft-api:latest
-
-      # Docker: Build frontend image
-      - name: Build frontend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: frontend/Dockerfile
-          load: true
-          tags: printcraft-frontend:latest
-
-      # Artifacts: Save Docker images as tar files
-      - name: Save Docker images
-        run: |
-          docker save printcraft-api:latest > printcraft-api.tar
-          docker save printcraft-frontend:latest > printcraft-frontend.tar
-
-      # Artifacts: Upload Docker images for deployment
-      - name: Upload Docker images
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images
-          path: |
-            printcraft-api.tar
-            printcraft-frontend.tar
-
-      # Artifacts: Upload frontend build for static file deployment
-      - name: Upload frontend build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist/
-
-  # Job: Deploy to production server (only if test job succeeds)
+  # Job 2: Deploy (Only triggers if tests pass)
   deploy:
     name: Deploy to Production
     needs: test
@@ -110,40 +50,22 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      # Checkout code (needed for any scripts or configs)
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Download built Docker images
-      - name: Download Docker images
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-          path: .
-
-      # Download frontend build artifacts
-      - name: Download frontend build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend-dist
-
-      # Deploy: SSH into server and update containers
-      - name: Deploy to production server
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PI_HOST }}
           username: ${{ secrets.PI_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Navigate to project directory
-            cd /path/to/your/project
-            # Load the pre-built Docker images
-            docker load < printcraft-api.tar
-            docker load < printcraft-frontend.tar
-            # Copy frontend static files to web server directory
-            rsync -avz --delete frontend-dist/ /path/to/frontend/build/on/server
-            # Stop existing containers
-            docker-compose down
-            # Start updated containers
-            docker-compose up -d
+            # 1. Go to the project folder on the Pi
+            cd ~/projects/3d-shop
+
+            # 2. Pull the latest code directly from GitHub
+            git pull origin main
+
+            # 3. Tell the Pi to build the new ARM64 images and start them
+            # The --build flag forces Docker to rebuild if the code changed
+            docker-compose up -d --build
+
+            # 4. Clean up old, unused Docker images to save SD/SSD space
+            docker image prune -f
