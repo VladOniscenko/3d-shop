@@ -13,14 +13,19 @@ export default defineConfig(({ mode }) => {
     throw new Error("VITE_DEV_API_ORIGIN must be set in frontend env file.");
   }
 
-  const server = devApiOrigin
-    ? {
-        proxy: {
-          "/api": devApiOrigin,
-          "/uploads": devApiOrigin,
-        },
-      }
-    : undefined;
+  const server = {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
+    ...(devApiOrigin
+      ? {
+          proxy: {
+            "/api": devApiOrigin,
+            "/uploads": devApiOrigin,
+          },
+        }
+      : {}),
+  };
 
   return {
     plugins: [react(), tailwindcss()],
