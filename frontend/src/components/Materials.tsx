@@ -30,16 +30,41 @@ export default function Materials() {
     fetchMaterials();
   }, []);
 
-  // Helper to map color names to Tailwind classes
-  const getColorClass = (color: string) => {
-    const c = color.toLowerCase();
-    if (c === "black") return "bg-gray-900 text-white";
-    if (c === "white") return "bg-white border border-gray-200 text-gray-400";
-    if (c === "red") return "bg-red-500 text-white";
-    if (c === "blue") return "bg-blue-500 text-white";
-    if (c === "green") return "bg-emerald-500 text-white";
-    if (c === "grey" || c === "gray") return "bg-gray-400 text-white";
-    return "bg-emerald-100 text-emerald-700"; // Fallback
+  const getColorStyle = (hex: string) => {
+    // Handle invalid or transparent
+    if (!hex || hex.toLowerCase() === "transparent") {
+      return { backgroundColor: "transparent", color: "#111827" }; // dark text on transparent
+    }
+
+    // Validate hex format (#RRGGBB or #RGB)
+    const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex);
+    if (!isValidHex) {
+      return { backgroundColor: "#D1FAE5", color: "#111827" }; // fallback color
+    }
+
+    // Compute text color using YIQ
+    const textColor = getContrastYIQ(hex);
+    return { backgroundColor: hex, color: textColor };
+  };
+
+  // YIQ contrast function
+  const getContrastYIQ = (hex: string) => {
+    let r: number, g: number, b: number;
+
+    if (hex.length === 4) {
+      // #RGB format
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else {
+      // #RRGGBB format
+      r = parseInt(hex.substring(1, 3), 16);
+      g = parseInt(hex.substring(3, 5), 16);
+      b = parseInt(hex.substring(5, 7), 16);
+    }
+
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? "#111827" : "#FFFFFF";
   };
 
   return (
@@ -71,7 +96,8 @@ export default function Materials() {
                 <div className="flex items-center gap-4 mb-6">
                   {/* Visual Color Bubble */}
                   <div
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${getColorClass(f.color)}`}
+                    className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                    style={getColorStyle(f.color)}
                   >
                     <Box size={24} />
                   </div>
