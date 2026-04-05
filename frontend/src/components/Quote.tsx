@@ -55,7 +55,7 @@ export default function Quote() {
   const availableMaterials = Array.from(
     new Set(filaments.map((f) => f.material)),
   );
-  const availableColors = Array.from(new Set(filaments.map((f) => f.color)));
+  const availableColors = Array.from(new Set(filaments.map((f) => f.name)));
 
   const finalMaterials =
     availableMaterials.length > 0 ? availableMaterials : ["PLA", "PETG"];
