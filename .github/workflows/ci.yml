@@ -1,0 +1,149 @@
+# CI/CD Pipeline for 3D Shop
+# This workflow automates testing and deployment to production.
+# - Runs on push to main branch
+# - Tests backend and builds frontend
+# - Builds Docker images and saves as artifacts
+# - Deploys to server via SSH if tests pass
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Job: Run tests and build artifacts
+  test:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Backend: Setup .NET environment
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Backend: Restore dependencies
+      - name: Restore backend dependencies
+        run: dotnet restore PrintCraftApi/PrintCraftApi.csproj
+
+      # Backend: Build the project
+      - name: Build backend
+        run: dotnet build PrintCraftApi/PrintCraftApi.csproj --no-restore --configuration Release
+
+      # Backend: Run unit tests
+      - name: Run backend tests
+        run: dotnet test PrintCraftApi.Tests/PrintCraftApi.Tests.csproj --no-build --verbosity normal --configuration Release
+
+      # Frontend: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # Frontend: Install dependencies
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      # Frontend: Build the application
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      # Docker: Setup Buildx for building images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Docker: Build backend image
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: PrintCraftApi/Dockerfile
+          load: true
+          tags: printcraft-api:latest
+
+      # Docker: Build frontend image
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: frontend/Dockerfile
+          load: true
+          tags: printcraft-frontend:latest
+
+      # Artifacts: Save Docker images as tar files
+      - name: Save Docker images
+        run: |
+          docker save printcraft-api:latest > printcraft-api.tar
+          docker save printcraft-frontend:latest > printcraft-frontend.tar
+
+      # Artifacts: Upload Docker images for deployment
+      - name: Upload Docker images
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: |
+            printcraft-api.tar
+            printcraft-frontend.tar
+
+      # Artifacts: Upload frontend build for static file deployment
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+
+  # Job: Deploy to production server (only if test job succeeds)
+  deploy:
+    name: Deploy to Production
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      # Checkout code (needed for any scripts or configs)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Download built Docker images
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+          path: .
+
+      # Download frontend build artifacts
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend-dist
+
+      # Deploy: SSH into server and update containers
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Navigate to project directory
+            cd /path/to/your/project
+            # Load the pre-built Docker images
+            docker load < printcraft-api.tar
+            docker load < printcraft-frontend.tar
+            # Copy frontend static files to web server directory
+            rsync -avz --delete frontend-dist/ /path/to/frontend/build/on/server
+            # Stop existing containers
+            docker-compose down
+            # Start updated containers
+            docker-compose up -d
