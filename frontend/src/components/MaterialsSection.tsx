@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { Filament } from "../types"; // Import your main interface
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
+import { getColorStyle } from "../utils/colors";
 
 export default function MaterialsSection() {
   const { t } = useI18n();
@@ -50,7 +51,9 @@ export default function MaterialsSection() {
               className="flex items-center gap-4 bg-[#f6fbf8] border border-[#d9e8e1] p-4 rounded-xl hover:bg-white hover:shadow-md transition-all group"
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 transition-transform group-hover:scale-110 ${f.getColorStyle()}}`}
+                key={f.id}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 transition-transform group-hover:scale-110"
+                style={getColorStyle(f.color)}
               >
                 <Box
                   size={16}

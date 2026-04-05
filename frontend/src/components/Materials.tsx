@@ -6,6 +6,7 @@ import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { Link } from "react-router-dom";
+import { getColorStyle } from "../utils/colors";
 
 export default function Materials() {
   const { t } = useI18n();
@@ -60,7 +61,7 @@ export default function Materials() {
                   {/* Visual Color Bubble */}
                   <div
                     className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                    style={f.getColorStyle()}
+                    style={getColorStyle(f.color)}
                   >
                     <Box size={24} />
                   </div>
