@@ -17,11 +17,22 @@ export default defineConfig(({ mode }) => {
     host: "0.0.0.0",
     port: 5173,
     strictPort: true,
+    watch: {
+      usePolling: true,
+    },
     ...(devApiOrigin
       ? {
           proxy: {
-            "/api": devApiOrigin,
-            "/uploads": devApiOrigin,
+            "/api": {
+              target: devApiOrigin,
+              changeOrigin: true,
+              secure: false,
+            },
+            "/uploads": {
+              target: devApiOrigin,
+              changeOrigin: true,
+              secure: false,
+            },
           },
         }
       : {}),
