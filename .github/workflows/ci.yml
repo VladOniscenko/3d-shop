@@ -14,7 +14,7 @@ on:
 jobs:
   # Job 1: Run tests (Stays entirely on GitHub's cloud)
   test:
-    name: Test Code
+    name: Test and Build
     runs-on: ubuntu-latest
 
     steps:
@@ -28,21 +28,34 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # Backend: Restore dependencies
+      # Backend: Restore, Build, and Test
       - name: Restore backend dependencies
         run: dotnet restore PrintCraftApi/PrintCraftApi.csproj
 
-      # Backend: Build the project
       - name: Build backend
         run: dotnet build PrintCraftApi/PrintCraftApi.csproj --no-restore --configuration Release
 
-      # Backend: Run unit tests
       - name: Run backend tests
         run: dotnet test PrintCraftApi.Tests/PrintCraftApi.Tests.csproj --no-build --verbosity normal --configuration Release
 
-      # (Optional) You can add Frontend tests here if you have them!
+      # Frontend: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
-  # Job 2: Deploy (Only triggers if tests pass)
+      # Frontend: Install dependencies and Build
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+  # Job 2: Deploy to Raspberry Pi (Only triggers if 'test' job succeeds)
   deploy:
     name: Deploy to Production
     needs: test
@@ -50,6 +63,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      # Step 1: Connect GitHub Runner to your Tailscale VPN
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      # Step 2: SSH into the Pi over Tailscale and execute deployment
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -57,15 +77,14 @@ jobs:
           username: ${{ secrets.PI_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Go to the project folder on the Pi
+            # 1. Navigate to your project directory on the Pi
             cd ~/projects/3d-shop
 
-            # 2. Pull the latest code directly from GitHub
+            # 2. Pull the latest tested code from GitHub
             git pull origin main
 
-            # 3. Tell the Pi to build the new ARM64 images and start them
-            # The --build flag forces Docker to rebuild if the code changed
+            # 3. Build ARM64 Docker images natively on the Pi and start the containers
             docker-compose up -d --build
 
-            # 4. Clean up old, unused Docker images to save SD/SSD space
+            # 4. Clean up old, unused Docker images to save storage space
             docker image prune -f
