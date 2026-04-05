@@ -94,7 +94,16 @@ public class UploadController : ControllerBase
             return BadRequest(new { message = "File is too large. Maximum size is 50 MB." });
 
         var extension = Path.GetExtension(file.FileName);
-        if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+        if (string.IsNullOrWhiteSpace(extension))
+            return BadRequest(new { message = "Unsupported file type." });
+
+        // Check if the current user is an admin
+        bool isAdmin = User.IsInRole("admin");
+
+        // If they are an admin, let them use the big list. Otherwise, restrict them to the small list.
+        var validExtensions = isAdmin ? AllowedExtensions : ModelExtensions;
+
+        if (!validExtensions.Contains(extension))
             return BadRequest(new { message = "Unsupported file type." });
 
         if (!IsAllowedContentType(extension, file.ContentType))

@@ -920,7 +920,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.noFiles": "No files added yet.",
     "quote.dragDropHint": "Drag and drop files here",
     "quote.allowedFilesInline":
-      "Allowed files: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
+      "Allowed files: STL, OBJ, 3MF, STEP, STP (max 50 MB).",
     "quote.shipping": "Shipping Info",
     "quote.submit": "Submit Quote Request",
     "quote.secure": "Safe & Secure 3D Printing",
@@ -2080,7 +2080,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
     "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":
-      "Toegestane bestanden: STL, OBJ, 3MF, STEP, STP, PNG, JPG, JPEG, WEBP, GIF (max 50 MB).",
+      "Toegestane bestanden: STL, OBJ, 3MF, STEP, STP (max 50 MB).",
     "quote.shipping": "Verzendgegevens",
     "quote.submit": "Offerte Aanvraag Versturen",
     "quote.secure": "Veilig & Betrouwbaar 3D Printen",

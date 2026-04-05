@@ -21,8 +21,7 @@ import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
 import ModelDiscoveryCards from "./ModelDiscoveryCards";
 
-const ALLOWED_UPLOAD_ACCEPT =
-  ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
+const ALLOWED_UPLOAD_ACCEPT = ".stl,.obj,.3mf,.step,.stp";
 
 export default function Quote() {
   const { t } = useI18n();
