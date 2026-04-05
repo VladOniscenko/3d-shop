@@ -119,12 +119,6 @@ export default function SeoManager() {
         keywords: t("seo.home.keywords"),
         index: true,
       },
-      "/gallery": {
-        title: t("seo.gallery.title"),
-        description: t("seo.gallery.description"),
-        keywords: t("seo.gallery.keywords"),
-        index: true,
-      },
       "/products": {
         title: t("seo.gallery.title"),
         description: t("seo.gallery.description"),

@@ -164,7 +164,7 @@ export default function CheckoutPage() {
             </h2>
             <p className="text-gray-500 mb-8">{t("cart.emptyDesc")}</p>
             <button
-              onClick={() => navigate("/gallery")}
+              onClick={() => navigate("/products")}
               className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center gap-2 mx-auto"
             >
               {t("cart.goGallery")} <ArrowRight size={18} />

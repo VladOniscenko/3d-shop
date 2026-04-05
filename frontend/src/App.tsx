@@ -196,10 +196,6 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/materials" element={<Materials />} />
-          <Route
-            path="/gallery"
-            element={<Navigate to="/products" replace />}
-          />
 
           {ALLOWED_PRODUCT_ORDER && (
             <>
