@@ -9,6 +9,7 @@ import Footer from "./Footer";
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
 import type { ActiveQuotePromotion } from "../types";
+import { ALLOWED_PRODUCT_ORDER } from "../constants";
 
 export default function Home() {
   const { language, t } = useI18n();
@@ -94,9 +95,11 @@ export default function Home() {
           <div className="site-section p-6 sm:p-8">
             <MaterialsSection />
           </div>
-          <div className="site-section p-6 sm:p-8">
-            <RecentPrints />
-          </div>
+          {ALLOWED_PRODUCT_ORDER && (
+            <div className="site-section p-6 sm:p-8">
+              <RecentPrints />
+            </div>
+          )}
         </section>
       </main>
       <Footer />
