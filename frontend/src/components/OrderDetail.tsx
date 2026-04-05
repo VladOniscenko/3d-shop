@@ -341,7 +341,7 @@ export default function OrderDetail() {
 
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="text-sm font-black uppercase tracking-wide text-gray-900 mb-3">
-              {t("orderDetail.paymentAttempt")}
+              {t("orderDetail.paymentAttempts")}
             </h3>
             {paymentAttempts.length === 0 ? (
               <p className="text-sm text-gray-500">
