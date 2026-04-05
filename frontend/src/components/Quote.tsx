@@ -314,7 +314,7 @@ export default function Quote() {
                     className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    Add Description
+                    {t("quote.addDescription")}
                   </button>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function Quote() {
                     >
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-bold text-gray-800 truncate max-w-[300px]">
-                          {item.fileName || "Text Description"}
+                          {item.fileName || t("quote.textDescription")}
                         </span>
                         <button
                           type="button"

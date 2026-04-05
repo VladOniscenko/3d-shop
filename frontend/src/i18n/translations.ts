@@ -940,6 +940,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.phone": "Phone Number",
     "quote.street": "Street Address",
     "quote.city": "City",
+    "quote.textDescription": "Text Description",
     "quote.postalCode": "Postal Code",
     "quote.shippingLaterNotice":
       "Shipping details are requested after your quote is approved, when you click confirm and pay.",
@@ -2101,6 +2102,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.phone": "Telefoonnummer",
     "quote.street": "Straat en huisnummer",
     "quote.city": "Plaats",
+    "quote.textDescription": "Tekst Beschrijving",
     "quote.postalCode": "Postcode",
     "quote.shippingLaterNotice":
       "Verzendgegevens vragen we pas nadat je offerte is goedgekeurd, wanneer je op bevestigen en betalen klikt.",
