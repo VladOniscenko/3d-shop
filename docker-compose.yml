@@ -48,7 +48,7 @@ services:
       Email__Username: ${Email__Username}
       Email__Password: ${Email__Password}
     ports:
-      - "5001:8080"
+      - "5001:5001"
     volumes:
       - printcraft_uploads:/app/wwwroot/uploads
     restart: unless-stopped
