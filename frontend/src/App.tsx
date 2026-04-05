@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import SeoManager from "./components/SeoManager";
 import api from "./services/api";
+import { ALLOWED_PRODUCT_ORDER } from "./constants.tsx";
 
 const recentVisitDispatches = new Map<string, number>();
 
@@ -199,8 +200,14 @@ export default function App() {
             path="/gallery"
             element={<Navigate to="/products" replace />}
           />
-          <Route path="/products" element={<Gallery />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
+
+          {ALLOWED_PRODUCT_ORDER && (
+            <>
+              <Route path="/products" element={<Gallery />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+            </>
+          )}
+
           <Route path="/how-it-works" element={<Navigate to="/" replace />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -241,6 +248,20 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          {ALLOWED_PRODUCT_ORDER && (
+            <>
+              <Route
+                path="/cart"
+                element={
+                  <ProtectedRoute>
+                    <Cart />
+                  </ProtectedRoute>
+                }
+              />
+            </>
+          )}
+
           <Route
             path="/orders/:id/models/:itemIndex"
             element={

@@ -53,16 +53,17 @@ export default function NotFound() {
   return (
     <div className="site-shell">
       <Navbar />
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
-        <section className="rounded-[2rem] p-8 lg:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative overflow-hidden bg-gradient-to-br from-[#12382b] via-[#0f5144] to-[#0a645e] shadow-[0_28px_50px_rgba(12,56,43,0.28)]">
+      <main className="mx-auto w-full max-w-7xl py-10 lg:py-14">
+        <section className="rounded-[2rem] p-8 lg:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative overflow-hidden bg-gradient-to-br from-[#3b0a12] via-[#7a1124] to-[#d62839] shadow-[0_28px_50px_rgba(60,10,20,0.4)]">
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
           <div className="space-y-5 text-white z-10">
-            <p className="text-emerald-100/80 text-sm font-bold tracking-[0.24em]">
+            <p className="text-rose-100/80 text-sm font-bold tracking-[0.24em]">
               404
             </p>
             <h1 className="text-4xl sm:text-5xl font-black leading-[1.04] tracking-tight">
               {t("notFound.title")}
             </h1>
-            <p className="text-emerald-50/85 max-w-lg text-base sm:text-lg">
+            <p className="text-rose-50/85 max-w-lg text-base sm:text-lg">
               {t("notFound.description")}
             </p>
 
@@ -74,7 +75,7 @@ export default function NotFound() {
               <button
                 type="button"
                 onClick={() => window.history.back()}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition"
               >
                 <ArrowLeft size={18} />
                 {t("notFound.goBack")}
@@ -83,7 +84,7 @@ export default function NotFound() {
           </div>
 
           <div className="relative w-full h-[300px] sm:h-[360px] lg:h-[460px] z-10">
-            <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[70%] bg-emerald-300/20 rounded-full blur-3xl" />
+            <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[70%] bg-rose-400/20 rounded-full blur-3xl" />
 
             {modelSrc ? (
               <Suspense
