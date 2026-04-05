@@ -28,44 +28,6 @@ export default function MaterialsSection() {
     fetchPreview();
   }, []);
 
-  // Helper to match API colors to UI bubbles
-  const getColorStyle = (hex: string) => {
-    // Handle invalid or transparent
-    if (!hex || hex.toLowerCase() === "transparent") {
-      return { backgroundColor: "transparent", color: "#111827" }; // dark text on transparent
-    }
-
-    // Validate hex format (#RRGGBB or #RGB)
-    const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex);
-    if (!isValidHex) {
-      return { backgroundColor: "#D1FAE5", color: "#111827" }; // fallback color
-    }
-
-    // Compute text color using YIQ
-    const textColor = getContrastYIQ(hex);
-    return { backgroundColor: hex, color: textColor };
-  };
-
-  // YIQ contrast function
-  const getContrastYIQ = (hex: string) => {
-    let r: number, g: number, b: number;
-
-    if (hex.length === 4) {
-      // #RGB format
-      r = parseInt(hex[1] + hex[1], 16);
-      g = parseInt(hex[2] + hex[2], 16);
-      b = parseInt(hex[3] + hex[3], 16);
-    } else {
-      // #RRGGBB format
-      r = parseInt(hex.substring(1, 3), 16);
-      g = parseInt(hex.substring(3, 5), 16);
-      b = parseInt(hex.substring(5, 7), 16);
-    }
-
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "#111827" : "#FFFFFF";
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -88,7 +50,7 @@ export default function MaterialsSection() {
               className="flex items-center gap-4 bg-[#f6fbf8] border border-[#d9e8e1] p-4 rounded-xl hover:bg-white hover:shadow-md transition-all group"
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 transition-transform group-hover:scale-110 ${getColorStyle(f.color)}`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 transition-transform group-hover:scale-110 ${f.getColorStyle()}}`}
               >
                 <Box
                   size={16}
