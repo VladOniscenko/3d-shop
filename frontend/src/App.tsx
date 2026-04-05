@@ -72,6 +72,7 @@ const OrderModelViewerPage = lazy(
 const AdminUploadedModelViewerPage = lazy(
   () => import("./components/AdminUploadedModelViewerPage.tsx"),
 );
+const NotFound = lazy(() => import("./components/NotFound.tsx"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
@@ -337,6 +338,7 @@ export default function App() {
               </AdminRoute>
             }
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

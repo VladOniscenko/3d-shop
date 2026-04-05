@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { matchPath, useLocation } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
 
 type RouteSeo = {
@@ -175,16 +175,48 @@ export default function SeoManager() {
       },
     };
 
-    const isOrderDetail = location.pathname.startsWith("/orders/");
-    const isProductDetail = location.pathname.startsWith("/products/");
+    const pathname = location.pathname;
 
-    const routeSeo = isOrderDetail
+    const knownDynamicPatterns = [
+      "/products/:id",
+      "/orders/:id",
+      "/orders/:id/models/:itemIndex",
+      "/admin/orders/:id",
+      "/admin/orders/:id/models/:itemIndex",
+      "/admin/products/:id",
+      "/admin/models/view/:fileName",
+    ];
+
+    const isKnownDynamicRoute = knownDynamicPatterns.some((pattern) =>
+      Boolean(matchPath({ path: pattern, end: true }, pathname)),
+    );
+
+    const isKnownExactRoute = Object.prototype.hasOwnProperty.call(
+      seoByRoute,
+      pathname,
+    );
+
+    const isKnownRoute = isKnownExactRoute || isKnownDynamicRoute;
+
+    const notFoundSeo: RouteSeo = {
+      title: t("seo.notFound.title"),
+      description: t("seo.notFound.description"),
+      keywords: t("seo.notFound.keywords"),
+      index: false,
+    };
+
+    const isOrderDetail = pathname.startsWith("/orders/");
+    const isProductDetail = pathname.startsWith("/products/");
+
+    const routeSeo = !isKnownRoute
+      ? notFoundSeo
+      : isOrderDetail
       ? { ...seoByRoute["/orders"], index: false }
       : isProductDetail
         ? { ...seoByRoute["/products"], index: true }
-        : seoByRoute[location.pathname] || defaultSeo;
+        : seoByRoute[pathname] || defaultSeo;
 
-    const canonicalUrl = `${window.location.origin}${location.pathname}`;
+    const canonicalUrl = `${window.location.origin}${pathname}`;
 
     document.documentElement.lang = language === "nl" ? "nl-NL" : "en";
     document.title = routeSeo.title;
@@ -205,7 +237,7 @@ export default function SeoManager() {
     upsertMetaByName("twitter:description", routeSeo.description);
 
     upsertCanonical(canonicalUrl);
-    upsertJsonLd(location.pathname, canonicalUrl, language, routeSeo.title);
+    upsertJsonLd(pathname, canonicalUrl, language, routeSeo.title);
   }, [language, location.pathname, t]);
 
   return null;

@@ -1000,6 +1000,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orders.project": "Project",
     "orders.placedOn": "Placed on",
 
+    // Not Found
+    "notFound.title": "This page got lost in the print queue",
+    "notFound.description":
+      "The page you requested does not exist or has been moved. Head back home and start a new 3D print project.",
+    "notFound.backHome": "Back to home",
+    "notFound.goBack": "Go back",
+    "notFound.loadingModel": "Loading 3D model...",
+
     // Order detail
     "orderDetail.notFound": "Order not found",
     "orderDetail.back": "Back to Projects",
@@ -1136,6 +1144,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "seo.faq.description":
       "Frequently asked questions about lead times, materials, prices and quality.",
     "seo.faq.keywords": "3D print FAQ Netherlands, 3D printing questions",
+    "seo.notFound.title": "Page Not Found | PrintCraft 3D Print Service",
+    "seo.notFound.description":
+      "The requested page could not be found. Return to PrintCraft to start your next 3D print project.",
+    "seo.notFound.keywords": "404, page not found, PrintCraft",
   },
   nl: {
     // Navbar
@@ -2148,6 +2160,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orders.project": "Project",
     "orders.placedOn": "Geplaatst op",
 
+    // Not Found
+    "notFound.title": "Deze pagina is zoekgeraakt in de printwachtrij",
+    "notFound.description":
+      "De opgevraagde pagina bestaat niet of is verplaatst. Ga terug naar home en start een nieuw 3D-printproject.",
+    "notFound.backHome": "Terug naar home",
+    "notFound.goBack": "Ga terug",
+    "notFound.loadingModel": "3D-model laden...",
+
     // Order detail
     "orderDetail.notFound": "Order niet gevonden",
     "orderDetail.back": "Terug naar Projecten",
@@ -2285,5 +2305,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "seo.faq.description":
       "Veelgestelde vragen over levertijd, materialen, prijzen en kwaliteit.",
     "seo.faq.keywords": "3D print FAQ Nederland, vragen 3D printen",
+    "seo.notFound.title": "Pagina niet gevonden | PrintCraft 3D Print Service",
+    "seo.notFound.description":
+      "De opgevraagde pagina kon niet worden gevonden. Ga terug naar PrintCraft om je volgende 3D-printproject te starten.",
+    "seo.notFound.keywords": "404, pagina niet gevonden, PrintCraft",
   },
 };
