@@ -1,11 +1,11 @@
-export type SupportedLanguage = "en" | "nl";
+export type SupportedLanguage = "nl" | "en";
 
 export const languageOptions: Array<{
   code: SupportedLanguage;
   label: string;
 }> = [
-  { code: "en", label: "EN" },
   { code: "nl", label: "NL" },
+  { code: "en", label: "EN" },
 ];
 
 export const translations: Record<SupportedLanguage, Record<string, string>> = {
