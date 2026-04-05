@@ -58,8 +58,9 @@ export default function Quote() {
   const availableColors = Array.from(new Set(filaments.map((f) => f.color)));
 
   const finalMaterials =
-    availableMaterials.length > 0 ? availableMaterials : ["PLA"];
-  const finalColors = availableColors.length > 0 ? availableColors : ["Black"];
+    availableMaterials.length > 0 ? availableMaterials : ["PLA", "PETG"];
+  const finalColors =
+    availableColors.length > 0 ? availableColors : ["Black", "White"];
 
   const uploadSelectedFiles = async (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
