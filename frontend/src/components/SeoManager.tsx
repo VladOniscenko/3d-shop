@@ -211,10 +211,10 @@ export default function SeoManager() {
     const routeSeo = !isKnownRoute
       ? notFoundSeo
       : isOrderDetail
-      ? { ...seoByRoute["/orders"], index: false }
-      : isProductDetail
-        ? { ...seoByRoute["/products"], index: true }
-        : seoByRoute[pathname] || defaultSeo;
+        ? { ...seoByRoute["/orders"], index: false }
+        : isProductDetail
+          ? { ...seoByRoute["/products"], index: true }
+          : seoByRoute[pathname] || defaultSeo;
 
     const canonicalUrl = `${window.location.origin}${pathname}`;
 
