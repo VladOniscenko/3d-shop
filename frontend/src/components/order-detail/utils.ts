@@ -24,6 +24,7 @@ export function buildPriceSummary(order: Order): PriceSummary {
     0,
   );
   const deliveryPrice = Math.max(order.deliveryPrice ?? 0, 0);
+  const serviceFeePrice = Math.max(order.serviceFeePrice ?? 0, 0);
 
   const calculatedTotal =
     subtotalPrice == null
@@ -47,6 +48,7 @@ export function buildPriceSummary(order: Order): PriceSummary {
     isPendingQuote,
     subtotalPrice,
     deliveryPrice,
+    serviceFeePrice,
     orderDiscount,
     displayTotal,
   };

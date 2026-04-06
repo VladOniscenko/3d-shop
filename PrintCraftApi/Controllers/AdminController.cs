@@ -99,11 +99,13 @@ public class AdminController : ControllerBase
     private static void RecalculateQuotedPrice(Order order)
     {
         var normalizedDelivery = Math.Max(order.DeliveryPrice, 0m);
+        var normalizedServiceFee = Math.Max(order.ServiceFeePrice, 0m);
         var normalizedDiscount = Math.Max(order.OrderDiscountAmount, 0m);
         var subtotal = CalculateSubtotal(order);
-        var total = Math.Max(subtotal + normalizedDelivery - normalizedDiscount, 0m);
+        var total = Math.Max(subtotal + normalizedDelivery + normalizedServiceFee - normalizedDiscount, 0m);
 
         order.DeliveryPrice = normalizedDelivery;
+        order.ServiceFeePrice = normalizedServiceFee;
         order.OrderDiscountAmount = normalizedDiscount;
         order.QuotedPrice = total > 0 ? total : null;
     }
@@ -853,6 +855,27 @@ public class AdminController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPatch("orders/{id:guid}/service-fee")] // PATCH for partial update
+    public async Task<IActionResult> UpdateFeePrice([FromRoute] Guid id, [FromBody] FeePriceRequest payload)
+    {
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment or production progress." });
+
+        if (payload.ServiceFeePrice < 0)
+            return BadRequest(new { message = "Fee price cannot be negative." });
+
+        order.ServiceFeePrice = payload.ServiceFeePrice;
+        RecalculateQuotedPrice(order);
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(order);
+    }
+
     [HttpPatch("orders/{id:guid}/delivery-price")] // PATCH for partial update
     public async Task<IActionResult> UpdateDeliveryPrice([FromRoute] Guid id, [FromBody] DeliveryPriceRequest payload)
     {
@@ -1108,6 +1131,7 @@ public class AdminController : ControllerBase
     public record CreateOrderNoteRequest(string Content, string Visibility);
     public record UpdateItemRequest(double Price);
     public record DeliveryPriceRequest(decimal DeliveryPrice);
+    public record FeePriceRequest(decimal ServiceFeePrice);
     public record OrderDiscountRequest(decimal OrderDiscountAmount);
     public record UpdateOrderStatusRequest(string Status);
     public record UpdateOrderCustomerRequest(

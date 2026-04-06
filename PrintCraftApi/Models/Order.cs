@@ -18,7 +18,8 @@ public class Order
 
     public string Status { get; set; } = "pending_quote";
     public string OrderType { get; set; } = "quote"; // "quote" or "online"
-    public decimal DeliveryPrice { get; set; } = 6.95m;
+    public decimal DeliveryPrice { get; set; } = 4.95m;
+    public decimal ServiceFeePrice { get; set; } = 5.00m;
     public decimal OrderDiscountAmount { get; set; } = 0m;
     public decimal? QuotedPrice { get; set; }
     public string? QuoteMessage { get; set; }
@@ -49,5 +50,5 @@ public class Order
 
     [NotMapped]
     public decimal FinalTotalAmount
-        => Math.Max(SubtotalAmount + Math.Max(DeliveryPrice, 0m) - DiscountAmount, 0m);
+        => Math.Max(SubtotalAmount + Math.Max(ServiceFeePrice, 0m) + Math.Max(DeliveryPrice, 0m) - DiscountAmount, 0m);
 }

@@ -1,4 +1,12 @@
-import { Calendar, MapPin, Phone, Tag, Truck, User } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Phone,
+  Tag,
+  Truck,
+  User,
+  Receipt,
+} from "lucide-react";
 import type { OrderSectionProps, PriceSummary } from "./types";
 
 interface OrderSidebarProps extends OrderSectionProps {
@@ -66,6 +74,18 @@ export default function OrderSidebar({
               <span>
                 {!priceSummary.isPendingQuote && priceSummary.deliveryPrice > 0
                   ? `€${priceSummary.deliveryPrice.toFixed(2)}`
+                  : t("orderDetail.toBeCalculated")}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-emerald-100/70">
+              <span className="flex items-center gap-2">
+                <Receipt size={14} /> {t("orderDetail.serviceFee")}
+              </span>
+              <span>
+                {!priceSummary.isPendingQuote &&
+                priceSummary.serviceFeePrice > 0
+                  ? `€${priceSummary.serviceFeePrice.toFixed(2)}`
                   : t("orderDetail.toBeCalculated")}
               </span>
             </div>

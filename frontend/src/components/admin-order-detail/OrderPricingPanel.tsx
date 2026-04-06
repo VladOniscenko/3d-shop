@@ -15,6 +15,10 @@ interface OrderPricingPanelProps {
   setDeliveryPrice: Dispatch<SetStateAction<number>>;
   savingDelivery: boolean;
   updateDeliveryPrice: (price: number) => Promise<void>;
+  serviceFee: number;
+  setServiceFee: Dispatch<SetStateAction<number>>;
+  savingServiceFee: boolean;
+  updateServiceFee: (fee: number) => Promise<void>;
   orderDiscountAmount: number;
   setOrderDiscountAmount: Dispatch<SetStateAction<number>>;
   savingOrderDiscount: boolean;
@@ -38,6 +42,10 @@ export default function OrderPricingPanel({
   setDeliveryPrice,
   savingDelivery,
   updateDeliveryPrice,
+  serviceFee,
+  setServiceFee,
+  savingServiceFee,
+  updateServiceFee,
   orderDiscountAmount,
   setOrderDiscountAmount,
   savingOrderDiscount,
@@ -233,6 +241,45 @@ export default function OrderPricingPanel({
         </div>
       </div>
 
+      {/* Service Fee Section */}
+      <div className="mt-4 rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
+          <h3 className="font-bold text-[#1b2b25] text-sm">
+            {t("admin.orderDetail.serviceFeeLabel") || "Service Fee"}
+          </h3>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <label className="block text-xs uppercase text-[#6c817a] font-semibold mb-3">
+                {`${t("admin.orderDetail.serviceFeeLabel") || "Service Fee"} (${CURRENCY_CODE})`}
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={serviceFee}
+                disabled={pricingLocked}
+                onChange={(e) => {
+                  const newFee = parseFloat(e.target.value) || 0;
+                  setServiceFee(newFee);
+                }}
+                className="admin-field w-full"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={savingServiceFee || pricingLocked}
+              onClick={() => updateServiceFee(serviceFee)}
+              className="admin-btn admin-btn-primary mt-6"
+            >
+              {savingServiceFee
+                ? t("admin.orderDetail.savingButton")
+                : t("admin.orderDetail.saveButton")}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Order Discount Section */}
       <div className="mt-4 rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
@@ -325,6 +372,14 @@ export default function OrderPricingPanel({
               </span>
               <span className="font-semibold">
                 {formatCurrencyAmount(deliveryPrice)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">
+                {t("admin.orderDetail.serviceFeeLabel") || "Service Fee"}:
+              </span>
+              <span className="font-semibold">
+                {formatCurrencyAmount(serviceFee)}
               </span>
             </div>
             <div className="flex justify-between items-center">

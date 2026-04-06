@@ -21,6 +21,7 @@ export interface PriceSummary {
   isPendingQuote: boolean;
   subtotalPrice: number | null;
   deliveryPrice: number;
+  serviceFeePrice: number;
   orderDiscount: number;
   displayTotal: number;
 }

@@ -22,6 +22,7 @@ export interface Order {
   postalCode: string;
   phoneNumber: string;
   deliveryPrice?: number;
+  serviceFeePrice?: number;
   orderDiscountAmount?: number;
   subtotalAmount?: number;
   discountAmount?: number;

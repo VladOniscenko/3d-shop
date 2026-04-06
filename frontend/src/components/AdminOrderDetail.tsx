@@ -48,9 +48,11 @@ export default function AdminOrderDetail() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [itemPrices, setItemPrices] = useState<{ [key: string]: number }>({});
   const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [serviceFee, setServiceFee] = useState(0);
   const [orderDiscountAmount, setOrderDiscountAmount] = useState(0);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
   const [savingDelivery, setSavingDelivery] = useState(false);
+  const [savingServiceFee, setSavingServiceFee] = useState(false);
   const [savingOrderDiscount, setSavingOrderDiscount] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailType, setEmailType] = useState("quote_requested");
@@ -94,6 +96,7 @@ export default function AdminOrderDetail() {
 
       setItemPrices(prices);
       setDeliveryPrice(data.deliveryPrice || 0);
+      setServiceFee(data.serviceFeePrice || 0);
       setOrderDiscountAmount(data.orderDiscountAmount || 0);
       setSelectedStatus(data.status || "pending");
       setTrackingCode(data.trackingCode || "");
@@ -207,6 +210,28 @@ export default function AdminOrderDetail() {
       notifyError(t("admin.order.deliveryPriceUpdateFailed"));
     } finally {
       setSavingDelivery(false);
+    }
+  };
+
+  const updateServiceFee = async (fee: number) => {
+    if (!id) return;
+    setSavingServiceFee(true);
+    try {
+      await api.patch(`/admin/orders/${id}/service-fee`, {
+        serviceFeePrice: fee,
+      });
+      await refresh();
+      notifySuccess(
+        t("admin.order.serviceFeeUpdated") || "Service fee updated",
+      );
+    } catch (err) {
+      console.error(err);
+      notifyError(
+        t("admin.order.serviceFeeUpdateFailed") ||
+          "Failed to update service fee",
+      );
+    } finally {
+      setSavingServiceFee(false);
     }
   };
 
@@ -405,7 +430,7 @@ export default function AdminOrderDetail() {
 
   const totalPrice = Math.max(
     0,
-    subtotal + deliveryPrice - orderDiscountAmount,
+    subtotal + deliveryPrice + serviceFee - orderDiscountAmount,
   );
   const pricingLocked = isOrderPricingLocked(order.status, !!order.isPaid);
   const allowedStatusOptions = ADMIN_ORDER_STATUS_OPTIONS.filter((option) =>
@@ -577,6 +602,10 @@ export default function AdminOrderDetail() {
             setDeliveryPrice={setDeliveryPrice}
             savingDelivery={savingDelivery}
             updateDeliveryPrice={updateDeliveryPrice}
+            serviceFee={serviceFee}
+            setServiceFee={setServiceFee}
+            savingServiceFee={savingServiceFee}
+            updateServiceFee={updateServiceFee}
             orderDiscountAmount={orderDiscountAmount}
             setOrderDiscountAmount={setOrderDiscountAmount}
             savingOrderDiscount={savingOrderDiscount}
