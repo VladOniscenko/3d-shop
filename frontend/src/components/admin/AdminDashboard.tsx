@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
+import api from "../../services/api";
 import type {
   Filament,
   Order,
   Product,
   QuotePromotionSettings,
-} from "../types";
-import { useI18n } from "../i18n/I18nContext";
-import { formatCurrencyAmount } from "../utils/currency";
+} from "../../types";
+import { useI18n } from "../../i18n/I18nContext";
+import { formatCurrencyAmount } from "../../utils/currency";
 
 interface Summary {
   totalUsers: number;

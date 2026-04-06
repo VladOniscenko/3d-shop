@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
-import type { Filament } from "../types";
-import { useNotify } from "../context/NotifyContext";
-import { useI18n } from "../i18n/I18nContext";
+import api from "../../services/api";
+import type { Filament } from "../../types";
+import { useNotify } from "../../context/NotifyContext";
+import { useI18n } from "../../i18n/I18nContext";
 import axios from "axios";
 
 export default function AdminFilaments() {

@@ -46,18 +46,24 @@ const FAQ = lazy(() => import("./components/FAQ.tsx"));
 const Orders = lazy(() => import("./components/Orders"));
 const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
 const Cart = lazy(() => import("./components/Cart.tsx"));
-const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
-const AdminOrders = lazy(() => import("./components/AdminOrders.tsx"));
+const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
+const AdminOrders = lazy(() => import("./components/admin/AdminOrders.tsx"));
 const AdminOrderDetail = lazy(
-  () => import("./components/AdminOrderDetail.tsx"),
+  () => import("./components/admin/AdminOrderDetail.tsx"),
 );
-const AdminPayments = lazy(() => import("./components/AdminPayments.tsx"));
-const AdminUsers = lazy(() => import("./components/AdminUsers.tsx"));
-const AdminProducts = lazy(() => import("./components/AdminProducts.tsx"));
+const AdminPayments = lazy(
+  () => import("./components/admin/AdminPayments.tsx"),
+);
+const AdminUsers = lazy(() => import("./components/admin/AdminUsers.tsx"));
+const AdminProducts = lazy(
+  () => import("./components/admin/AdminProducts.tsx"),
+);
 const AdminProductEdit = lazy(
-  () => import("./components/AdminProductEdit.tsx"),
+  () => import("./components/admin/AdminProductEdit.tsx"),
 );
-const AdminFilaments = lazy(() => import("./components/AdminFilaments.tsx"));
+const AdminFilaments = lazy(
+  () => import("./components/admin/AdminFilaments.tsx"),
+);
 const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy.tsx"));
 const TermsOfService = lazy(() => import("./components/TermsOfService.tsx"));
 const RefundPolicy = lazy(() => import("./components/RefundPolicy.tsx"));
@@ -71,7 +77,7 @@ const OrderModelViewerPage = lazy(
   () => import("./components/OrderModelViewerPage.tsx"),
 );
 const AdminUploadedModelViewerPage = lazy(
-  () => import("./components/AdminUploadedModelViewerPage.tsx"),
+  () => import("./components/admin/AdminUploadedModelViewerPage.tsx"),
 );
 const NotFound = lazy(() => import("./components/NotFound.tsx"));
 

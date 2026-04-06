@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
-import { useI18n } from "../i18n/I18nContext";
+import api from "../../services/api";
+import { useI18n } from "../../i18n/I18nContext";
 
 type AdminPaymentRecord = {
   id: string;

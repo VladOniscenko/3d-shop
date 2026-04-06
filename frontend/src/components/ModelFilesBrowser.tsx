@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Boxes, ExternalLink, RefreshCcw, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import AdminLayout from "./AdminLayout";
-import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./admin/AdminLayout";
+import AdminBreadcrumb from "./admin/AdminBreadcrumb";
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
 import { resolveAssetUrl } from "../utils/assetUrl";

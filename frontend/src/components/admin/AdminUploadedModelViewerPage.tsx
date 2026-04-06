@@ -3,10 +3,10 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
 import AdminBreadcrumb from "./AdminBreadcrumb";
-import { useI18n } from "../i18n/I18nContext";
-import { resolveAssetUrl } from "../utils/assetUrl";
+import { useI18n } from "../../i18n/I18nContext";
+import { resolveAssetUrl } from "../../utils/assetUrl";
 
-const HeroModelViewer = lazy(() => import("./HeroModelViewer"));
+const HeroModelViewer = lazy(() => import("./../HeroModelViewer"));
 
 function getFileExtension(fileName: string): string {
   const clean = fileName.split("?")[0] ?? fileName;

@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
-import type { Order } from "../types";
-import { useI18n } from "../i18n/I18nContext";
+import api from "../../services/api";
+import type { Order } from "../../types";
+import { useI18n } from "../../i18n/I18nContext";
 import {
   ADMIN_ORDER_STATUS_OPTIONS,
   formatOrderStatusLabel,
   getOrderStatusPillClass,
-} from "../utils/orderStatus";
+} from "../../utils/orderStatus";
 
 const STATUS_OPTIONS = [
   { value: "All", label: "admin.orders.statusAll" },

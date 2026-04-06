@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
-import type { User } from "../types";
-import { useI18n } from "../i18n/I18nContext";
-import { useNotify } from "../context/NotifyContext";
+import api from "../../services/api";
+import type { User } from "../../types";
+import { useI18n } from "../../i18n/I18nContext";
+import { useNotify } from "../../context/NotifyContext";
 
 export default function AdminUsers() {
   const { t } = useI18n();

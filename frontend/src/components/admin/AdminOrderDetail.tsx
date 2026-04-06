@@ -2,21 +2,21 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
+import api from "../../services/api";
 import type {
   Order,
   OrderNote,
   PaymentAttempt,
   QuotePromotionSettings,
-} from "../types";
-import { useNotify } from "../context/NotifyContext";
-import { useI18n } from "../i18n/I18nContext";
+} from "../../types";
+import { useNotify } from "../../context/NotifyContext";
+import { useI18n } from "../../i18n/I18nContext";
 import type {
   OrderCommunication,
   OrderStatusHistoryEntry,
-} from "./admin-order-detail/types";
-import OrderPricingPanel from "./admin-order-detail/OrderPricingPanel";
-import OrderHistoryPanel from "./admin-order-detail/OrderHistoryPanel";
+} from "./../admin-order-detail/types";
+import OrderPricingPanel from "./../admin-order-detail/OrderPricingPanel";
+import OrderHistoryPanel from "./../admin-order-detail/OrderHistoryPanel";
 import {
   ADMIN_ORDER_STATUS_OPTIONS,
   canTransitionOrderStatus,
@@ -24,8 +24,8 @@ import {
   getOrderStatusPillClass,
   isOrderPricingLocked,
   normalizeOrderStatus,
-} from "../utils/orderStatus";
-import { formatCurrencyAmount } from "../utils/currency";
+} from "../../utils/orderStatus";
+import { formatCurrencyAmount } from "../../utils/currency";
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();

@@ -5,8 +5,8 @@ import type { Order, OrderItem } from "../types";
 import api from "../services/api";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import AdminLayout from "./AdminLayout";
-import AdminBreadcrumb from "./AdminBreadcrumb";
+import AdminLayout from "./admin/AdminLayout";
+import AdminBreadcrumb from "./admin/AdminBreadcrumb";
 import { resolveAssetUrl } from "../utils/assetUrl";
 import { useI18n } from "../i18n/I18nContext";
 

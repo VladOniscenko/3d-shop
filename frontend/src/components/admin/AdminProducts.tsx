@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
-import api from "../services/api";
-import type { Product } from "../types";
-import { useNotify } from "../context/NotifyContext";
-import { useI18n } from "../i18n/I18nContext";
-import { resolveAssetUrl } from "../utils/assetUrl";
+import api from "../../services/api";
+import type { Product } from "../../types";
+import { useNotify } from "../../context/NotifyContext";
+import { useI18n } from "../../i18n/I18nContext";
+import { resolveAssetUrl } from "../../utils/assetUrl";
 import {
   PRODUCT_TYPE_LABELS,
   PRODUCT_TYPES,
   productImages,
-} from "../utils/products";
-import { formatCurrencyAmount } from "../utils/currency";
+} from "../../utils/products";
+import { formatCurrencyAmount } from "../../utils/currency";
 
 const PRODUCT_TYPE_OPTIONS = [
   PRODUCT_TYPES.PRINT,
