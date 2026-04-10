@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using PrintCraftApi.Data;
 using System.Text;
+using System.Text.Json;
 
 namespace PrintCraftApi.Controllers;
 
@@ -13,6 +14,8 @@ namespace PrintCraftApi.Controllers;
 public class UploadController : ControllerBase
 {
     private readonly PrintCraftDb _db;
+    private const string VisitorHeaderName = "X-Visitor-Id";
+    private const string UploadMetadataSuffix = ".upload-meta.json";
 
     private const long MaxUploadBytes = 50 * 1024 * 1024; // 50 MB
     private const int HeaderReadSize = 512;
@@ -123,11 +126,17 @@ public class UploadController : ControllerBase
             Directory.CreateDirectory(uploadsFolder);
         }
 
+        var ownerKey = ResolveUploadOwnerKey();
+        if (ownerKey == null)
+            return BadRequest(new { message = "Missing upload visitor identifier." });
+
         var safeFileName = Guid.NewGuid().ToString() + extension.ToLowerInvariant();
         var filePath = Path.Combine(uploadsFolder, safeFileName);
 
         using var stream = new FileStream(filePath, FileMode.Create);
         await file.CopyToAsync(stream);
+
+        await WriteUploadMetadataAsync(filePath, ownerKey);
 
         return Ok(new { url = $"/uploads/{safeFileName}" });
     }
@@ -260,6 +269,7 @@ public class UploadController : ControllerBase
             return NotFound(new { message = "File not found." });
 
         System.IO.File.Delete(filePath);
+        DeleteUploadMetadataIfExists(filePath);
         return Ok(new { message = "File deleted." });
     }
 
@@ -275,6 +285,13 @@ public class UploadController : ControllerBase
         var extension = Path.GetExtension(fileName);
         if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
             return BadRequest(new { message = "Only model files can be deleted from this endpoint." });
+
+        var ownerKey = ResolveUploadOwnerKey();
+        if (ownerKey == null)
+            return BadRequest(new { message = "Missing upload visitor identifier." });
+
+        if (!IsOwnedTempUpload(fileName, ownerKey))
+            return Forbid();
 
         var linkedToProduct = _db.Products
             .AsNoTracking()
@@ -320,6 +337,10 @@ public class UploadController : ControllerBase
         if (fileUrls.Length == 0)
             return Ok(new { requestedCount = 0, deletedCount = 0 });
 
+        var ownerKey = ResolveUploadOwnerKey();
+        if (ownerKey == null)
+            return BadRequest(new { message = "Missing upload visitor identifier." });
+
         var fileNames = fileUrls
             .Select(ExtractFileNameFromAssetUrl)
             .Where(name => !string.IsNullOrWhiteSpace(name))
@@ -361,6 +382,9 @@ public class UploadController : ControllerBase
             if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
                 continue;
 
+            if (!IsOwnedTempUpload(fileName, ownerKey))
+                continue;
+
             if (linkedProductFileNames.Contains(fileName) || linkedOrderFileNames.Contains(fileName))
                 continue;
 
@@ -369,6 +393,7 @@ public class UploadController : ControllerBase
                 continue;
 
             System.IO.File.Delete(filePath);
+            DeleteUploadMetadataIfExists(filePath);
             deletedCount += 1;
         }
 
@@ -515,6 +540,61 @@ public class UploadController : ControllerBase
 
         return true;
     }
+
+    private string? ResolveUploadOwnerKey()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(userId))
+            return $"user:{userId}";
+
+        var visitorId = Request.Headers[VisitorHeaderName].FirstOrDefault()?.Trim();
+        if (string.IsNullOrWhiteSpace(visitorId))
+            return null;
+
+        return $"anon:{visitorId}";
+    }
+
+    private static string GetUploadMetadataPath(string filePath)
+        => filePath + UploadMetadataSuffix;
+
+    private static async Task WriteUploadMetadataAsync(string filePath, string ownerKey)
+    {
+        var metadata = new UploadMetadata(ownerKey, DateTime.UtcNow);
+        var metadataJson = JsonSerializer.Serialize(metadata);
+        await System.IO.File.WriteAllTextAsync(GetUploadMetadataPath(filePath), metadataJson);
+    }
+
+    private static void DeleteUploadMetadataIfExists(string filePath)
+    {
+        var metadataPath = GetUploadMetadataPath(filePath);
+        if (System.IO.File.Exists(metadataPath))
+        {
+            System.IO.File.Delete(metadataPath);
+        }
+    }
+
+    private bool IsOwnedTempUpload(string fileName, string ownerKey)
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        var metadataPath = GetUploadMetadataPath(filePath);
+
+        if (!System.IO.File.Exists(metadataPath))
+            return false;
+
+        try
+        {
+            var metadataJson = System.IO.File.ReadAllText(metadataPath);
+            var metadata = JsonSerializer.Deserialize<UploadMetadata>(metadataJson);
+            return metadata != null && string.Equals(metadata.OwnerKey, ownerKey, StringComparison.Ordinal);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private sealed record UploadMetadata(string OwnerKey, DateTime UploadedAtUtc);
 
     public sealed record TempUploadCleanupRequest(string[]? FileUrls);
 }

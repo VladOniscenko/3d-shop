@@ -53,7 +53,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Password must be at least 8 characters." });
 
         if (await _db.Users.AnyAsync(u => u.Email == email))
-            return BadRequest("Email already exists.");
+            return BadRequest(new { message = "Email already exists." });
 
         var user = new User
         {
@@ -73,12 +73,12 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
-            return Unauthorized();
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var normalizedEmail = req.Email.Trim().ToLowerInvariant();
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-            return Unauthorized();
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var key = GetJwtSigningKey();
         var jwtIssuer = _configuration["JwtIssuer"];
@@ -111,7 +111,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null) return Unauthorized();
+        if (userId == null) return Unauthorized(new { message = "Unauthorized." });
 
         var user = await _db.Users.FindAsync(Guid.Parse(userId));
         return user != null

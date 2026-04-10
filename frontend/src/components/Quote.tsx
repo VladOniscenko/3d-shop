@@ -20,6 +20,7 @@ import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
 import ModelDiscoveryCards from "./ModelDiscoveryCards";
+import { getOrCreateVisitorId } from "../services/api";
 
 const ALLOWED_UPLOAD_ACCEPT = ".stl,.obj,.3mf,.step,.stp";
 
@@ -310,11 +311,13 @@ export default function Quote() {
       if (pendingFileUrls.length === 0) return;
 
       const token = localStorage.getItem("token");
+      const visitorId = getOrCreateVisitorId();
 
       void fetch("/api/upload/temp/cleanup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Visitor-Id": visitorId,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ fileUrls: pendingFileUrls }),

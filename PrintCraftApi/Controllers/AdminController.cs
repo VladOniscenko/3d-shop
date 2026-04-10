@@ -794,6 +794,7 @@ public class AdminController : ControllerBase
             .OrderBy(u => u.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(u => new AdminUserDto(u.Id, u.Name, u.Email, u.Role))
             .ToListAsync();
         return Ok(new { results, totalCount, page, pageSize });
     }
@@ -801,22 +802,43 @@ public class AdminController : ControllerBase
     [HttpGet("users/{id:guid}")]
     public async Task<IActionResult> GetUserById([FromRoute] Guid id)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users
+            .Where(u => u.Id == id)
+            .Select(u => new AdminUserDto(u.Id, u.Name, u.Email, u.Role))
+            .FirstOrDefaultAsync();
+
         return user == null ? NotFound(new { message = "User not found" }) : Ok(user);
     }
 
     [HttpPut("users/{id:guid}")]
-    public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] User updated)
+    public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest updated)
     {
         var user = await _db.Users.FindAsync(id);
         if (user == null) return NotFound(new { message = "User not found" });
 
-        user.Name = updated.Name;
-        user.Email = updated.Email;
-        user.Role = updated.Role;
+        var name = updated.Name?.Trim();
+        var email = updated.Email?.Trim().ToLowerInvariant();
+        var role = updated.Role?.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 80)
+            return BadRequest(new { message = "Name must be between 2 and 80 characters." });
+
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            return BadRequest(new { message = "A valid email is required." });
+
+        if (role is not ("customer" or "admin"))
+            return BadRequest(new { message = "Role must be customer or admin." });
+
+        var duplicateEmail = await _db.Users.AnyAsync(u => u.Email == email && u.Id != id);
+        if (duplicateEmail)
+            return BadRequest(new { message = "Email already exists." });
+
+        user.Name = name;
+        user.Email = email;
+        user.Role = role;
 
         await _db.SaveChangesAsync();
-        return Ok(user);
+        return Ok(new AdminUserDto(user.Id, user.Name, user.Email, user.Role));
     }
 
     [HttpDelete("users/{id:guid}")]
@@ -1174,6 +1196,8 @@ public class AdminController : ControllerBase
         string PhoneNumber);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
+    public record AdminUserDto(Guid Id, string Name, string Email, string Role);
+    public record UpdateUserRequest(string Name, string Email, string Role);
 
     private async Task RefreshQuoteStatusesAsync(IEnumerable<Order> orders, string changedBy)
     {
