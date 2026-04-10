@@ -264,6 +264,11 @@ Email__Category=Integration Test
     - `https://<your-domain>/api/payments/webhook`
   - Use that endpoint signing secret (`whsec_...`) as `StripeWebhookSecret`.
 
+- Automatic fallback reconciliation:
+  - The API runs a background worker every minute.
+  - It checks pending Stripe payments and updates order/payment status server-side.
+  - This means status updates can still complete even if redirect sync is missed.
+
 - Optional secret rotation:
   - You can keep `StripeWebhookSecret` and add extra secrets in `StripeWebhookSecrets` (comma separated).
   - The API accepts any configured secret for signature verification.
