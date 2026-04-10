@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Navbar from "./Navbar";
@@ -112,6 +112,7 @@ export default function OrderDetail() {
     null,
   );
   const [payments, setPayments] = useState<PaymentAttempt[]>([]);
+  const handledRedirectRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -204,8 +205,11 @@ export default function OrderDetail() {
   useEffect(() => {
     const paymentState = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
+    const redirectKey = `${id ?? ""}:${paymentState ?? ""}:${sessionId ?? ""}`;
 
     if (!id || !paymentState) return;
+
+    if (handledRedirectRef.current === redirectKey) return;
 
     const resolveSessionId = (): string | null => {
       if (sessionId) return sessionId;
@@ -222,14 +226,18 @@ export default function OrderDetail() {
 
     if (paymentState !== "return" && paymentState !== "cancel") return;
 
+    if (!sessionId && payments.length === 0) return;
+
     const resolvedSessionId = resolveSessionId();
     if (!resolvedSessionId) {
-      if (paymentState === "cancel") {
+      if (paymentState === "cancel" && payments.length > 0) {
         notifyError(t("orderDetail.paymentCancelled"));
       }
       navigate(`/orders/${id}`, { replace: true });
       return;
     }
+
+    handledRedirectRef.current = redirectKey;
 
     const syncPayment = async () => {
       try {
