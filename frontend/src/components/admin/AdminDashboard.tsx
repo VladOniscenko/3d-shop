@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
-import type {
-  Filament,
-  Order,
-  Product,
-  QuotePromotionSettings,
-} from "../../types";
+import type { Filament, Order, Product } from "../../types";
 import { useI18n } from "../../i18n/I18nContext";
 import { formatCurrencyAmount } from "../../utils/currency";
 
@@ -57,21 +52,7 @@ type DashboardData = {
   usersCount: number;
   products: Product[];
   filaments: Filament[];
-  promotion: QuotePromotionSettings;
   analytics: VisitAnalytics;
-};
-
-const DEFAULT_PROMOTION: QuotePromotionSettings = {
-  id: "",
-  isEnabled: false,
-  showBannerOnHome: false,
-  promotionType: "buy_x_get_y",
-  buyQuantity: 1,
-  freeQuantity: 1,
-  secondItemPercentOff: 50,
-  bannerTextEn: "",
-  bannerTextNl: "",
-  ruleSummary: "",
 };
 
 function StatCard({
@@ -128,8 +109,6 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [savingPromotion, setSavingPromotion] = useState(false);
-  const [promotionMessage, setPromotionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -140,7 +119,6 @@ export default function AdminDashboard() {
           usersRes,
           productsRes,
           filamentsRes,
-          promotionRes,
           analyticsRes,
         ] = await Promise.all([
           api.get<Summary>("/admin/summary"),
@@ -150,7 +128,6 @@ export default function AdminDashboard() {
           api.get<{ totalCount: number }>("/admin/users?page=1&pageSize=1"),
           api.get<Product[]>("/products"),
           api.get<Filament[]>("/filaments"),
-          api.get<QuotePromotionSettings>("/admin/promotions/quote"),
           api.get<VisitAnalytics>("/admin/analytics/visits"),
         ]);
 
@@ -160,7 +137,6 @@ export default function AdminDashboard() {
           usersCount: usersRes.data.totalCount || 0,
           products: Array.isArray(productsRes.data) ? productsRes.data : [],
           filaments: Array.isArray(filamentsRes.data) ? filamentsRes.data : [],
-          promotion: promotionRes.data || DEFAULT_PROMOTION,
           analytics: analyticsRes.data,
         });
       } catch (err) {
@@ -193,65 +169,6 @@ export default function AdminDashboard() {
   if (!data) {
     return null;
   }
-
-  const updatePromotionField = <K extends keyof QuotePromotionSettings>(
-    key: K,
-    value: QuotePromotionSettings[K],
-  ) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        promotion: {
-          ...prev.promotion,
-          [key]: value,
-        },
-      };
-    });
-  };
-
-  const savePromotion = async () => {
-    if (!data) return;
-
-    setSavingPromotion(true);
-    setPromotionMessage(null);
-    try {
-      const payload = {
-        isEnabled: !!data.promotion.isEnabled,
-        showBannerOnHome: !!data.promotion.showBannerOnHome,
-        promotionType: data.promotion.promotionType,
-        buyQuantity: Number(data.promotion.buyQuantity || 0),
-        freeQuantity: Number(data.promotion.freeQuantity || 0),
-        secondItemPercentOff: Number(data.promotion.secondItemPercentOff || 0),
-        bannerTextEn: data.promotion.bannerTextEn || null,
-        bannerTextNl: data.promotion.bannerTextNl || null,
-      };
-
-      const res = await api.put<QuotePromotionSettings>(
-        "/admin/promotions/quote",
-        payload,
-      );
-
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              promotion: {
-                ...prev.promotion,
-                ...res.data,
-              },
-            }
-          : prev,
-      );
-      setPromotionMessage(t("admin.promotion.saved"));
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || t("admin.promotion.saveFailed");
-      setPromotionMessage(message);
-    } finally {
-      setSavingPromotion(false);
-    }
-  };
 
   const { summary, orders, usersCount, products, filaments, analytics } = data;
 
@@ -696,186 +613,6 @@ export default function AdminDashboard() {
         </p>
       </section>
 
-      <section className="admin-panel p-5 mb-6">
-        <h2 className="text-lg font-semibold mb-1 text-[#16251f]">
-          {t("admin.promotion.title")}
-        </h2>
-        <p className="text-xs text-[#5f736d] mb-3">
-          {t("admin.promotion.subtitle")}
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <label className="admin-label">
-            <span className="font-semibold">
-              {t("admin.promotion.enabled")}
-            </span>
-            <select
-              className="admin-field"
-              value={data.promotion.isEnabled ? "yes" : "no"}
-              onChange={(e) =>
-                updatePromotionField("isEnabled", e.target.value === "yes")
-              }
-            >
-              <option value="no">{t("admin.promotion.no")}</option>
-              <option value="yes">{t("admin.promotion.yes")}</option>
-            </select>
-          </label>
-
-          <label className="admin-label">
-            <span className="font-semibold">
-              {t("admin.promotion.bannerEnabled")}
-            </span>
-            <select
-              className="admin-field"
-              value={data.promotion.showBannerOnHome ? "yes" : "no"}
-              onChange={(e) =>
-                updatePromotionField(
-                  "showBannerOnHome",
-                  e.target.value === "yes",
-                )
-              }
-            >
-              <option value="no">{t("admin.promotion.no")}</option>
-              <option value="yes">{t("admin.promotion.yes")}</option>
-            </select>
-          </label>
-
-          <label className="admin-label">
-            <span className="font-semibold">
-              {t("admin.promotion.ruleType")}
-            </span>
-            <select
-              className="admin-field"
-              value={data.promotion.promotionType}
-              onChange={(e) =>
-                updatePromotionField(
-                  "promotionType",
-                  e.target.value as QuotePromotionSettings["promotionType"],
-                )
-              }
-            >
-              <option value="buy_x_get_y">
-                {t("admin.promotion.rule.buyXGetY")}
-              </option>
-              <option value="second_item_percent">
-                {t("admin.promotion.rule.secondPercent")}
-              </option>
-            </select>
-          </label>
-        </div>
-
-        <details className="rounded-lg border border-[#dbe7e2] bg-[#fbfefd] p-3 mt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-[#1f312b]">
-            {t("admin.promotion.advancedSettings")}
-          </summary>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
-            {data.promotion.promotionType === "buy_x_get_y" ? (
-              <>
-                <label className="admin-label">
-                  <span className="font-semibold">
-                    {t("admin.promotion.buyQty")}
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    className="admin-field"
-                    value={data.promotion.buyQuantity}
-                    onChange={(e) =>
-                      updatePromotionField(
-                        "buyQuantity",
-                        parseInt(e.target.value, 10) || 1,
-                      )
-                    }
-                  />
-                </label>
-                <label className="admin-label">
-                  <span className="font-semibold">
-                    {t("admin.promotion.freeQty")}
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    className="admin-field"
-                    value={data.promotion.freeQuantity}
-                    onChange={(e) =>
-                      updatePromotionField(
-                        "freeQuantity",
-                        parseInt(e.target.value, 10) || 1,
-                      )
-                    }
-                  />
-                </label>
-              </>
-            ) : (
-              <label className="admin-label lg:col-span-2">
-                <span className="font-semibold">
-                  {t("admin.promotion.secondPercent")}
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  className="admin-field"
-                  value={data.promotion.secondItemPercentOff}
-                  onChange={(e) =>
-                    updatePromotionField(
-                      "secondItemPercentOff",
-                      parseFloat(e.target.value) || 0,
-                    )
-                  }
-                />
-              </label>
-            )}
-
-            <label className="admin-label lg:col-span-2">
-              <span className="font-semibold">
-                {t("admin.promotion.bannerTextEn")}
-              </span>
-              <input
-                className="admin-field"
-                value={data.promotion.bannerTextEn || ""}
-                onChange={(e) =>
-                  updatePromotionField("bannerTextEn", e.target.value)
-                }
-                placeholder={t("admin.promotion.bannerTextEnPlaceholder")}
-              />
-            </label>
-            <label className="admin-label lg:col-span-2">
-              <span className="font-semibold">
-                {t("admin.promotion.bannerTextNl")}
-              </span>
-              <input
-                className="admin-field"
-                value={data.promotion.bannerTextNl || ""}
-                onChange={(e) =>
-                  updatePromotionField("bannerTextNl", e.target.value)
-                }
-                placeholder={t("admin.promotion.bannerTextNlPlaceholder")}
-              />
-            </label>
-          </div>
-        </details>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="admin-btn admin-btn-primary"
-            onClick={savePromotion}
-            disabled={savingPromotion}
-          >
-            {savingPromotion
-              ? t("admin.promotion.saving")
-              : t("admin.promotion.save")}
-          </button>
-          <p className="text-xs text-[#5f736d]">
-            {t("admin.promotion.activeRule")}:{" "}
-            {data.promotion.ruleSummary || "-"}
-          </p>
-        </div>
-        {promotionMessage ? (
-          <p className="mt-2 text-xs text-[#2e423d]">{promotionMessage}</p>
-        ) : null}
-      </section>
     </AdminLayout>
   );
 }

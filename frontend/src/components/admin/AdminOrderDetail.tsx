@@ -7,7 +7,6 @@ import type {
   Order,
   OrderNote,
   PaymentAttempt,
-  QuotePromotionSettings,
 } from "../../types";
 import { useNotify } from "../../context/NotifyContext";
 import { useI18n } from "../../i18n/I18nContext";
@@ -71,9 +70,6 @@ export default function AdminOrderDetail() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentFromDate, setPaymentFromDate] = useState("");
   const [paymentToDate, setPaymentToDate] = useState("");
-  const [quotePromotionSettings, setQuotePromotionSettings] =
-    useState<QuotePromotionSettings | null>(null);
-  const [applyingQuotePromotion, setApplyingQuotePromotion] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
 
@@ -105,19 +101,17 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const [res, commsRes, statusRes, paymentsRes, promotionRes] =
+        const [res, commsRes, statusRes, paymentsRes] =
           await Promise.all([
             api.get(`/admin/orders/${id}`),
             api.get(`/admin/orders/${id}/communications`),
             api.get(`/admin/orders/${id}/status-history`),
             api.get(`/admin/orders/${id}/payments`),
-            api.get(`/admin/promotions/quote`),
           ]);
         applyOrderData(res.data);
         setCommunications(commsRes.data || []);
         setStatusHistory(statusRes.data || []);
         setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
-        setQuotePromotionSettings(promotionRes.data || null);
       } catch (err) {
         console.error(err);
       } finally {
@@ -380,23 +374,6 @@ export default function AdminOrderDetail() {
     }
   };
 
-  const applyQuotePromotion = async () => {
-    if (!id) return;
-    setApplyingQuotePromotion(true);
-    try {
-      await api.post(`/admin/promotions/quote/apply/${id}`);
-      await refresh();
-      notifySuccess(t("admin.order.promotionApplied"));
-    } catch (err: any) {
-      console.error(err);
-      notifyError(
-        err?.response?.data?.message || t("admin.order.promotionApplyFailed"),
-      );
-    } finally {
-      setApplyingQuotePromotion(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="admin-shell flex items-center justify-center">
@@ -613,9 +590,6 @@ export default function AdminOrderDetail() {
             subtotal={subtotal}
             totalPrice={totalPrice}
             pricingLocked={pricingLocked}
-            quotePromotionSettings={quotePromotionSettings}
-            applyingQuotePromotion={applyingQuotePromotion}
-            onApplyQuotePromotion={applyQuotePromotion}
           />
 
           <OrderHistoryPanel

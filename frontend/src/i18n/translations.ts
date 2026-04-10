@@ -41,7 +41,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Home
     "home.footer": "© 2026 PrintCraft Collective. All rights reserved.",
-    "home.promo.badge": "Quote Offer",
     "home.how.bridgeBadge": "Next Step",
     "home.how.bridgeTitle": "How does it work from idea to delivery?",
     "home.how.bridgeSubtitle":
@@ -323,31 +322,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.hintAggregatedDaily": "Sum across daily buckets",
     "admin.dashboard.hintAggregatedMonthly": "Sum across monthly buckets",
     "admin.dashboard.hintAggregatedYearly": "Sum across yearly buckets",
-    "admin.promotion.title": "Quote Promotion",
-    "admin.promotion.subtitle":
-      "Configure quote-only discount rules and control the homepage banner.",
-    "admin.promotion.enabled": "Promotion enabled",
-    "admin.promotion.bannerEnabled": "Show banner on homepage",
-    "admin.promotion.ruleType": "Discount rule",
-    "admin.promotion.rule.buyXGetY": "Buy X, get Y free",
-    "admin.promotion.rule.secondPercent": "Every second item % off",
-    "admin.promotion.buyQty": "Buy quantity (X)",
-    "admin.promotion.freeQty": "Free quantity (Y)",
-    "admin.promotion.secondPercent": "Second item discount (%)",
-    "admin.promotion.bannerTextEn": "Banner text (English)",
-    "admin.promotion.bannerTextNl": "Banner text (Dutch)",
-    "admin.promotion.bannerTextEnPlaceholder":
-      "e.g. Buy 1 get 1 free on quote orders",
-    "admin.promotion.bannerTextNlPlaceholder":
-      "bijv. Koop 1 krijg 1 gratis op offerte-orders",
-    "admin.promotion.activeRule": "Active rule",
-    "admin.promotion.advancedSettings": "Show advanced settings",
-    "admin.promotion.save": "Save Promotion",
-    "admin.promotion.saving": "Saving...",
-    "admin.promotion.saved": "Promotion settings saved.",
-    "admin.promotion.saveFailed": "Could not save promotion settings.",
-    "admin.promotion.yes": "Yes",
-    "admin.promotion.no": "No",
 
     "admin.orders.managementTitle": "Order Management",
     "admin.orders.statusAll": "All",
@@ -548,9 +522,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Tracking code is required for sent email.",
     "admin.order.emailSent": "Email sent to customer.",
     "admin.order.emailSendFailed": "Could not send customer email.",
-    "admin.order.promotionApplied": "Quote promotion discount applied.",
-    "admin.order.promotionApplyFailed":
-      "Could not apply quote promotion discount.",
 
     // Admin - Orders
     "admin.orders.title": "Orders",
@@ -651,10 +622,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.subtotalLabel": "Subtotal",
     "admin.orderDetail.totalIncludingDeliveryLabel":
       "Total (including delivery)",
-    "admin.orderDetail.promotionTitle": "Quote promotion",
-    "admin.orderDetail.promotionApplyButton": "Apply active promotion",
-    "admin.orderDetail.promotionApplying": "Applying promotion...",
-    "admin.orderDetail.promotionNoRule": "No active rule available.",
     "admin.orderDetail.statusHistoryTitle": "Status History",
     "admin.orderDetail.noStatusChangesMessage":
       "No status changes recorded yet.",
@@ -1203,7 +1170,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Home
     "home.footer": "© 2026 PrintCraft Collective. Alle rechten voorbehouden.",
-    "home.promo.badge": "Offerte-aanbieding",
     "home.how.bridgeBadge": "Volgende Stap",
     "home.how.bridgeTitle": "Hoe werkt het van idee tot levering?",
     "home.how.bridgeSubtitle":
@@ -1492,31 +1458,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.dashboard.hintAggregatedDaily": "Som van dagelijkse buckets",
     "admin.dashboard.hintAggregatedMonthly": "Som van maandelijkse buckets",
     "admin.dashboard.hintAggregatedYearly": "Som van jaarlijkse buckets",
-    "admin.promotion.title": "Offertepromotie",
-    "admin.promotion.subtitle":
-      "Stel kortingregels voor offertes in en beheer de banner op de homepage.",
-    "admin.promotion.enabled": "Promotie ingeschakeld",
-    "admin.promotion.bannerEnabled": "Banner op homepage tonen",
-    "admin.promotion.ruleType": "Kortingsregel",
-    "admin.promotion.rule.buyXGetY": "Koop X, krijg Y gratis",
-    "admin.promotion.rule.secondPercent": "Elke tweede item % korting",
-    "admin.promotion.buyQty": "Koop-aantal (X)",
-    "admin.promotion.freeQty": "Gratis-aantal (Y)",
-    "admin.promotion.secondPercent": "Korting op tweede item (%)",
-    "admin.promotion.bannerTextEn": "Bannertekst (Engels)",
-    "admin.promotion.bannerTextNl": "Bannertekst (Nederlands)",
-    "admin.promotion.bannerTextEnPlaceholder":
-      "bijv. Buy 1 get 1 free on quote orders",
-    "admin.promotion.bannerTextNlPlaceholder":
-      "bijv. Koop 1 krijg 1 gratis op offerte-orders",
-    "admin.promotion.activeRule": "Actieve regel",
-    "admin.promotion.advancedSettings": "Toon geavanceerde instellingen",
-    "admin.promotion.save": "Promotie opslaan",
-    "admin.promotion.saving": "Bezig met opslaan...",
-    "admin.promotion.saved": "Promotie-instellingen opgeslagen.",
-    "admin.promotion.saveFailed": "Kon promotie-instellingen niet opslaan.",
-    "admin.promotion.yes": "Ja",
-    "admin.promotion.no": "Nee",
 
     "admin.orders.managementTitle": "Orderbeheer",
     "admin.orders.statusAll": "Alle",
@@ -1725,9 +1666,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Volgcode is verplicht voor deze e-mail.",
     "admin.order.emailSent": "E-mail naar klant verzonden.",
     "admin.order.emailSendFailed": "Kon e-mail naar klant niet verzenden.",
-    "admin.order.promotionApplied": "Offertepromotie-korting toegepast.",
-    "admin.order.promotionApplyFailed":
-      "Kon offertepromotie-korting niet toepassen.",
 
     // Admin - Orders
     "admin.orders.title": "Orders",
@@ -1828,10 +1766,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.subtotalLabel": "Subtotaal",
     "admin.orderDetail.totalIncludingDeliveryLabel":
       "Totaal (inclusief levering)",
-    "admin.orderDetail.promotionTitle": "Offertepromotie",
-    "admin.orderDetail.promotionApplyButton": "Actieve promotie toepassen",
-    "admin.orderDetail.promotionApplying": "Promotie toepassen...",
-    "admin.orderDetail.promotionNoRule": "Geen actieve regel beschikbaar.",
     "admin.orderDetail.statusHistoryTitle": "Status Geschiedenis",
     "admin.orderDetail.noStatusChangesMessage":
       "Nog geen status wijzigingen geregistreerd.",

@@ -21,7 +21,6 @@ public class PrintCraftDb : DbContext
     public DbSet<VisitEvent> VisitEvents => Set<VisitEvent>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
-    public DbSet<QuotePromotionSettings> QuotePromotionSettings => Set<QuotePromotionSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,11 +95,5 @@ public class PrintCraftDb : DbContext
             .HasForeignKey(p => p.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<QuotePromotionSettings>()
-            .HasIndex(p => p.UpdatedAt);
-
-        modelBuilder.Entity<QuotePromotionSettings>()
-            .Property(p => p.PromotionType)
-            .HasDefaultValue("buy_x_get_y");
     }
 }
