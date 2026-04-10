@@ -973,7 +973,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.color": "Color",
     "cart.quantity": "Quantity",
     "cart.paymentMethod": "Payment Method",
-    "cart.paymentOnline": "Online Payment (Mollie)",
+    "cart.paymentOnline": "Online Payment (Stripe)",
     "cart.paymentOptions": "iDEAL, Credit Card, Bancontact, etc.",
     "cart.summary": "Summary",
     "cart.subtotal": "Subtotal",
@@ -981,7 +981,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.total": "Total",
     "cart.shipping": "Shipping",
     "cart.processing": "Processing...",
-    "cart.payMollie": "Pay with Mollie",
+    "cart.payStripe": "Pay with Stripe",
     "cart.checkoutFailed":
       "Something went wrong. Please check your address and try again.",
     "cart.conflict":
@@ -2152,7 +2152,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.color": "Kleur",
     "cart.quantity": "Aantal",
     "cart.paymentMethod": "Betaalmethode",
-    "cart.paymentOnline": "Online Betaling (Mollie)",
+    "cart.paymentOnline": "Online Betaling (Stripe)",
     "cart.paymentOptions": "iDEAL, Credit Card, Bancontact, enz.",
     "cart.summary": "Overzicht",
     "cart.subtotal": "Subtotaal",
@@ -2160,7 +2160,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "cart.total": "Totaal",
     "cart.shipping": "Verzending",
     "cart.processing": "Verwerken...",
-    "cart.payMollie": "Betaal met Mollie",
+    "cart.payStripe": "Betaal met Stripe",
     "cart.checkoutFailed":
       "Er ging iets mis. Controleer je adres en probeer opnieuw.",
     "cart.conflict":

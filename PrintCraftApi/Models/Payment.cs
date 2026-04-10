@@ -11,14 +11,14 @@ public class Payment
 
     [Required]
     [MaxLength(32)]
-    public string Provider { get; set; } = "mollie";
+    public string Provider { get; set; } = "stripe";
 
     // Internal payment reference for correlation across logs and webhooks.
     [Required]
     [MaxLength(64)]
     public string Reference { get; set; } = string.Empty;
 
-    [MaxLength(128)]
+    [MaxLength(255)]
     public string? ProviderPaymentId { get; set; }
 
     [Required]
@@ -32,7 +32,7 @@ public class Payment
     [MaxLength(48)]
     public string Status { get; set; } = "created";
 
-    [MaxLength(256)]
+    [MaxLength(2048)]
     public string? CheckoutUrl { get; set; }
 
     [MaxLength(64)]

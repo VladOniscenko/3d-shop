@@ -56,7 +56,7 @@ export default function AdminPayments() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [provider, setProvider] = useState("mollie");
+  const [provider, setProvider] = useState("stripe");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);

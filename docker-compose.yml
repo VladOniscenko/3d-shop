@@ -25,6 +25,7 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: http://+:5001
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       FrontendBaseUrl: ${FrontendBaseUrl:?FrontendBaseUrl is required}
       BackendBaseUrl: ${BackendBaseUrl:?BackendBaseUrl is required}
@@ -35,7 +36,8 @@ services:
       Discord__QuoteWebhookUrl: ${Discord__QuoteWebhookUrl}
       Discord__BookingWebhookUrl: ${Discord__BookingWebhookUrl}
       Discord__PaymentReceivedWebhookUrl: ${Discord__PaymentReceivedWebhookUrl}
-      MollieKey: ${MollieKey:?MollieKey is required}
+      StripeSecretKey: ${StripeSecretKey:?StripeSecretKey is required}
+      StripeWebhookSecret: ${StripeWebhookSecret:?StripeWebhookSecret is required}
       CurrencyCode: ${CurrencyCode:-EUR}
       Email__SenderName: ${Email__SenderName}
       Email__SenderEmail: ${Email__SenderEmail}

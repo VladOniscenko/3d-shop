@@ -1,20 +1,17 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Mollie.Api.Client;
-using Mollie.Api.Models;
-using Mollie.Api.Models.Payment;
-using Mollie.Api.Models.Payment.Request;
 using PrintCraftApi.Configuration;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using PrintCraftApi.Services;
 using PrintCraftApi.Validation;
+using Stripe;
+using Stripe.Checkout;
 
 namespace PrintCraftApi.Controllers;
 
@@ -24,11 +21,12 @@ public class PaymentsController : ControllerBase
 {
     private readonly PrintCraftDb _db;
     private readonly IConfiguration _configuration;
-    private readonly PaymentClient _paymentClient;
+    private readonly SessionService _checkoutSessionService;
     private readonly IEmailService _emailService;
     private readonly IDiscordWebhookService _discordWebhookService;
     private readonly ILogger<PaymentsController> _logger;
     private readonly string _currencyCode;
+    private readonly IReadOnlyList<string> _stripeWebhookSecrets;
 
     public PaymentsController(
         PrintCraftDb db,
@@ -42,9 +40,11 @@ public class PaymentsController : ControllerBase
         _emailService = emailService;
         _discordWebhookService = discordWebhookService;
         _logger = logger;
+
         _currencyCode = NormalizeCurrencyCode(_configuration["CurrencyCode"]);
-        var mollieKey = GetRequiredConfig("MollieKey");
-        _paymentClient = new PaymentClient(mollieKey);
+        StripeConfiguration.ApiKey = GetRequiredConfig("StripeSecretKey");
+        _stripeWebhookSecrets = LoadStripeWebhookSecrets(_configuration);
+        _checkoutSessionService = new SessionService();
     }
 
     [HttpPost("orders/{orderId:guid}/create")]
@@ -109,18 +109,18 @@ public class PaymentsController : ControllerBase
         }
 
         var frontendBaseUrl = GetRequiredConfig("FrontendBaseUrl").TrimEnd('/');
-        var backendBaseUrl = GetRequiredConfig("BackendBaseUrl").TrimEnd('/');
+        var user = await _db.Users.FindAsync(userId);
 
-        var paymentRecord = await CreateAndStoreMolliePaymentAsync(
+        var paymentRecord = await CreateAndStoreStripeCheckoutAsync(
             order,
             order.QuotedPrice.Value,
             $"Quoted order #{order.Id.ToString()[..8]}",
-            $"{frontendBaseUrl}/orders/{order.Id}?payment=return",
-            $"{backendBaseUrl}/api/payments/webhook");
+            $"{frontendBaseUrl}/orders/{order.Id}",
+            user?.Email);
 
         var quotedCheckoutUrl = paymentRecord.CheckoutUrl;
         if (string.IsNullOrWhiteSpace(quotedCheckoutUrl))
-            return BadRequest(new { message = "Mollie did not return a checkout URL." });
+            return BadRequest(new { message = "Stripe did not return a checkout URL." });
 
         var previousStatus = order.Status;
         order.Status = "pending_payment";
@@ -147,7 +147,6 @@ public class PaymentsController : ControllerBase
 
         var userId = Guid.Parse(userIdStr);
 
-        // Get user's cart from database
         var cart = await _db.Carts
             .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.UserId == userId);
@@ -171,9 +170,8 @@ public class PaymentsController : ControllerBase
             });
         }
 
-        // Validate prices from database products
         decimal subtotal = 0m;
-        decimal deliveryPrice = 6.95m;
+        const decimal deliveryPrice = 6.95m;
         var orderItems = new List<OrderItem>();
 
         foreach (var cartItem in cart.Items)
@@ -181,12 +179,11 @@ public class PaymentsController : ControllerBase
             if (cartItem.Count <= 0 || cartItem.Count > AppLimits.MaxItemQuantity)
                 return BadRequest(new { message = "Invalid cart item quantity." });
 
-            // Get product to validate price
             var product = await _db.Products.FindAsync(cartItem.ProductId);
             if (product == null)
                 return BadRequest(new { message = $"Product {cartItem.ProductId} not found" });
 
-            decimal productPrice = ProductPricing.EffectivePrice(product.Price, product.DiscountPercentage);
+            var productPrice = ProductPricing.EffectivePrice(product.Price, product.DiscountPercentage);
             subtotal += productPrice * cartItem.Count;
 
             orderItems.Add(new OrderItem
@@ -200,9 +197,8 @@ public class PaymentsController : ControllerBase
             });
         }
 
-        decimal finalTotal = subtotal + deliveryPrice;
+        var finalTotal = subtotal + deliveryPrice;
 
-        // Create Order from cart
         var newOrder = new Order
         {
             UserId = userId,
@@ -222,9 +218,10 @@ public class PaymentsController : ControllerBase
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(newOrder.Id, null, newOrder.Status, "system", "Online checkout order created");
 
+        var user = await _db.Users.FindAsync(userId);
+
         try
         {
-            var user = await _db.Users.FindAsync(userId);
             if (user != null)
             {
                 await _discordWebhookService.SendBookingCreatedAsync(newOrder, user);
@@ -235,18 +232,17 @@ public class PaymentsController : ControllerBase
             _logger.LogWarning(ex, "Failed sending booking Discord notification for order {OrderId}", newOrder.Id);
         }
 
-        var paymentRecord = await CreateAndStoreMolliePaymentAsync(
+        var paymentRecord = await CreateAndStoreStripeCheckoutAsync(
             newOrder,
             finalTotal,
-            $"Order #{newOrder.Id.ToString().Substring(0, 8)}",
-            $"{GetRequiredConfig("FrontendBaseUrl").TrimEnd('/')}/orders/{newOrder.Id}?payment=return",
-            $"{GetRequiredConfig("BackendBaseUrl").TrimEnd('/')}/api/payments/webhook");
+            $"Order #{newOrder.Id.ToString()[..8]}",
+            $"{GetRequiredConfig("FrontendBaseUrl").TrimEnd('/')}/orders/{newOrder.Id}",
+            user?.Email);
 
         var checkoutUrl = paymentRecord.CheckoutUrl;
         if (string.IsNullOrWhiteSpace(checkoutUrl))
-            return BadRequest(new { message = "Mollie did not return a checkout URL." });
+            return BadRequest(new { message = "Stripe did not return a checkout URL." });
 
-        // Clear the cart after successful payment link creation
         _db.CartItems.RemoveRange(cart.Items);
         await _db.SaveChangesAsync();
 
@@ -262,59 +258,44 @@ public class PaymentsController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Webhook()
     {
+        string rawPayload;
         try
         {
             Request.EnableBuffering();
-            string? rawPayload = null;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true))
             {
                 rawPayload = await reader.ReadToEndAsync();
                 Request.Body.Position = 0;
             }
 
-            var payloadHash = ComputeSha256Hex(rawPayload);
-            var form = await Request.ReadFormAsync();
-            string? paymentId = form["id"];
-
-            if (string.IsNullOrEmpty(paymentId))
-                return Ok();
-
-            var molliePayment = await _paymentClient.GetPaymentAsync(paymentId);
-            var trackedPayment = await _db.Payments
-                .Include(p => p.Order)
-                .ThenInclude(o => o!.Items)
-                .FirstOrDefaultAsync(p => p.ProviderPaymentId == paymentId);
-
-            if (trackedPayment == null)
+            var signatureHeader = Request.Headers["Stripe-Signature"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(signatureHeader))
             {
-                var metadataCandidate = molliePayment.Metadata?.ToString();
-                if (TryExtractGuid(metadataCandidate, out var paymentGuid))
-                {
-                    trackedPayment = await _db.Payments
-                        .Include(p => p.Order)
-                        .ThenInclude(o => o!.Items)
-                        .FirstOrDefaultAsync(p => p.Id == paymentGuid);
-                }
-
-                // Legacy fallback: older records used orderId as metadata and had no payment rows.
-                if (trackedPayment == null && TryExtractGuid(metadataCandidate, out var legacyOrderId))
-                {
-                    await ApplyLegacyOrderPaymentFallbackAsync(legacyOrderId, molliePayment);
-                    return Ok();
-                }
+                _logger.LogWarning("Stripe webhook missing signature header.");
+                return BadRequest();
             }
 
+            if (!TryConstructStripeEvent(rawPayload, signatureHeader, out var stripeEvent))
+            {
+                _logger.LogWarning("Stripe webhook signature validation failed for all configured secrets.");
+                return BadRequest();
+            }
+
+            var trackedPayment = await ResolveTrackedPaymentAsync(stripeEvent);
             if (trackedPayment == null)
             {
-                _logger.LogWarning("Webhook received unknown payment id {PaymentId}.", paymentId);
+                _logger.LogWarning("Stripe webhook received unknown payment event {EventType} ({EventId}).", stripeEvent.Type, stripeEvent.Id);
                 return Ok();
             }
 
-            RegisterWebhookAttempt(trackedPayment, payloadHash);
+            RegisterWebhookAttempt(trackedPayment, ComputeSha256Hex(rawPayload));
+
+            var paymentWasPaid = false;
+            var paymentWasFailure = false;
 
             try
             {
-                ApplyPaymentStatus(trackedPayment, molliePayment);
+                ApplyStripePaymentStatus(trackedPayment, stripeEvent, out paymentWasPaid, out paymentWasFailure);
                 trackedPayment.LastWebhookError = null;
             }
             catch (Exception ex)
@@ -330,7 +311,6 @@ public class PaymentsController : ControllerBase
             {
                 var previousOrderStatus = order.Status;
                 var wasAlreadyPaid = order.IsPaid;
-                var paymentWasPaid = molliePayment.Status == PaymentStatus.Paid;
 
                 var hasAnyPaidPayment = paymentWasPaid || await _db.Payments
                     .AnyAsync(p => p.OrderId == order.Id && p.Status == "paid");
@@ -342,9 +322,7 @@ public class PaymentsController : ControllerBase
                     order.UpdatedAt = DateTime.UtcNow;
                 }
                 else if (!hasAnyPaidPayment
-                    && (molliePayment.Status == PaymentStatus.Canceled
-                        || molliePayment.Status == PaymentStatus.Expired
-                        || molliePayment.Status == PaymentStatus.Failed)
+                    && paymentWasFailure
                     && string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
                 {
                     order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
@@ -364,7 +342,7 @@ public class PaymentsController : ControllerBase
                     var note = paymentWasPaid
                         ? $"Payment marked as paid ({trackedPayment.Reference})"
                         : $"Payment updated as {trackedPayment.Status} ({trackedPayment.Reference})";
-                    await LogStatusHistoryAsync(order.Id, previousOrderStatus, order.Status, "mollie_webhook", note);
+                    await LogStatusHistoryAsync(order.Id, previousOrderStatus, order.Status, "stripe_webhook", note);
                 }
 
                 if (!wasAlreadyPaid && paymentWasPaid)
@@ -392,7 +370,7 @@ public class PaymentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Mollie webhook processing failed.");
+            _logger.LogError(ex, "Stripe webhook processing failed.");
             return Ok();
         }
     }
@@ -424,17 +402,17 @@ public class PaymentsController : ControllerBase
         return value;
     }
 
-    private async Task<Payment> CreateAndStoreMolliePaymentAsync(
+    private async Task<Payment> CreateAndStoreStripeCheckoutAsync(
         Order order,
         decimal amount,
         string description,
-        string redirectUrl,
-        string webhookUrl)
+        string returnUrl,
+        string? customerEmail)
     {
         var payment = new Payment
         {
             OrderId = order.Id,
-            Provider = "mollie",
+            Provider = "stripe",
             Reference = BuildPaymentReference(order.Id),
             Currency = _currencyCode,
             Amount = amount,
@@ -448,27 +426,54 @@ public class PaymentsController : ControllerBase
 
         try
         {
-            var metadata = JsonSerializer.Serialize(new
+            var metadata = new Dictionary<string, string>
             {
-                orderId = order.Id,
-                paymentId = payment.Id,
-                reference = payment.Reference
-            });
-
-            var paymentRequest = new PaymentRequest
-            {
-                Amount = new Amount(_currencyCode, amount.ToString("F2")),
-                Description = description,
-                RedirectUrl = redirectUrl,
-                WebhookUrl = webhookUrl,
-                Metadata = metadata
+                ["orderId"] = order.Id.ToString(),
+                ["paymentId"] = payment.Id.ToString(),
+                ["reference"] = payment.Reference
             };
 
-            var response = await _paymentClient.CreatePaymentAsync(paymentRequest);
+            var amountMinor = ConvertToMinorUnits(amount);
+            var successUrl = AppendQueryString(AppendQueryString(returnUrl, "payment", "return"), "session_id", "{CHECKOUT_SESSION_ID}");
+            var cancelUrl = AppendQueryString(returnUrl, "payment", "cancel");
+
+            var sessionOptions = new SessionCreateOptions
+            {
+                Mode = "payment",
+                SuccessUrl = successUrl,
+                CancelUrl = cancelUrl,
+                PaymentMethodTypes = new List<string> { "card", "ideal", "bancontact" },
+                Metadata = metadata,
+                LineItems = new List<SessionLineItemOptions>
+                {
+                    new()
+                    {
+                        Quantity = 1,
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            Currency = _currencyCode.ToLowerInvariant(),
+                            UnitAmount = amountMinor,
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = description
+                            }
+                        }
+                    }
+                },
+                PaymentIntentData = new SessionPaymentIntentDataOptions
+                {
+                    Metadata = metadata
+                }
+            };
+
+            if (!string.IsNullOrWhiteSpace(customerEmail))
+                sessionOptions.CustomerEmail = customerEmail;
+
+            var response = await _checkoutSessionService.CreateAsync(sessionOptions);
             payment.ProviderPaymentId = response.Id;
-            payment.CheckoutUrl = response.Links?.Checkout?.Href;
-            payment.Method = response.Method?.ToString();
-            payment.Status = NormalizePaymentStatus(response.Status);
+            payment.CheckoutUrl = response.Url;
+            payment.Method = response.PaymentMethodTypes?.FirstOrDefault();
+            payment.Status = NormalizeStripeStatus(response.Status, response.PaymentStatus);
             payment.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
@@ -476,8 +481,11 @@ public class PaymentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            payment.ProviderPaymentId = null;
+            payment.CheckoutUrl = null;
+            payment.Method = null;
             payment.Status = "create_failed";
-            payment.FailureReason = ex.Message;
+            payment.FailureReason = TruncateError(ex.Message);
             payment.FailedAt = DateTime.UtcNow;
             payment.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
@@ -485,114 +493,191 @@ public class PaymentsController : ControllerBase
         }
     }
 
-    private static void ApplyPaymentStatus(Payment trackedPayment, Mollie.Api.Models.Payment.Response.PaymentResponse molliePayment)
+    private async Task<Payment?> ResolveTrackedPaymentAsync(Event stripeEvent)
     {
+        if (stripeEvent.Data.Object is Session session)
+        {
+            if (!string.IsNullOrWhiteSpace(session.Id))
+            {
+                var byProviderId = await _db.Payments
+                    .Include(p => p.Order)
+                    .ThenInclude(o => o!.Items)
+                    .FirstOrDefaultAsync(p => p.ProviderPaymentId == session.Id);
+                if (byProviderId != null)
+                    return byProviderId;
+            }
+
+            if (TryExtractPaymentId(session.Metadata, out var paymentId))
+            {
+                return await _db.Payments
+                    .Include(p => p.Order)
+                    .ThenInclude(o => o!.Items)
+                    .FirstOrDefaultAsync(p => p.Id == paymentId);
+            }
+        }
+
+        if (stripeEvent.Data.Object is PaymentIntent paymentIntent)
+        {
+            if (!string.IsNullOrWhiteSpace(paymentIntent.Id))
+            {
+                var byProviderId = await _db.Payments
+                    .Include(p => p.Order)
+                    .ThenInclude(o => o!.Items)
+                    .FirstOrDefaultAsync(p => p.ProviderPaymentId == paymentIntent.Id);
+                if (byProviderId != null)
+                    return byProviderId;
+            }
+
+            if (TryExtractPaymentId(paymentIntent.Metadata, out var paymentId))
+            {
+                return await _db.Payments
+                    .Include(p => p.Order)
+                    .ThenInclude(o => o!.Items)
+                    .FirstOrDefaultAsync(p => p.Id == paymentId);
+            }
+        }
+
+        return null;
+    }
+
+    private static void ApplyStripePaymentStatus(Payment trackedPayment, Event stripeEvent, out bool paymentWasPaid, out bool paymentWasFailure)
+    {
+        paymentWasPaid = false;
+        paymentWasFailure = false;
+
         var now = DateTime.UtcNow;
-        trackedPayment.Status = NormalizePaymentStatus(molliePayment.Status);
-        trackedPayment.Method = molliePayment.Method?.ToString();
-        trackedPayment.UpdatedAt = now;
 
-        if (molliePayment.Status == PaymentStatus.Paid)
-            trackedPayment.PaidAt ??= now;
+        switch (stripeEvent.Type)
+        {
+            case EventTypes.CheckoutSessionCompleted:
+                if (stripeEvent.Data.Object is not Session completedSession)
+                    return;
 
-        if (molliePayment.Status == PaymentStatus.Canceled)
-            trackedPayment.CanceledAt ??= now;
+                trackedPayment.ProviderPaymentId ??= completedSession.Id;
+                trackedPayment.Method = completedSession.PaymentMethodTypes?.FirstOrDefault();
+                trackedPayment.Status = NormalizeStripeStatus(completedSession.Status, completedSession.PaymentStatus);
+                trackedPayment.UpdatedAt = now;
 
-        if (molliePayment.Status == PaymentStatus.Expired)
-            trackedPayment.ExpiredAt ??= now;
+                if (string.Equals(completedSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
+                {
+                    paymentWasPaid = true;
+                    trackedPayment.PaidAt ??= now;
+                }
+                break;
 
-        if (molliePayment.Status == PaymentStatus.Failed)
-            trackedPayment.FailedAt ??= now;
+            case EventTypes.CheckoutSessionExpired:
+                if (stripeEvent.Data.Object is not Session expiredSession)
+                    return;
 
-        trackedPayment.ProviderPaymentId ??= molliePayment.Id;
+                trackedPayment.ProviderPaymentId ??= expiredSession.Id;
+                trackedPayment.Status = "expired";
+                trackedPayment.ExpiredAt ??= now;
+                trackedPayment.UpdatedAt = now;
+                paymentWasFailure = true;
+                break;
+
+            case EventTypes.CheckoutSessionAsyncPaymentFailed:
+                if (stripeEvent.Data.Object is not Session failedSession)
+                    return;
+
+                trackedPayment.ProviderPaymentId ??= failedSession.Id;
+                trackedPayment.Status = "failed";
+                trackedPayment.FailedAt ??= now;
+                trackedPayment.UpdatedAt = now;
+                paymentWasFailure = true;
+                break;
+
+            case EventTypes.CheckoutSessionAsyncPaymentSucceeded:
+                if (stripeEvent.Data.Object is not Session asyncSucceededSession)
+                    return;
+
+                trackedPayment.ProviderPaymentId ??= asyncSucceededSession.Id;
+                trackedPayment.Method = asyncSucceededSession.PaymentMethodTypes?.FirstOrDefault();
+                trackedPayment.Status = "paid";
+                trackedPayment.PaidAt ??= now;
+                trackedPayment.UpdatedAt = now;
+                paymentWasPaid = true;
+                break;
+
+            case EventTypes.PaymentIntentSucceeded:
+                if (stripeEvent.Data.Object is not PaymentIntent succeededIntent)
+                    return;
+
+                trackedPayment.ProviderPaymentId ??= succeededIntent.Id;
+                trackedPayment.Status = "paid";
+                trackedPayment.PaidAt ??= now;
+                trackedPayment.UpdatedAt = now;
+                paymentWasPaid = true;
+                break;
+
+            case EventTypes.PaymentIntentPaymentFailed:
+                if (stripeEvent.Data.Object is not PaymentIntent failedIntent)
+                    return;
+
+                trackedPayment.ProviderPaymentId ??= failedIntent.Id;
+                trackedPayment.Status = "failed";
+                trackedPayment.FailureReason = TruncateError(failedIntent.LastPaymentError?.Message);
+                trackedPayment.FailedAt ??= now;
+                trackedPayment.UpdatedAt = now;
+                paymentWasFailure = true;
+                break;
+
+            default:
+                if (stripeEvent.Data.Object is Session session)
+                {
+                    trackedPayment.ProviderPaymentId ??= session.Id;
+                    trackedPayment.Method = session.PaymentMethodTypes?.FirstOrDefault();
+                    trackedPayment.Status = NormalizeStripeStatus(session.Status, session.PaymentStatus);
+                    trackedPayment.UpdatedAt = now;
+
+                    paymentWasPaid = string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+                    paymentWasFailure = string.Equals(session.Status, "expired", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(session.PaymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase);
+
+                    if (paymentWasPaid)
+                        trackedPayment.PaidAt ??= now;
+
+                    if (string.Equals(session.Status, "expired", StringComparison.OrdinalIgnoreCase))
+                        trackedPayment.ExpiredAt ??= now;
+                }
+                break;
+        }
     }
 
-    private async Task ApplyLegacyOrderPaymentFallbackAsync(Guid orderId, Mollie.Api.Models.Payment.Response.PaymentResponse molliePayment)
+    private static bool TryExtractPaymentId(IDictionary<string, string>? metadata, out Guid paymentId)
     {
-        var order = await _db.Orders
-            .Include(o => o.Items)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-        if (order == null) return;
-
-        if (molliePayment.Status == PaymentStatus.Paid)
-        {
-            var wasAlreadyPaid = order.IsPaid;
-            var previousStatus = order.Status;
-            order.Status = "paid";
-            order.IsPaid = true;
-            order.UpdatedAt = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync();
-            await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Legacy metadata payment marked as paid");
-
-            if (!wasAlreadyPaid)
-            {
-                var user = await _db.Users.FindAsync(order.UserId);
-                var paidAmount = order.QuotedPrice
-                    ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
-
-                if (user != null)
-                    await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
-
-                await _discordWebhookService.SendPaymentReceivedAsync(order, user, paidAmount);
-            }
-
-            return;
-        }
-
-        if (molliePayment.Status == PaymentStatus.Canceled || molliePayment.Status == PaymentStatus.Expired)
-        {
-            var previousStatus = order.Status;
-            order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
-                ? "quoted"
-                : "failed";
-            order.UpdatedAt = DateTime.UtcNow;
-
-            if (string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
-                QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
-
-            await _db.SaveChangesAsync();
-            await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "mollie_webhook", "Legacy metadata payment cancelled or expired");
-        }
-    }
-
-    private static bool TryExtractGuid(string? candidate, out Guid value)
-    {
-        value = Guid.Empty;
-        if (string.IsNullOrWhiteSpace(candidate)) return false;
-
-        if (Guid.TryParse(candidate, out value)) return true;
-
-        try
-        {
-            using var doc = JsonDocument.Parse(candidate);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object)
-                return false;
-
-            if (doc.RootElement.TryGetProperty("paymentId", out var paymentIdElement)
-                && paymentIdElement.ValueKind == JsonValueKind.String
-                && Guid.TryParse(paymentIdElement.GetString(), out value))
-            {
-                return true;
-            }
-
-            if (doc.RootElement.TryGetProperty("orderId", out var orderIdElement)
-                && orderIdElement.ValueKind == JsonValueKind.String
-                && Guid.TryParse(orderIdElement.GetString(), out value))
-            {
-                return true;
-            }
-        }
-        catch
-        {
+        paymentId = Guid.Empty;
+        if (metadata == null)
             return false;
-        }
 
-        return false;
+        return metadata.TryGetValue("paymentId", out var value)
+            && Guid.TryParse(value, out paymentId);
     }
 
-    private static string NormalizePaymentStatus(string? status)
-        => string.IsNullOrWhiteSpace(status) ? "unknown" : status.ToLowerInvariant();
+    private static string NormalizeStripeStatus(string? sessionStatus, string? paymentStatus)
+    {
+        if (string.Equals(paymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
+            return "paid";
+
+        if (string.Equals(paymentStatus, "unpaid", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(sessionStatus, "open", StringComparison.OrdinalIgnoreCase))
+            return "open";
+
+        if (string.Equals(paymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase))
+            return "canceled";
+
+        if (string.Equals(sessionStatus, "expired", StringComparison.OrdinalIgnoreCase))
+            return "expired";
+
+        if (string.Equals(sessionStatus, "complete", StringComparison.OrdinalIgnoreCase))
+            return "pending";
+
+        return string.IsNullOrWhiteSpace(paymentStatus)
+            ? string.IsNullOrWhiteSpace(sessionStatus)
+                ? "unknown"
+                : sessionStatus.ToLowerInvariant()
+            : paymentStatus.ToLowerInvariant();
+    }
 
     private static string NormalizeCurrencyCode(string? currencyCode)
     {
@@ -619,12 +704,72 @@ public class PaymentsController : ControllerBase
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
+    private static long ConvertToMinorUnits(decimal amount)
+    {
+        var rounded = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
+        return (long)(rounded * 100m);
+    }
+
+    private static string AppendQueryString(string url, string key, string value)
+    {
+        var separator = url.Contains('?') ? "&" : "?";
+        return $"{url}{separator}{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value)}";
+    }
+
     private static string TruncateError(string? error)
     {
         if (string.IsNullOrWhiteSpace(error))
             return "Unknown webhook processing error.";
 
         return error.Length > 1024 ? error[..1024] : error;
+    }
+
+    private static IReadOnlyList<string> LoadStripeWebhookSecrets(IConfiguration configuration)
+    {
+        var single = configuration["StripeWebhookSecret"];
+        var list = configuration["StripeWebhookSecrets"];
+
+        var secrets = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(single))
+            secrets.Add(single.Trim());
+
+        if (!string.IsNullOrWhiteSpace(list))
+        {
+            var split = list
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+            secrets.AddRange(split);
+        }
+
+        if (secrets.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "StripeWebhookSecret (or StripeWebhookSecrets) must be configured via environment variables.");
+        }
+
+        return secrets
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private bool TryConstructStripeEvent(string payload, string signatureHeader, out Event stripeEvent)
+    {
+        foreach (var secret in _stripeWebhookSecrets)
+        {
+            try
+            {
+                stripeEvent = EventUtility.ConstructEvent(payload, signatureHeader, secret);
+                return true;
+            }
+            catch
+            {
+                // Try next configured secret.
+            }
+        }
+
+        stripeEvent = null!;
+        return false;
     }
 }
 

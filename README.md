@@ -229,7 +229,9 @@ Discord__ErrorWebhookUrl=replace-me
 Discord__QuoteWebhookUrl=replace-me
 Discord__BookingWebhookUrl=replace-me
 Discord__PaymentReceivedWebhookUrl=replace-me
-MollieKey=replace-me
+StripeSecretKey=replace-me
+StripeWebhookSecret=replace-me
+StripeWebhookSecrets=
 CurrencyCode=EUR
 VITE_DEV_API_ORIGIN=<dev-api-origin>
 VITE_CURRENCY_CODE=EUR
@@ -244,6 +246,27 @@ Email__EnableSsl=true
 Email__ApiBaseUrl=https://send.api.mailtrap.io/api/send
 Email__Category=Integration Test
 ```
+
+### Stripe Webhooks (Local + Production)
+
+- Local with Docker Compose:
+   - Keep API in Docker on port `5001`.
+   - Start Stripe listener:
+      - `stripe listen --forward-to http://localhost:5001/api/payments/webhook`
+   - Copy the `whsec_...` value to `StripeWebhookSecret`.
+
+- Local with `dotnet run`:
+   - If API listens on `ASPNETCORE_URLS` (for example `http://localhost:5243`):
+      - `stripe listen --forward-to http://localhost:5243/api/payments/webhook`
+
+- Production:
+   - Create a webhook endpoint in Stripe Dashboard pointing to:
+      - `https://<your-domain>/api/payments/webhook`
+   - Use that endpoint signing secret (`whsec_...`) as `StripeWebhookSecret`.
+
+- Optional secret rotation:
+   - You can keep `StripeWebhookSecret` and add extra secrets in `StripeWebhookSecrets` (comma separated).
+   - The API accepts any configured secret for signature verification.
 
 ---
 
