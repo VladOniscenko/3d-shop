@@ -169,6 +169,17 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 AutoReplenishment = true
             }));
+
+    options.AddPolicy("QuoteLimit", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"quote:{httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 4,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 
 var app = builder.Build();

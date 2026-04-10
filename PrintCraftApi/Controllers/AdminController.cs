@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using System.Net.Mail;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using PrintCraftApi.Data;
 using PrintCraftApi.Models;
 using System.IO;
@@ -350,25 +352,25 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrWhiteSpace(provider))
         {
             var providerNorm = provider.Trim().ToLower();
-            query = query.Where(p => p.Provider.ToLower() == providerNorm);
+            query = query.Where(p => EF.Functions.ILike(p.Provider, providerNorm));
         }
 
         if (!string.IsNullOrWhiteSpace(status))
         {
             var statusNorm = status.Trim().ToLower();
-            query = query.Where(p => p.Status.ToLower() == statusNorm);
+            query = query.Where(p => EF.Functions.ILike(p.Status, statusNorm));
         }
 
         if (!string.IsNullOrWhiteSpace(reference))
         {
             var referenceNorm = reference.Trim().ToLower();
-            query = query.Where(p => p.Reference.ToLower().Contains(referenceNorm));
+            query = query.Where(p => EF.Functions.ILike(p.Reference, $"%{referenceNorm}%"));
         }
 
         if (!string.IsNullOrWhiteSpace(providerPaymentId))
         {
             var providerPaymentNorm = providerPaymentId.Trim().ToLower();
-            query = query.Where(p => p.ProviderPaymentId != null && p.ProviderPaymentId.ToLower().Contains(providerPaymentNorm));
+            query = query.Where(p => p.ProviderPaymentId != null && EF.Functions.ILike(p.ProviderPaymentId, $"%{providerPaymentNorm}%"));
         }
 
         if (fromUtc.HasValue)
@@ -442,13 +444,13 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             var q = search.ToLower();
-            query = query.Where(o => o.Id.ToString().ToLower().Contains(q)
-                || o.FullName.ToLower().Contains(q)
-                || o.AddressLine1.ToLower().Contains(q)
-                || o.City.ToLower().Contains(q)
-                || o.PhoneNumber.ToLower().Contains(q)
-                || o.Status.ToLower().Contains(q)
-                || (!string.IsNullOrEmpty(o.QuoteMessage) && o.QuoteMessage.ToLower().Contains(q))
+            query = query.Where(o => EF.Functions.ILike(o.Id.ToString(), $"%{q}%")
+                || EF.Functions.ILike(o.FullName, $"%{q}%")
+                || EF.Functions.ILike(o.AddressLine1, $"%{q}%")
+                || EF.Functions.ILike(o.City, $"%{q}%")
+                || EF.Functions.ILike(o.PhoneNumber, $"%{q}%")
+                || EF.Functions.ILike(o.Status, $"%{q}%")
+                || (!string.IsNullOrEmpty(o.QuoteMessage) && EF.Functions.ILike(o.QuoteMessage, $"%{q}%"))
             );
         }
 
@@ -539,7 +541,7 @@ public class AdminController : ControllerBase
             if (!IsAllowedNoteVisibility(normalizedVisibility))
                 return BadRequest(new { message = "Visibility must be one of: internal, customer." });
 
-            query = query.Where(n => n.Visibility.ToLower() == normalizedVisibility);
+            query = query.Where(n => EF.Functions.ILike(n.Visibility, normalizedVisibility));
         }
 
         var notes = await query
@@ -786,7 +788,7 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             var q = search.ToLower();
-            query = query.Where(u => u.Name.ToLower().Contains(q) || u.Email.ToLower().Contains(q) || u.Role.ToLower().Contains(q));
+            query = query.Where(u => EF.Functions.ILike(u.Name, $"%{q}%") || EF.Functions.ILike(u.Email, $"%{q}%") || EF.Functions.ILike(u.Role, $"%{q}%"));
         }
 
         var totalCount = await query.CountAsync();
@@ -823,7 +825,7 @@ public class AdminController : ControllerBase
         if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 80)
             return BadRequest(new { message = "Name must be between 2 and 80 characters." });
 
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        if (!IsValidEmail(email))
             return BadRequest(new { message = "A valid email is required." });
 
         if (role is not ("customer" or "admin"))
@@ -833,9 +835,13 @@ public class AdminController : ControllerBase
         if (duplicateEmail)
             return BadRequest(new { message = "Email already exists." });
 
-        user.Name = name;
-        user.Email = email;
-        user.Role = role;
+        var normalizedName = name ?? string.Empty;
+        var normalizedEmail = email ?? string.Empty;
+        var normalizedRole = role ?? "customer";
+
+        user.Name = normalizedName;
+        user.Email = normalizedEmail;
+        user.Role = normalizedRole;
 
         await _db.SaveChangesAsync();
         return Ok(new AdminUserDto(user.Id, user.Name, user.Email, user.Role));
@@ -1198,6 +1204,21 @@ public class AdminController : ControllerBase
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
     public record AdminUserDto(Guid Id, string Name, string Email, string Role);
     public record UpdateUserRequest(string Name, string Email, string Role);
+
+    private static bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return false;
+
+        try
+        {
+            _ = new MailAddress(email);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     private async Task RefreshQuoteStatusesAsync(IEnumerable<Order> orders, string changedBy)
     {

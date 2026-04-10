@@ -360,7 +360,7 @@ public class PaymentsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Stripe webhook processing failed.");
-            return Ok();
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Stripe webhook processing failed." });
         }
     }
 

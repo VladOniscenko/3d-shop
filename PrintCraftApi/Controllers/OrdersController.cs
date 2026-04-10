@@ -127,6 +127,7 @@ public class OrdersController : ControllerBase
 
     [HttpPost("quote")]
     [AllowAnonymous]
+    [EnableRateLimiting("QuoteLimit")]
     public async Task<IActionResult> CreateQuote([FromBody] QuoteRequest request)
     {
         var isAuthenticated = User?.Identity?.IsAuthenticated == true;
