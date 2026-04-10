@@ -43,7 +43,9 @@ export default function Quote() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<string | null>(null);
+  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
+    string | null
+  >(null);
   const [guestAccountCreated, setGuestAccountCreated] = useState(false);
 
   useEffect(() => {
