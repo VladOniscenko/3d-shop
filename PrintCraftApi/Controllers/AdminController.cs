@@ -443,15 +443,21 @@ public class AdminController : ControllerBase
 
         if (!string.IsNullOrEmpty(search))
         {
-            var q = search.ToLower();
-            query = query.Where(o => EF.Functions.ILike(o.Id.ToString(), $"%{q}%")
-                || EF.Functions.ILike(o.FullName, $"%{q}%")
-                || EF.Functions.ILike(o.AddressLine1, $"%{q}%")
-                || EF.Functions.ILike(o.City, $"%{q}%")
-                || EF.Functions.ILike(o.PhoneNumber, $"%{q}%")
-                || EF.Functions.ILike(o.Status, $"%{q}%")
-                || (!string.IsNullOrEmpty(o.QuoteMessage) && EF.Functions.ILike(o.QuoteMessage, $"%{q}%"))
-            );
+            var q = search.Trim();
+            if (Guid.TryParse(q, out var searchId))
+            {
+                query = query.Where(o => o.Id == searchId);
+            }
+            else
+            {
+                query = query.Where(o => EF.Functions.ILike(o.FullName, $"%{q}%")
+                    || EF.Functions.ILike(o.AddressLine1, $"%{q}%")
+                    || EF.Functions.ILike(o.City, $"%{q}%")
+                    || EF.Functions.ILike(o.PhoneNumber, $"%{q}%")
+                    || EF.Functions.ILike(o.Status, $"%{q}%")
+                    || (!string.IsNullOrEmpty(o.QuoteMessage) && EF.Functions.ILike(o.QuoteMessage, $"%{q}%"))
+                );
+            }
         }
 
         if (!string.IsNullOrEmpty(status) && status != "All")
