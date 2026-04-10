@@ -301,7 +301,9 @@ export default function AdminDashboard() {
     (order) => new Date(order.createdAt) >= monthAgo,
   ).length;
 
-  const uniqueCustomers = new Set(orders.map((o) => o.userId)).size;
+  const uniqueCustomers = new Set(
+    orders.map((o) => o.userId).filter(Boolean),
+  ).size;
   const totalOrderItems = orders.reduce(
     (sum, order) =>
       sum + order.items.reduce((inner, item) => inner + (item.count || 0), 0),

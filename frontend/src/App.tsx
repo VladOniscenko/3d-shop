@@ -38,6 +38,7 @@ function shouldSendVisit(eventType: "pageview" | "heartbeat", path: string) {
 const Home = lazy(() => import("./components/Home.tsx"));
 const Login = lazy(() => import("./components/Login.tsx"));
 const Quote = lazy(() => import("./components/Quote.tsx"));
+const GuestQuoteAccess = lazy(() => import("./components/GuestQuoteAccess.tsx"));
 const Signup = lazy(() => import("./components/Signup.tsx"));
 const Materials = lazy(() => import("./components/Materials.tsx"));
 const Gallery = lazy(() => import("./components/Gallery.tsx"));
@@ -217,15 +218,10 @@ export default function App() {
           <Route path="/refunds" element={<RefundPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
 
+          <Route path="/quote" element={<Quote />} />
+          <Route path="/quote/access" element={<GuestQuoteAccess />} />
+
           {/* Private Routes - Only logged-in users can see these */}
-          <Route
-            path="/quote"
-            element={
-              <ProtectedRoute>
-                <Quote />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/orders"
             element={

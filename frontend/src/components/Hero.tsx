@@ -12,7 +12,6 @@ const heroModelLoaders = import.meta.glob("../assets/hero-models/*.stl", {
 
 export default function Hero() {
   const { t } = useI18n();
-  const isLoggedIn = !!localStorage.getItem("token");
   const [showViewer, setShowViewer] = useState(false);
   const [heroModelSrc, setHeroModelSrc] = useState("");
 
@@ -81,12 +80,8 @@ export default function Hero() {
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <Link
-            to={isLoggedIn ? "/quote" : "/signup"}
-            className="site-btn-primary gap-2"
-          >
-            <Upload size={20} />{" "}
-            {isLoggedIn ? t("hero.ctaQuote") : t("nav.getStarted")}
+          <Link to="/quote" className="site-btn-primary gap-2">
+            <Upload size={20} /> {t("hero.ctaQuote")}
           </Link>
         </div>
 

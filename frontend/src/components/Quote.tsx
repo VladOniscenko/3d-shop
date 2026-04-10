@@ -23,6 +23,10 @@ import ModelDiscoveryCards from "./ModelDiscoveryCards";
 
 const ALLOWED_UPLOAD_ACCEPT = ".stl,.obj,.3mf,.step,.stp";
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function Quote() {
   const { t } = useI18n();
   const { notifyError } = useNotify();
@@ -35,6 +39,13 @@ export default function Quote() {
   const [isDragOver, setIsDragOver] = useState(false);
   const submittedRef = useRef(false);
   const uploadedFileUrlsRef = useRef<Set<string>>(new Set());
+  const isLoggedIn = !!localStorage.getItem("token");
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -218,6 +229,27 @@ export default function Quote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLoggedIn) {
+      const normalizedName = guestName.trim();
+      const normalizedEmail = guestEmail.trim();
+
+      if (normalizedName.length < 2) {
+        notifyError(t("quote.guestRequiredName"));
+        return;
+      }
+
+      if (!normalizedEmail) {
+        notifyError(t("quote.guestRequiredEmail"));
+        return;
+      }
+
+      if (!isValidEmail(normalizedEmail)) {
+        notifyError(t("quote.guestInvalidEmail"));
+        return;
+      }
+    }
+
     if (items.length === 0) {
       notifyError(t("quote.noFiles"));
       return;
@@ -231,10 +263,30 @@ export default function Quote() {
 
     setIsSubmitting(true);
     try {
-      await api.post("/orders/quote", { items });
+      const payload: {
+        items: OrderItem[];
+        guestName?: string;
+        guestEmail?: string;
+        guestPhone?: string;
+      } = { items };
+
+      if (!isLoggedIn) {
+        payload.guestName = guestName.trim();
+        payload.guestEmail = guestEmail.trim();
+        payload.guestPhone = guestPhone.trim();
+      }
+
+      const res = await api.post("/orders/quote", payload);
       submittedRef.current = true;
       uploadedFileUrlsRef.current.clear();
-      navigate("/orders");
+
+      if (isLoggedIn) {
+        navigate("/orders");
+        return;
+      }
+
+      setItems([]);
+      setGuestSubmittedOrderId(res?.data?.id || null);
     } catch (err: any) {
       const message = err?.response?.data?.message || t("quote.submitFailed");
       notifyError(message);
@@ -291,6 +343,80 @@ export default function Quote() {
         <div className="mb-8">
           <ModelDiscoveryCards compact lowEmphasis inlineMinimal />
         </div>
+
+        {!isLoggedIn && (
+          <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800">
+              {t("quote.guestContactTitle")}
+            </h3>
+            <p className="mt-1 text-sm text-[#5f736d]">
+              {t("quote.guestContactSubtitle")}
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {t("quote.fullName")}
+                </label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder={t("quote.fullName")}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {t("quote.guestEmail")}
+                </label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="name@example.com"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {t("quote.phone")}
+                </label>
+                <input
+                  type="text"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder={t("quote.phone")}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isLoggedIn && guestSubmittedOrderId && (
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+            <h3 className="text-lg font-bold text-emerald-800">
+              {t("quote.guestSubmittedTitle")}
+            </h3>
+            <p className="mt-1 text-sm text-emerald-900/80">
+              {t("quote.guestSubmittedBody")}
+            </p>
+            <p className="mt-2 text-xs font-semibold text-emerald-800">
+              {t("quote.guestSubmittedReference")} {guestSubmittedOrderId}
+            </p>
+            <Link
+              to={`/quote/access?orderId=${encodeURIComponent(
+                guestSubmittedOrderId,
+              )}&email=${encodeURIComponent(guestEmail.trim())}`}
+              className="inline-flex mt-3 text-xs font-semibold text-[#0f766e] hover:underline"
+            >
+              {t("quote.guestTrackOpen")}
+            </Link>
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit}

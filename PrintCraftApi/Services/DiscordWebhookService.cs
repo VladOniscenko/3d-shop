@@ -8,7 +8,7 @@ namespace PrintCraftApi.Services;
 public interface IDiscordWebhookService
 {
     Task SendUnhandledExceptionAsync(HttpContext context, Exception exception, CancellationToken cancellationToken = default);
-    Task SendQuoteRequestedAsync(Order order, User user, CancellationToken cancellationToken = default);
+    Task SendQuoteRequestedAsync(Order order, User? user, string? guestEmail = null, CancellationToken cancellationToken = default);
     Task SendBookingCreatedAsync(Order order, User? user, CancellationToken cancellationToken = default);
     Task SendPaymentReceivedAsync(Order order, User? user, decimal paidAmount, CancellationToken cancellationToken = default);
 }
@@ -56,7 +56,7 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
         return PostToWebhookAsync(webhookUrl, embed, "global exception", cancellationToken);
     }
 
-    public async Task SendQuoteRequestedAsync(Order order, User user, CancellationToken cancellationToken = default)
+    public async Task SendQuoteRequestedAsync(Order order, User? user, string? guestEmail = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("=== SendQuoteRequestedAsync START for order {OrderId} ===", order.Id);
 
@@ -77,6 +77,13 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
             webhookUrl = fallbackWebhookUrl;
         }
 
+        var customerName = !string.IsNullOrWhiteSpace(user?.Name)
+            ? user!.Name
+            : (!string.IsNullOrWhiteSpace(order.FullName) ? order.FullName : "Guest customer");
+        var customerEmail = !string.IsNullOrWhiteSpace(user?.Email)
+            ? user!.Email
+            : (string.IsNullOrWhiteSpace(guestEmail) ? "not provided" : guestEmail);
+
         var embed = new DiscordEmbed
         {
             Title = "🧾 New Quote Request",
@@ -86,8 +93,8 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
                 new DiscordField { Name = "Order ID", Value = order.Id.ToString(), Inline = true },
                 new DiscordField { Name = "Created", Value = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss UTC"), Inline = true },
                 new DiscordField { Name = "Status", Value = order.Status, Inline = true },
-                new DiscordField { Name = "Customer Name", Value = user.Name ?? "Unknown", Inline = true },
-                new DiscordField { Name = "Email", Value = user.Email, Inline = true },
+                new DiscordField { Name = "Customer Name", Value = customerName, Inline = true },
+                new DiscordField { Name = "Email", Value = customerEmail, Inline = true },
                 new DiscordField { Name = "Item Count", Value = order.Items.Count.ToString(), Inline = true },
                 new DiscordField { Name = "Items", Value = BuildItemsForEmbed(order.Items), Inline = false },
             },

@@ -1048,8 +1048,12 @@ public class AdminController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
-        var user = await _db.Users.FindAsync(order.UserId);
-        if (user == null) return NotFound(new { message = "Customer not found for order" });
+        var recipient = await ResolveOrderEmailRecipientAsync(order);
+        if (recipient == null)
+            return BadRequest(new { message = "No customer email found for this order." });
+
+        var recipientEmail = recipient.Value.Email;
+        var recipientName = recipient.Value.Name;
 
         var type = payload.Type?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(type))
@@ -1058,8 +1062,8 @@ public class AdminController : ControllerBase
         switch (type)
         {
             case "quote_requested":
-                await _emailService.SendQuoteRequestedEmailAsync(user.Email, user.Name, order.Id);
-                await LogOrderCommunicationAsync(order.Id, "quote_requested", "Quote request received", user.Email);
+                await _emailService.SendQuoteRequestedEmailAsync(recipientEmail, recipientName, order.Id);
+                await LogOrderCommunicationAsync(order.Id, "quote_requested", "Quote request received", recipientEmail);
                 return Ok(new { message = "Quote requested email sent." });
 
             case "quote_confirmation":
@@ -1085,12 +1089,12 @@ public class AdminController : ControllerBase
                 await _db.SaveChangesAsync();
 
                 await _emailService.SendQuoteConfirmationEmailAsync(
-                    user.Email,
-                    user.Name,
+                    recipientEmail,
+                    recipientName,
                     order.Id,
                     quotePrice,
                     quoteMessage);
-                await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", user.Email);
+                await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", recipientEmail);
                 return Ok(new { message = "Quote confirmation email sent." });
 
             case "order_sent_tracking":
@@ -1113,17 +1117,44 @@ public class AdminController : ControllerBase
                 }
 
                 await _emailService.SendOrderSentTrackingEmailAsync(
-                    user.Email,
-                    user.Name,
+                    recipientEmail,
+                    recipientName,
                     order.Id,
                     trackingCode,
                     trackingUrl);
-                await LogOrderCommunicationAsync(order.Id, "order_sent_tracking", "Your order has been sent", user.Email);
+                await LogOrderCommunicationAsync(order.Id, "order_sent_tracking", "Your order has been sent", recipientEmail);
                 return Ok(new { message = "Order sent email sent." });
 
             default:
                 return BadRequest(new { message = "Unsupported email type." });
         }
+    }
+
+    private async Task<(string Email, string Name)?> ResolveOrderEmailRecipientAsync(Order order)
+    {
+        if (order.UserId.HasValue)
+        {
+            var user = await _db.Users.FindAsync(order.UserId.Value);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                var name = string.IsNullOrWhiteSpace(user.Name) ? user.Email : user.Name;
+                return (user.Email.Trim(), name.Trim());
+            }
+        }
+
+        var recentEmail = await _db.OrderCommunications
+            .Where(c => c.OrderId == order.Id && !string.IsNullOrWhiteSpace(c.RecipientEmail))
+            .OrderByDescending(c => c.SentAt)
+            .Select(c => c.RecipientEmail)
+            .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(recentEmail))
+        {
+            var name = string.IsNullOrWhiteSpace(order.FullName) ? "Customer" : order.FullName.Trim();
+            return (recentEmail.Trim(), name);
+        }
+
+        return null;
     }
 
     public record AdminQuoteRequest(decimal Price, string Message);

@@ -84,6 +84,7 @@ public class UploadController : ControllerBase
 
     [HttpPost]
     [DisableRequestSizeLimit]
+    [AllowAnonymous]
     [EnableRateLimiting("UploadLimit")]
     public async Task<IActionResult> Upload([FromForm] IFormFile file)
     {
@@ -263,6 +264,7 @@ public class UploadController : ControllerBase
     }
 
     [HttpDelete("temp")]
+    [AllowAnonymous]
     [EnableRateLimiting("UploadLimit")]
     public IActionResult DeleteTempUpload([FromQuery] string? fileUrl)
     {
@@ -310,6 +312,7 @@ public class UploadController : ControllerBase
     }
 
     [HttpPost("temp/cleanup")]
+    [AllowAnonymous]
     [EnableRateLimiting("UploadLimit")]
     public IActionResult CleanupTempUploads([FromBody] TempUploadCleanupRequest? request)
     {

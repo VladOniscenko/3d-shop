@@ -1,6 +1,6 @@
 export interface Order {
   id: string;
-  userId: string;
+  userId?: string | null;
   status:
     | "pending_quote"
     | "quoted"

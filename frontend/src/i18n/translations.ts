@@ -916,6 +916,36 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.subtitle": "Upload models and choose from our live inventory.",
     "quote.models": "Your 3D Models",
     "quote.addFile": "Add Files",
+    "quote.guestContactTitle": "Contact details",
+    "quote.guestContactSubtitle":
+      "Not logged in? No problem. Add your contact details so we can send your quote.",
+    "quote.guestEmail": "Email",
+    "quote.guestRequiredName": "Please enter your full name.",
+    "quote.guestRequiredEmail": "Please enter your email address.",
+    "quote.guestInvalidEmail": "Please enter a valid email address.",
+    "quote.guestSubmittedTitle": "Quote request sent",
+    "quote.guestSubmittedBody":
+      "Thanks! We received your request and will email you once your quote is ready.",
+    "quote.guestSubmittedReference": "Reference:",
+    "quote.guestTrackOpen": "Track this quote",
+    "quote.guestTrackTitle": "Track your quote",
+    "quote.guestTrackSubtitle":
+      "Enter your quote reference and email. We will send a secure access link.",
+    "quote.guestTrackOrderIdPlaceholder": "Quote reference (UUID)",
+    "quote.guestTrackEmailPlaceholder": "Email used for the quote",
+    "quote.guestTrackSendLink": "Send access link",
+    "quote.guestTrackLoading": "Loading quote details...",
+    "quote.guestTrackReference": "Quote reference",
+    "quote.guestTrackNoActiveSession":
+      "No active quote session. Request an access link above.",
+    "quote.guestTrackOrderIdRequired": "Please enter your quote reference.",
+    "quote.guestTrackEmailRequired": "Please enter your email address.",
+    "quote.guestTrackEmailInvalid": "Please enter a valid email address.",
+    "quote.guestTrackLinkSentGeneric":
+      "If the details match, an access link was sent.",
+    "quote.guestTrackLinkFailed":
+      "Could not send access link right now. Please try again.",
+    "quote.guestAccessInvalid": "This access link is invalid or expired.",
     "quote.noFiles": "No files added yet.",
     "quote.dragDropHint": "Drag and drop files here",
     "quote.allowedFilesInline":
@@ -2077,6 +2107,37 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.subtitle": "Upload modellen en kies uit onze actuele voorraad.",
     "quote.models": "Jouw 3D Modellen",
     "quote.addFile": "Bestanden Toevoegen",
+    "quote.guestContactTitle": "Contactgegevens",
+    "quote.guestContactSubtitle":
+      "Niet ingelogd? Geen probleem. Voeg je contactgegevens toe zodat we je offerte kunnen mailen.",
+    "quote.guestEmail": "E-mail",
+    "quote.guestRequiredName": "Vul je volledige naam in.",
+    "quote.guestRequiredEmail": "Vul je e-mailadres in.",
+    "quote.guestInvalidEmail": "Vul een geldig e-mailadres in.",
+    "quote.guestSubmittedTitle": "Offerteaanvraag verzonden",
+    "quote.guestSubmittedBody":
+      "Bedankt! We hebben je aanvraag ontvangen en mailen je zodra je offerte klaarstaat.",
+    "quote.guestSubmittedReference": "Referentie:",
+    "quote.guestTrackOpen": "Deze offerte volgen",
+    "quote.guestTrackTitle": "Volg je offerte",
+    "quote.guestTrackSubtitle":
+      "Vul je offertreferentie en e-mail in. We sturen je een veilige toegangslink.",
+    "quote.guestTrackOrderIdPlaceholder": "Offertereferentie (UUID)",
+    "quote.guestTrackEmailPlaceholder": "E-mail gebruikt voor de offerte",
+    "quote.guestTrackSendLink": "Verstuur toegangslink",
+    "quote.guestTrackLoading": "Offertedetails laden...",
+    "quote.guestTrackReference": "Offertereferentie",
+    "quote.guestTrackNoActiveSession":
+      "Geen actieve offertesessie. Vraag hierboven een toegangslink aan.",
+    "quote.guestTrackOrderIdRequired": "Vul je offertereferentie in.",
+    "quote.guestTrackEmailRequired": "Vul je e-mailadres in.",
+    "quote.guestTrackEmailInvalid": "Vul een geldig e-mailadres in.",
+    "quote.guestTrackLinkSentGeneric":
+      "Als de gegevens kloppen, is een toegangslink verstuurd.",
+    "quote.guestTrackLinkFailed":
+      "Kon nu geen toegangslink versturen. Probeer opnieuw.",
+    "quote.guestAccessInvalid":
+      "Deze toegangslink is ongeldig of verlopen.",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
     "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":
