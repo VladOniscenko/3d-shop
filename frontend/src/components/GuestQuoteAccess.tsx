@@ -16,6 +16,14 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
+function buildCooldownKey(orderId: string, email: string) {
+  return `pc_guest_quote_access_resend:${orderId.trim().toLowerCase()}:${email
+    .trim()
+    .toLowerCase()}`;
+}
+
 export default function GuestQuoteAccess() {
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
@@ -31,6 +39,56 @@ export default function GuestQuoteAccess() {
   const [isRequestingLink, setIsRequestingLink] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const [accessError, setAccessError] = useState("");
+  const [cooldownEndsAt, setCooldownEndsAt] = useState<number | null>(null);
+  const [cooldownNow, setCooldownNow] = useState(() => Date.now());
+
+  const cooldownKey = useMemo(() => {
+    if (!orderId.trim() || !email.trim()) return null;
+    return buildCooldownKey(orderId, email);
+  }, [email, orderId]);
+
+  const cooldownRemainingSeconds = useMemo(() => {
+    if (!cooldownEndsAt) return 0;
+    return Math.max(0, Math.ceil((cooldownEndsAt - cooldownNow) / 1000));
+  }, [cooldownEndsAt, cooldownNow]);
+
+  const canRequestAccessLink =
+    !isRequestingLink && cooldownRemainingSeconds === 0;
+
+  useEffect(() => {
+    if (!cooldownKey) {
+      setCooldownEndsAt(null);
+      return;
+    }
+
+    const stored = window.localStorage.getItem(cooldownKey);
+    if (!stored) {
+      setCooldownEndsAt(null);
+      return;
+    }
+
+    const parsed = Number.parseInt(stored, 10);
+    if (!Number.isFinite(parsed) || parsed <= Date.now()) {
+      window.localStorage.removeItem(cooldownKey);
+      setCooldownEndsAt(null);
+      return;
+    }
+
+    setCooldownEndsAt(parsed);
+  }, [cooldownKey]);
+
+  useEffect(() => {
+    if (!cooldownEndsAt) return;
+
+    setCooldownNow(Date.now());
+    const timerId = window.setInterval(() => {
+      setCooldownNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [cooldownEndsAt]);
 
   useEffect(() => {
     const loadOrderByToken = async () => {
@@ -92,6 +150,12 @@ export default function GuestQuoteAccess() {
         orderId: orderId.trim(),
         email: email.trim(),
       });
+      const endsAt = Date.now() + RESEND_COOLDOWN_SECONDS * 1000;
+      if (cooldownKey) {
+        window.localStorage.setItem(cooldownKey, String(endsAt));
+        setCooldownEndsAt(endsAt);
+        setCooldownNow(Date.now());
+      }
       setRequestMessage(
         res?.data?.message || t("quote.guestTrackLinkSentGeneric"),
       );
@@ -138,7 +202,7 @@ export default function GuestQuoteAccess() {
               />
               <button
                 type="submit"
-                disabled={isRequestingLink}
+                disabled={!canRequestAccessLink}
                 className="md:col-span-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0f766e] text-white font-semibold hover:bg-[#0c5b54] disabled:opacity-60"
               >
                 {isRequestingLink ? (
@@ -146,9 +210,23 @@ export default function GuestQuoteAccess() {
                 ) : (
                   <Mail size={16} />
                 )}
-                {t("quote.guestTrackSendLink")}
+                {cooldownRemainingSeconds > 0
+                  ? t("quote.guestTrackResendWait").replace(
+                      "{seconds}",
+                      String(cooldownRemainingSeconds),
+                    )
+                  : t("quote.guestTrackSendLink")}
               </button>
             </form>
+
+            {cooldownRemainingSeconds > 0 && (
+              <p className="mt-3 text-xs text-[#60736d]">
+                {t("quote.guestTrackResendHint").replace(
+                  "{seconds}",
+                  String(cooldownRemainingSeconds),
+                )}
+              </p>
+            )}
 
             {requestMessage && (
               <p className="mt-4 text-sm text-[#1f4339]">{requestMessage}</p>

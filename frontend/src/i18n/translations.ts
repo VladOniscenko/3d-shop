@@ -946,6 +946,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.guestTrackLinkFailed":
       "Could not send access link right now. Please try again.",
     "quote.guestAccessInvalid": "This access link is invalid or expired.",
+    "quote.guestTrackResendWait": "Wait {seconds}s",
+    "quote.guestTrackResendHint":
+      "You can request another access link in {seconds} seconds.",
     "quote.noFiles": "No files added yet.",
     "quote.dragDropHint": "Drag and drop files here",
     "quote.allowedFilesInline":
@@ -2137,6 +2140,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.guestTrackLinkFailed":
       "Kon nu geen toegangslink versturen. Probeer opnieuw.",
     "quote.guestAccessInvalid": "Deze toegangslink is ongeldig of verlopen.",
+    "quote.guestTrackResendWait": "Wacht {seconds}s",
+    "quote.guestTrackResendHint":
+      "Je kunt over {seconds} seconden opnieuw een toegangslink aanvragen.",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
     "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":
