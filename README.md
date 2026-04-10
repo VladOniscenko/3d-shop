@@ -250,23 +250,23 @@ Email__Category=Integration Test
 ### Stripe Webhooks (Local + Production)
 
 - Local with Docker Compose:
-   - Keep API in Docker on port `5001`.
-   - Start Stripe listener:
-      - `stripe listen --forward-to http://localhost:5001/api/payments/webhook`
-   - Copy the `whsec_...` value to `StripeWebhookSecret`.
+  - Keep API in Docker on port `5001`.
+  - Start Stripe listener:
+    - `stripe listen --forward-to http://localhost:5001/api/payments/webhook`
+  - Copy the `whsec_...` value to `StripeWebhookSecret`.
 
 - Local with `dotnet run`:
-   - If API listens on `ASPNETCORE_URLS` (for example `http://localhost:5243`):
-      - `stripe listen --forward-to http://localhost:5243/api/payments/webhook`
+  - If API listens on `ASPNETCORE_URLS` (for example `http://localhost:5243`):
+    - `stripe listen --forward-to http://localhost:5243/api/payments/webhook`
 
 - Production:
-   - Create a webhook endpoint in Stripe Dashboard pointing to:
-      - `https://<your-domain>/api/payments/webhook`
-   - Use that endpoint signing secret (`whsec_...`) as `StripeWebhookSecret`.
+  - Create a webhook endpoint in Stripe Dashboard pointing to:
+    - `https://<your-domain>/api/payments/webhook`
+  - Use that endpoint signing secret (`whsec_...`) as `StripeWebhookSecret`.
 
 - Optional secret rotation:
-   - You can keep `StripeWebhookSecret` and add extra secrets in `StripeWebhookSecrets` (comma separated).
-   - The API accepts any configured secret for signature verification.
+  - You can keep `StripeWebhookSecret` and add extra secrets in `StripeWebhookSecrets` (comma separated).
+  - The API accepts any configured secret for signature verification.
 
 ---
 
