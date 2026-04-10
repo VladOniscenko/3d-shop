@@ -38,7 +38,9 @@ function shouldSendVisit(eventType: "pageview" | "heartbeat", path: string) {
 const Home = lazy(() => import("./components/Home.tsx"));
 const Login = lazy(() => import("./components/Login.tsx"));
 const Quote = lazy(() => import("./components/Quote.tsx"));
-const GuestQuoteAccess = lazy(() => import("./components/GuestQuoteAccess.tsx"));
+const GuestQuoteAccess = lazy(
+  () => import("./components/GuestQuoteAccess.tsx"),
+);
 const Signup = lazy(() => import("./components/Signup.tsx"));
 const Materials = lazy(() => import("./components/Materials.tsx"));
 const Gallery = lazy(() => import("./components/Gallery.tsx"));

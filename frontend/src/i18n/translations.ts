@@ -2136,8 +2136,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Als de gegevens kloppen, is een toegangslink verstuurd.",
     "quote.guestTrackLinkFailed":
       "Kon nu geen toegangslink versturen. Probeer opnieuw.",
-    "quote.guestAccessInvalid":
-      "Deze toegangslink is ongeldig of verlopen.",
+    "quote.guestAccessInvalid": "Deze toegangslink is ongeldig of verlopen.",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
     "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":

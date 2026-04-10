@@ -61,7 +61,9 @@ export default function GuestQuoteAccess() {
   const statusLabel = useMemo(() => {
     if (!order?.status) return "";
     const translationKey = getOrderStatusTranslationKey(order.status);
-    return translationKey ? t(translationKey) : formatOrderStatusLabel(order.status);
+    return translationKey
+      ? t(translationKey)
+      : formatOrderStatusLabel(order.status);
   }, [order?.status, t]);
 
   const requestAccessLink = async (e: React.FormEvent) => {
@@ -116,7 +118,10 @@ export default function GuestQuoteAccess() {
               {t("quote.guestTrackSubtitle")}
             </p>
 
-            <form onSubmit={requestAccessLink} className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <form
+              onSubmit={requestAccessLink}
+              className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3"
+            >
               <input
                 type="text"
                 value={orderId}
@@ -174,7 +179,9 @@ export default function GuestQuoteAccess() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-[#314941]">
                   <p>
-                    <span className="font-semibold">{t("orders.placedOn")}:</span>{" "}
+                    <span className="font-semibold">
+                      {t("orders.placedOn")}:
+                    </span>{" "}
                     {new Date(order.createdAt).toLocaleString()}
                   </p>
                   <p>
@@ -193,10 +200,13 @@ export default function GuestQuoteAccess() {
                         {item.fileName || t("quote.textDescription")}
                       </p>
                       <p className="text-xs text-[#5f736d] mt-1">
-                        {item.material} · {item.color} · {t("quote.quantity")}: {item.count}
+                        {item.material} · {item.color} · {t("quote.quantity")}:{" "}
+                        {item.count}
                       </p>
                       {item.notes && (
-                        <p className="text-xs text-[#4e635c] mt-1">{item.notes}</p>
+                        <p className="text-xs text-[#4e635c] mt-1">
+                          {item.notes}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -211,7 +221,10 @@ export default function GuestQuoteAccess() {
           </section>
 
           <p className="text-center text-xs text-[#60736d]">
-            <Link to="/quote" className="text-[#0f766e] font-semibold hover:underline">
+            <Link
+              to="/quote"
+              className="text-[#0f766e] font-semibold hover:underline"
+            >
               {t("quote.title")}
             </Link>
           </p>
