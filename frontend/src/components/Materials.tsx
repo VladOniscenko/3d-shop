@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Box, Loader2, Database, Tag, Info } from "lucide-react";
+import { Box, Loader2, Database, Tag } from "lucide-react";
 import Navbar from "./Navbar";
 import type { Filament } from "../types"; // Use the new interface name
 import api from "../services/api";
 import { useI18n } from "../i18n/I18nContext";
 import Footer from "./Footer";
-import { Link } from "react-router-dom";
 import { getColorStyle } from "../utils/colors";
 
 export default function Materials() {
@@ -97,22 +96,6 @@ export default function Materials() {
             ))}
           </div>
         )}
-
-        {/* Call to Action */}
-        <div className="site-card reveal-up stagger-2 mt-14 rounded-3xl p-10 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-[#e4f5ef] text-[#0f766e] rounded-full mb-4">
-            <Info size={24} />
-          </div>
-          <h3 className="text-2xl font-bold mb-2 text-[#1b2c27]">
-            {t("materials.ctaTitle")}
-          </h3>
-          <p className="text-[#5f726c] mb-8 max-w-xl mx-auto">
-            {t("materials.ctaDesc")}
-          </p>
-          <Link to="/quote" className="site-btn-primary gap-2 px-8 py-4">
-            {t("materials.ctaButton")} <ArrowRight size={18} />
-          </Link>
-        </div>
       </main>
 
       <Footer />

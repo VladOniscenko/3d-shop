@@ -905,7 +905,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "High-quality filaments for every project, from decorative models to functional parts.",
     "materials.pageLoading": "Loading materials...",
     "materials.stock": "in stock",
-    "materials.ctaTitle": "Need a specific material?",
     "materials.ctaDesc":
       "We can order specialty filaments like Wood, Carbon Fiber, or Glow-in-the-dark for large projects.",
     "materials.ctaButton": "Start Your Project",
@@ -2067,7 +2066,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Hoogwaardige filamenten voor elk project, van decoratief tot functioneel.",
     "materials.pageLoading": "Materialen laden...",
     "materials.stock": "op voorraad",
-    "materials.ctaTitle": "Speciaal materiaal nodig?",
     "materials.ctaDesc":
       "We kunnen speciale filamenten bestellen zoals Wood, Carbon Fiber of Glow-in-the-dark voor grotere projecten.",
     "materials.ctaButton": "Start Je Project",

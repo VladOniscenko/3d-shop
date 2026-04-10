@@ -91,7 +91,11 @@ export default function Home() {
             {t("home.proof.bridgeSubtitle")}
           </p>
         </section>
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pb-12">
+        <section
+          className={`grid grid-cols-1 gap-6 items-start pb-12 ${
+            ALLOWED_PRODUCT_ORDER ? "lg:grid-cols-2" : ""
+          }`}
+        >
           <div className="site-section p-6 sm:p-8">
             <MaterialsSection />
           </div>
