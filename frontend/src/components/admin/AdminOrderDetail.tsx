@@ -3,11 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
-import type {
-  Order,
-  OrderNote,
-  PaymentAttempt,
-} from "../../types";
+import type { Order, OrderNote, PaymentAttempt } from "../../types";
 import { useNotify } from "../../context/NotifyContext";
 import { useI18n } from "../../i18n/I18nContext";
 import type {
@@ -101,13 +97,12 @@ export default function AdminOrderDetail() {
 
     const getOrder = async () => {
       try {
-        const [res, commsRes, statusRes, paymentsRes] =
-          await Promise.all([
-            api.get(`/admin/orders/${id}`),
-            api.get(`/admin/orders/${id}/communications`),
-            api.get(`/admin/orders/${id}/status-history`),
-            api.get(`/admin/orders/${id}/payments`),
-          ]);
+        const [res, commsRes, statusRes, paymentsRes] = await Promise.all([
+          api.get(`/admin/orders/${id}`),
+          api.get(`/admin/orders/${id}/communications`),
+          api.get(`/admin/orders/${id}/status-history`),
+          api.get(`/admin/orders/${id}/payments`),
+        ]);
         applyOrderData(res.data);
         setCommunications(commsRes.data || []);
         setStatusHistory(statusRes.data || []);

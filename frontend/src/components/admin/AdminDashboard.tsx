@@ -612,7 +612,6 @@ export default function AdminDashboard() {
           {new Date(analytics.generatedAtUtc).toLocaleString()}
         </p>
       </section>
-
     </AdminLayout>
   );
 }
