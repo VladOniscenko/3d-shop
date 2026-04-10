@@ -18,6 +18,7 @@ public class PrintCraftDb : DbContext
     public DbSet<OrderNote> OrderNotes => Set<OrderNote>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
     public DbSet<VisitEvent> VisitEvents => Set<VisitEvent>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
@@ -94,6 +95,15 @@ public class PrintCraftDb : DbContext
             .WithMany(o => o.Payments)
             .HasForeignKey(p => p.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserAddress>()
+            .HasOne(a => a.User)
+            .WithMany(u => u.Addresses)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserAddress>()
+            .HasIndex(a => new { a.UserId, a.IsDefault });
 
     }
 }

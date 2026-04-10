@@ -401,6 +401,8 @@ public class OrdersController : ControllerBase
         order.PostalCode = shippingValidation.PostalCode;
         order.UpdatedAt = DateTime.UtcNow;
 
+        await UpsertSavedAddressAsync(userId, request, shippingValidation);
+
         await _db.SaveChangesAsync();
 
         return Ok(MapOrderForCustomer(order));
@@ -542,6 +544,49 @@ public class OrdersController : ControllerBase
             ChangedAt = DateTime.UtcNow,
             ChangedBy = changedBy,
             Note = note,
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task UpsertSavedAddressAsync(
+        Guid userId,
+        SaveQuoteShippingRequest request,
+        ShippingInfoValidationResult shippingValidation)
+    {
+        const string? normalizedAddressLine2 = null;
+
+        var existing = await _db.UserAddresses.FirstOrDefaultAsync(a =>
+            a.UserId == userId
+            && a.FullName == shippingValidation.FullName
+            && a.PhoneNumber == shippingValidation.PhoneNumber
+            && a.AddressLine1 == shippingValidation.AddressLine1
+            && a.AddressLine2 == normalizedAddressLine2
+            && a.City == shippingValidation.City
+            && a.PostalCode == shippingValidation.PostalCode);
+
+        if (existing != null)
+        {
+            existing.LastUsedAt = DateTime.UtcNow;
+            existing.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return;
+        }
+
+        var hasDefault = await _db.UserAddresses.AnyAsync(a => a.UserId == userId && a.IsDefault);
+        _db.UserAddresses.Add(new UserAddress
+        {
+            UserId = userId,
+            FullName = shippingValidation.FullName,
+            PhoneNumber = shippingValidation.PhoneNumber,
+            AddressLine1 = shippingValidation.AddressLine1,
+            AddressLine2 = normalizedAddressLine2,
+            City = shippingValidation.City,
+            PostalCode = shippingValidation.PostalCode,
+            IsDefault = !hasDefault,
+            LastUsedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         await _db.SaveChangesAsync();

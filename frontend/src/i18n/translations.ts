@@ -1033,6 +1033,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.paymentSyncSuccess": "Payment status updated.",
     "orderDetail.paymentSyncPending":
       "Payment is still processing. Refresh this page shortly.",
+    "orderDetail.paymentCancelled": "Payment was canceled.",
     "orderDetail.noPaymentAttempts": "No payment attempts yet.",
     "modelViewer.title": "3D Model Viewer",
     "modelViewer.backToOrder": "Back to order",
@@ -2182,6 +2183,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.paymentSyncSuccess": "Betaalstatus is bijgewerkt.",
     "orderDetail.paymentSyncPending":
       "Betaling wordt nog verwerkt. Vernieuw deze pagina over enkele ogenblikken.",
+    "orderDetail.paymentCancelled": "Betaling is geannuleerd.",
     "orderDetail.noPaymentAttempts": "Nog geen betaalpogingen.",
     "modelViewer.title": "3D-modelviewer",
     "modelViewer.backToOrder": "Terug naar order",

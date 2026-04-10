@@ -1,12 +1,20 @@
-import type { ShippingDetails, ShippingField, TranslateFn } from "./types";
+import type {
+  SavedAddressOption,
+  ShippingDetails,
+  ShippingField,
+  TranslateFn,
+} from "./types";
 
 interface ShippingModalProps {
   open: boolean;
   shippingDetails: ShippingDetails;
   shippingErrors: Record<string, string>;
+  savedAddresses: SavedAddressOption[];
+  selectedAddressId: string | null;
   isPaying: boolean;
   t: TranslateFn;
   onFieldChange: (field: ShippingField, value: string) => void;
+  onSavedAddressChange: (addressId: string) => void;
   onCancel: () => void;
   onCheckout: () => void;
 }
@@ -15,9 +23,12 @@ export default function ShippingModal({
   open,
   shippingDetails,
   shippingErrors,
+  savedAddresses,
+  selectedAddressId,
   isPaying,
   t,
   onFieldChange,
+  onSavedAddressChange,
   onCancel,
   onCheckout,
 }: ShippingModalProps) {
@@ -34,6 +45,29 @@ export default function ShippingModal({
         </p>
 
         <div className="space-y-3">
+          {savedAddresses.length > 0 ? (
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Saved address
+              </label>
+              <select
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                value={selectedAddressId ?? ""}
+                onChange={(e) => onSavedAddressChange(e.target.value)}
+                disabled={isPaying}
+              >
+                <option value="">Enter a new address</option>
+                {savedAddresses.map((address) => (
+                  <option key={address.id} value={address.id}>
+                    {(address.label || address.fullName) +
+                      ` - ${address.addressLine1}, ${address.city}` +
+                      (address.isDefault ? " (default)" : "")}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <InputField
             value={shippingDetails.fullName}
             error={shippingErrors.fullName}

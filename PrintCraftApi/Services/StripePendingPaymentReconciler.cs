@@ -52,6 +52,7 @@ public class StripePendingPaymentReconciler : BackgroundService
 
             StripeConfiguration.ApiKey = stripeSecretKey;
             var sessionService = new SessionService();
+            var paymentIntentService = new PaymentIntentService();
 
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PrintCraftDb>();
@@ -82,28 +83,70 @@ public class StripePendingPaymentReconciler : BackgroundService
                 if (order == null || string.IsNullOrWhiteSpace(payment.ProviderPaymentId))
                     continue;
 
-                Session stripeSession;
-                try
+                Session? stripeSession = null;
+                PaymentIntent? stripePaymentIntent = null;
+
+                if (payment.ProviderPaymentId.StartsWith("pi_", StringComparison.OrdinalIgnoreCase))
                 {
-                    stripeSession = await sessionService.GetAsync(payment.ProviderPaymentId, new SessionGetOptions
+                    try
                     {
-                        Expand = new List<string> { "payment_intent" }
-                    }, cancellationToken: cancellationToken);
+                        stripePaymentIntent = await paymentIntentService.GetAsync(payment.ProviderPaymentId, cancellationToken: cancellationToken);
+                    }
+                    catch (StripeException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed retrieving Stripe payment intent {PaymentIntentId} for order {OrderId}", payment.ProviderPaymentId, order.Id);
+                        continue;
+                    }
                 }
-                catch (StripeException ex)
+                else
                 {
-                    _logger.LogWarning(ex, "Failed retrieving Stripe session {SessionId} for order {OrderId}", payment.ProviderPaymentId, order.Id);
-                    continue;
+                    try
+                    {
+                        stripeSession = await sessionService.GetAsync(payment.ProviderPaymentId, new SessionGetOptions
+                        {
+                            Expand = new List<string> { "payment_intent" }
+                        }, cancellationToken: cancellationToken);
+                    }
+                    catch (StripeException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed retrieving Stripe session {SessionId} for order {OrderId}", payment.ProviderPaymentId, order.Id);
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(stripeSession.PaymentIntentId))
+                    {
+                        try
+                        {
+                            stripePaymentIntent = await paymentIntentService.GetAsync(stripeSession.PaymentIntentId, cancellationToken: cancellationToken);
+                        }
+                        catch (StripeException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed retrieving Stripe payment intent {PaymentIntentId} linked to session {SessionId}", stripeSession.PaymentIntentId, stripeSession.Id);
+                        }
+                    }
                 }
 
                 var previousOrderStatus = order.Status;
                 var wasAlreadyPaid = order.IsPaid;
 
-                payment.Method ??= stripeSession.PaymentMethodTypes?.FirstOrDefault();
-                payment.Status = NormalizeStripeStatus(stripeSession.Status, stripeSession.PaymentStatus);
+                payment.Method ??= stripeSession?.PaymentMethodTypes?.FirstOrDefault();
+                payment.Status = stripeSession != null
+                    ? NormalizeStripeStatus(stripeSession.Status, stripeSession.PaymentStatus, stripePaymentIntent?.Status)
+                    : NormalizeStripeIntentStatus(stripePaymentIntent?.Status);
                 payment.UpdatedAt = now;
 
-                var isPaid = string.Equals(stripeSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+                var isPaid = stripeSession != null
+                    ? string.Equals(stripeSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(stripePaymentIntent?.Status, "succeeded", StringComparison.OrdinalIgnoreCase)
+                    : string.Equals(stripePaymentIntent?.Status, "succeeded", StringComparison.OrdinalIgnoreCase);
+
+                var isFailedLikeState = stripeSession != null
+                    ? string.Equals(stripeSession.Status, "expired", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(stripeSession.PaymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase)
+                        || (string.Equals(stripeSession.PaymentStatus, "unpaid", StringComparison.OrdinalIgnoreCase)
+                            && IsFailedLikePaymentIntentStatus(stripePaymentIntent?.Status))
+                    : IsFailedLikePaymentIntentStatus(stripePaymentIntent?.Status);
+
                 if (isPaid)
                 {
                     payment.PaidAt ??= now;
@@ -119,8 +162,11 @@ public class StripePendingPaymentReconciler : BackgroundService
                             && p.Status == "paid",
                         cancellationToken);
 
-                    var isFailedLikeState = string.Equals(stripeSession.Status, "expired", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(stripeSession.PaymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase);
+                    if (string.Equals(payment.Status, "expired", StringComparison.OrdinalIgnoreCase))
+                        payment.ExpiredAt ??= now;
+                    else if (string.Equals(payment.Status, "failed", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(payment.Status, "canceled", StringComparison.OrdinalIgnoreCase))
+                        payment.FailedAt ??= now;
 
                     if (!hasAnyPaidPayment && isFailedLikeState && string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
                     {
@@ -215,10 +261,17 @@ public class StripePendingPaymentReconciler : BackgroundService
         }
     }
 
-    private static string NormalizeStripeStatus(string? sessionStatus, string? paymentStatus)
+    private static string NormalizeStripeStatus(string? sessionStatus, string? paymentStatus, string? paymentIntentStatus)
     {
+        if (string.Equals(paymentIntentStatus, "succeeded", StringComparison.OrdinalIgnoreCase))
+            return "paid";
+
         if (string.Equals(paymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
             return "paid";
+
+        if (string.Equals(paymentStatus, "unpaid", StringComparison.OrdinalIgnoreCase)
+            && IsFailedLikePaymentIntentStatus(paymentIntentStatus))
+            return "failed";
 
         if (string.Equals(paymentStatus, "unpaid", StringComparison.OrdinalIgnoreCase)
             && string.Equals(sessionStatus, "open", StringComparison.OrdinalIgnoreCase))
@@ -239,4 +292,28 @@ public class StripePendingPaymentReconciler : BackgroundService
                 : sessionStatus.ToLowerInvariant()
             : paymentStatus.ToLowerInvariant();
     }
+
+    private static string NormalizeStripeIntentStatus(string? paymentIntentStatus)
+    {
+        if (string.IsNullOrWhiteSpace(paymentIntentStatus))
+            return "unknown";
+
+        if (string.Equals(paymentIntentStatus, "succeeded", StringComparison.OrdinalIgnoreCase))
+            return "paid";
+
+        if (string.Equals(paymentIntentStatus, "requires_payment_method", StringComparison.OrdinalIgnoreCase))
+            return "failed";
+
+        if (string.Equals(paymentIntentStatus, "canceled", StringComparison.OrdinalIgnoreCase))
+            return "canceled";
+
+        if (string.Equals(paymentIntentStatus, "processing", StringComparison.OrdinalIgnoreCase))
+            return "pending";
+
+        return "pending";
+    }
+
+    private static bool IsFailedLikePaymentIntentStatus(string? paymentIntentStatus)
+        => string.Equals(paymentIntentStatus, "requires_payment_method", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(paymentIntentStatus, "canceled", StringComparison.OrdinalIgnoreCase);
 }

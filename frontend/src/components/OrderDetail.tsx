@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
-import type { Order, PaymentAttempt } from "../types";
+import type { Order, PaymentAttempt, UserAddress } from "../types";
 import {
   normalizeShippingInfo,
   validateShippingInfo,
@@ -15,7 +15,11 @@ import OrderItemsCard from "./order-detail/OrderItemsCard";
 import OrderTimeline from "./order-detail/OrderTimeline";
 import OrderSidebar from "./order-detail/OrderSidebar";
 import ShippingModal from "./order-detail/ShippingModal";
-import type { ShippingDetails, ShippingField } from "./order-detail/types";
+import type {
+  SavedAddressOption,
+  ShippingDetails,
+  ShippingField,
+} from "./order-detail/types";
 import {
   buildPriceSummary,
   buildStatusSummary,
@@ -41,6 +45,45 @@ function getShippingDetailsFromOrder(order: Order | null): ShippingDetails {
   };
 }
 
+function getShippingDetailsFromAddress(
+  address: SavedAddressOption | null,
+): ShippingDetails {
+  return {
+    fullName: address?.fullName || "",
+    phoneNumber: address?.phoneNumber || "",
+    addressLine1: address?.addressLine1 || "",
+    city: address?.city || "",
+    postalCode: address?.postalCode || "",
+  };
+}
+
+function mergeShippingDetails(
+  base: ShippingDetails,
+  fallback: ShippingDetails,
+): ShippingDetails {
+  return {
+    fullName: base.fullName || fallback.fullName,
+    phoneNumber: base.phoneNumber || fallback.phoneNumber,
+    addressLine1: base.addressLine1 || fallback.addressLine1,
+    city: base.city || fallback.city,
+    postalCode: base.postalCode || fallback.postalCode,
+  };
+}
+
+function addressMatchesShippingDetails(
+  address: SavedAddressOption,
+  details: ShippingDetails,
+) {
+  const normalize = (value: string) => value.trim().toLowerCase();
+  return (
+    normalize(address.fullName) === normalize(details.fullName) &&
+    normalize(address.phoneNumber) === normalize(details.phoneNumber) &&
+    normalize(address.addressLine1) === normalize(details.addressLine1) &&
+    normalize(address.city) === normalize(details.city) &&
+    normalize(address.postalCode) === normalize(details.postalCode)
+  );
+}
+
 export default function OrderDetail() {
   const { t } = useI18n();
   const { notifyError, notifySuccess } = useNotify();
@@ -58,6 +101,8 @@ export default function OrderDetail() {
   const [shippingErrors, setShippingErrors] = useState<Record<string, string>>(
     {},
   );
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressOption[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [payments, setPayments] = useState<PaymentAttempt[]>([]);
 
   useEffect(() => {
@@ -70,6 +115,21 @@ export default function OrderDetail() {
         setOrder(orderRes.data);
         setShippingDetails(getShippingDetailsFromOrder(orderRes.data));
         setPayments(Array.isArray(paymentRes.data) ? paymentRes.data : []);
+
+        try {
+          const addressesRes = await api.get<UserAddress[]>("/me/addresses");
+          const normalizedAddresses: SavedAddressOption[] = Array.isArray(
+            addressesRes.data,
+          )
+            ? addressesRes.data.map((address) => ({
+                ...address,
+                addressLine2: address.addressLine2 || null,
+              }))
+            : [];
+          setSavedAddresses(normalizedAddresses);
+        } catch {
+          setSavedAddresses([]);
+        }
       } catch (err) {
         console.error("Error fetching order", err);
       } finally {
@@ -100,7 +160,21 @@ export default function OrderDetail() {
   const handleConfirmAndPay = async () => {
     if (!id) return;
 
-    setShippingDetails(getShippingDetailsFromOrder(order));
+    const orderDetails = getShippingDetailsFromOrder(order);
+    const defaultAddress =
+      savedAddresses.find((address) => address.isDefault) ??
+      savedAddresses[0] ??
+      null;
+
+    const fallbackDetails = getShippingDetailsFromAddress(defaultAddress);
+    const nextDetails = mergeShippingDetails(orderDetails, fallbackDetails);
+
+    setShippingDetails(nextDetails);
+    setSelectedAddressId(
+      defaultAddress && addressMatchesShippingDetails(defaultAddress, nextDetails)
+        ? defaultAddress.id
+        : null,
+    );
     setShippingErrors({});
     setShowShippingModal(true);
   };
@@ -122,7 +196,15 @@ export default function OrderDetail() {
     const paymentState = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
 
-    if (!id || paymentState !== "return" || !sessionId) return;
+    if (!id || !paymentState) return;
+
+    if (paymentState === "cancel") {
+      notifyError(t("orderDetail.paymentCancelled"));
+      navigate(`/orders/${id}`, { replace: true });
+      return;
+    }
+
+    if (paymentState !== "return" || !sessionId) return;
 
     const syncPayment = async () => {
       try {
@@ -158,12 +240,37 @@ export default function OrderDetail() {
   };
 
   const handleShippingField = (field: ShippingField, value: string) => {
+    setSelectedAddressId(null);
     setShippingDetails((prev) => ({ ...prev, [field]: value }));
     if (shippingErrors[field]) {
       const next = { ...shippingErrors };
       delete next[field];
       setShippingErrors(next);
     }
+  };
+
+  const handleSavedAddressChange = (addressId: string) => {
+    if (!addressId) {
+      const orderDetails = getShippingDetailsFromOrder(order);
+      const defaultAddress =
+        savedAddresses.find((address) => address.isDefault) ??
+        savedAddresses[0] ??
+        null;
+      setSelectedAddressId(null);
+      setShippingDetails(
+        mergeShippingDetails(orderDetails, getShippingDetailsFromAddress(defaultAddress)),
+      );
+      return;
+    }
+
+    const selectedAddress = savedAddresses.find(
+      (address) => address.id === addressId,
+    );
+    if (!selectedAddress) return;
+
+    setSelectedAddressId(selectedAddress.id);
+    setShippingDetails(getShippingDetailsFromAddress(selectedAddress));
+    setShippingErrors({});
   };
 
   const handleSaveAddressAndCheckout = async () => {
@@ -413,9 +520,12 @@ export default function OrderDetail() {
         open={showShippingModal}
         shippingDetails={shippingDetails}
         shippingErrors={shippingErrors}
+        savedAddresses={savedAddresses}
+        selectedAddressId={selectedAddressId}
         isPaying={isPaying}
         t={t}
         onFieldChange={handleShippingField}
+        onSavedAddressChange={handleSavedAddressChange}
         onCancel={() => setShowShippingModal(false)}
         onCheckout={handleSaveAddressAndCheckout}
       />

@@ -17,6 +17,18 @@ export interface ShippingDetails {
   postalCode: string;
 }
 
+export interface SavedAddressOption {
+  id: string;
+  label?: string | null;
+  isDefault: boolean;
+  fullName: string;
+  phoneNumber: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  postalCode: string;
+}
+
 export interface PriceSummary {
   isPendingQuote: boolean;
   subtotalPrice: number | null;
