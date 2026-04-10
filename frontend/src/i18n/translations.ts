@@ -1051,6 +1051,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.paymentStartFailed":
       "Could not start payment. Please try again.",
     "orderDetail.processingPayment": "Processing payment...",
+    "orderDetail.paymentSyncing": "Checking payment status...",
     "orderDetail.paymentSyncSuccess": "Payment status updated.",
     "orderDetail.paymentSyncPending":
       "Payment is still processing. Refresh this page shortly.",
@@ -2223,6 +2224,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.paymentStartFailed":
       "Betaling starten is niet gelukt. Probeer opnieuw.",
     "orderDetail.processingPayment": "Betaling wordt verwerkt...",
+    "orderDetail.paymentSyncing": "Betaalstatus wordt gecontroleerd...",
     "orderDetail.paymentSyncSuccess": "Betaalstatus is bijgewerkt.",
     "orderDetail.paymentSyncPending":
       "Betaling wordt nog verwerkt. Vernieuw deze pagina over enkele ogenblikken.",

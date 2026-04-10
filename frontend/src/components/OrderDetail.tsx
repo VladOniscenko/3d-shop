@@ -3,7 +3,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
-import type { Order, PaymentAttempt, UserAddress } from "../types";
+import type { Order, PaymentAttempt } from "../types";
+import type { UserAddress } from "../types/address";
 import {
   normalizeShippingInfo,
   validateShippingInfo,
@@ -96,6 +97,7 @@ export default function OrderDetail() {
   const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSyncingPayment, setIsSyncingPayment] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showShippingModal, setShowShippingModal] = useState(false);
@@ -240,6 +242,7 @@ export default function OrderDetail() {
     handledRedirectRef.current = redirectKey;
 
     const syncPayment = async () => {
+      setIsSyncingPayment(true);
       try {
         await api.post(`/payments/orders/${id}/sync`, {
           sessionId: resolvedSessionId,
@@ -256,6 +259,7 @@ export default function OrderDetail() {
           err?.response?.data?.message || t("orderDetail.paymentSyncPending"),
         );
       } finally {
+        setIsSyncingPayment(false);
         navigate(`/orders/${id}`, { replace: true });
       }
     };
@@ -358,6 +362,17 @@ export default function OrderDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
         <Loader2 className="animate-spin text-emerald-600" size={40} />
+      </div>
+    );
+  }
+
+  if (isSyncingPayment) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] gap-3 p-6 text-center">
+        <Loader2 className="animate-spin text-emerald-600" size={40} />
+        <p className="text-sm font-semibold text-gray-700">
+          {t("orderDetail.paymentSyncing")}
+        </p>
       </div>
     );
   }
