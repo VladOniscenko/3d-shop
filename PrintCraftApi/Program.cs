@@ -41,7 +41,8 @@ builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionStrin
 builder.Services.AddSingleton<IDiscordWebhookService, DiscordWebhookService>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
-builder.Services.AddHostedService<StripePendingPaymentReconciler>();
+builder.Services.AddSingleton<StripePendingPaymentReconciler>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<StripePendingPaymentReconciler>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

@@ -239,6 +239,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.status.canceled": "Canceled",
     "admin.payments.status.pending": "Pending",
     "admin.payments.status.open": "Open",
+    "admin.payments.reconcileNow": "Reconcile pending payments",
+    "admin.payments.reconciling": "Reconciling...",
+    "admin.payments.reconcileSuccess": "Pending payment reconciliation completed.",
+    "admin.payments.reconcileAlreadyRunning":
+      "Reconciliation is already running.",
+    "admin.payments.reconcileFailed":
+      "Could not run reconciliation right now.",
 
     "admin.dashboard.title": "Admin Dashboard",
     "admin.dashboard.overviewSubtitle":
@@ -1374,6 +1381,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.status.canceled": "Geannuleerd",
     "admin.payments.status.pending": "In afwachting",
     "admin.payments.status.open": "Open",
+    "admin.payments.reconcileNow": "Openstaande betalingen bijwerken",
+    "admin.payments.reconciling": "Bezig met bijwerken...",
+    "admin.payments.reconcileSuccess":
+      "Bijwerken van openstaande betalingen is voltooid.",
+    "admin.payments.reconcileAlreadyRunning":
+      "Bijwerken is al bezig.",
+    "admin.payments.reconcileFailed":
+      "Bijwerken kon nu niet worden uitgevoerd.",
 
     "admin.dashboard.title": "Admin Dashboard",
     "admin.dashboard.overviewSubtitle":

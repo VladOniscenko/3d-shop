@@ -4,6 +4,7 @@ import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
 import { useI18n } from "../../i18n/I18nContext";
+import { useNotify } from "../../context/NotifyContext";
 
 type AdminPaymentRecord = {
   id: string;
@@ -52,8 +53,10 @@ const STATUS_OPTIONS = [
 
 export default function AdminPayments() {
   const { t } = useI18n();
+  const { notifyError, notifySuccess } = useNotify();
   const [payments, setPayments] = useState<AdminPaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isReconciling, setIsReconciling] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [provider, setProvider] = useState("stripe");
@@ -98,6 +101,52 @@ export default function AdminPayments() {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  const handleReconcilePending = async () => {
+    setIsReconciling(true);
+    try {
+      const res = await api.post<{ started: boolean; message: string }>(
+        "/admin/payments/reconcile-pending",
+      );
+
+      if (res.data?.started) {
+        notifySuccess(
+          res.data?.message || t("admin.payments.reconcileSuccess"),
+        );
+      } else {
+        notifyError(
+          res.data?.message || t("admin.payments.reconcileAlreadyRunning"),
+        );
+      }
+
+      setPage(1);
+      const query = new URLSearchParams({
+        page: String(1),
+        pageSize: String(pageSize),
+      });
+
+      if (provider.trim()) query.set("provider", provider.trim());
+      if (status !== "all") query.set("status", status);
+      if (search.trim()) {
+        query.set("reference", search.trim());
+        query.set("providerPaymentId", search.trim());
+      }
+      if (fromDate) query.set("fromUtc", `${fromDate}T00:00:00.000Z`);
+      if (toDate) query.set("toUtc", `${toDate}T23:59:59.999Z`);
+
+      const refreshed = await api.get<PaymentsResponse>(
+        `/admin/payments?${query.toString()}`,
+      );
+      setPayments(refreshed.data.results || []);
+      setTotalCount(refreshed.data.totalCount || 0);
+    } catch (err: any) {
+      notifyError(
+        err?.response?.data?.message || t("admin.payments.reconcileFailed"),
+      );
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <AdminBreadcrumb
@@ -107,6 +156,19 @@ export default function AdminPayments() {
           { label: t("admin.nav.payments") },
         ]}
       />
+
+      <div className="flex justify-end mb-3">
+        <button
+          type="button"
+          onClick={handleReconcilePending}
+          disabled={isReconciling}
+          className="admin-btn admin-btn-secondary"
+        >
+          {isReconciling
+            ? t("admin.payments.reconciling")
+            : t("admin.payments.reconcileNow")}
+        </button>
+      </div>
 
       <div className="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-5 p-4">
         <input

@@ -101,8 +101,12 @@ export default function OrderDetail() {
   const [shippingErrors, setShippingErrors] = useState<Record<string, string>>(
     {},
   );
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddressOption[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressOption[]>(
+    [],
+  );
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
   const [payments, setPayments] = useState<PaymentAttempt[]>([]);
 
   useEffect(() => {
@@ -171,7 +175,8 @@ export default function OrderDetail() {
 
     setShippingDetails(nextDetails);
     setSelectedAddressId(
-      defaultAddress && addressMatchesShippingDetails(defaultAddress, nextDetails)
+      defaultAddress &&
+        addressMatchesShippingDetails(defaultAddress, nextDetails)
         ? defaultAddress.id
         : null,
     );
@@ -258,7 +263,10 @@ export default function OrderDetail() {
         null;
       setSelectedAddressId(null);
       setShippingDetails(
-        mergeShippingDetails(orderDetails, getShippingDetailsFromAddress(defaultAddress)),
+        mergeShippingDetails(
+          orderDetails,
+          getShippingDetailsFromAddress(defaultAddress),
+        ),
       );
       return;
     }

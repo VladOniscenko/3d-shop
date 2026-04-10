@@ -13,6 +13,7 @@ public class StripePendingPaymentReconciler : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<StripePendingPaymentReconciler> _logger;
+    private readonly SemaphoreSlim _runLock = new(1, 1);
 
     public StripePendingPaymentReconciler(
         IServiceScopeFactory scopeFactory,
@@ -28,15 +29,32 @@ public class StripePendingPaymentReconciler : BackgroundService
     {
         _logger.LogInformation("Stripe pending payment reconciler started.");
 
-        await ReconcilePendingPaymentsAsync(stoppingToken);
+        await RunOnceAsync(stoppingToken);
 
         using var timer = new PeriodicTimer(PollInterval);
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            await ReconcilePendingPaymentsAsync(stoppingToken);
+            await RunOnceAsync(stoppingToken);
         }
 
         _logger.LogInformation("Stripe pending payment reconciler stopped.");
+    }
+
+    public async Task<bool> RunOnceAsync(CancellationToken cancellationToken = default)
+    {
+        var acquired = await _runLock.WaitAsync(0, cancellationToken);
+        if (!acquired)
+            return false;
+
+        try
+        {
+            await ReconcilePendingPaymentsAsync(cancellationToken);
+            return true;
+        }
+        finally
+        {
+            _runLock.Release();
+        }
     }
 
     private async Task ReconcilePendingPaymentsAsync(CancellationToken cancellationToken)
@@ -64,12 +82,19 @@ public class StripePendingPaymentReconciler : BackgroundService
                 .ThenInclude(o => o!.Items)
                 .Where(p => p.Provider == "stripe"
                     && p.Order != null
-                    && p.Order.Status == "pending_payment"
                     && !p.Order.IsPaid
-                    && p.ProviderPaymentId != null)
+                    && p.ProviderPaymentId != null
+                    && (p.Order.Status == "pending_payment"
+                        || p.Status == "initializing"
+                        || p.Status == "created"
+                        || p.Status == "open"
+                        || p.Status == "pending"
+                        || p.Status == "unknown"))
                 .OrderBy(p => p.CreatedAt)
                 .Take(100)
                 .ToListAsync(cancellationToken);
+
+            _logger.LogInformation("Stripe pending payment reconciler found {Count} candidate payments.", pendingPayments.Count);
 
             if (pendingPayments.Count == 0)
                 return;

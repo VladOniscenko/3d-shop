@@ -133,11 +133,32 @@ public class AdminController : ControllerBase
     }
     private readonly PrintCraftDb _db;
     private readonly IEmailService _emailService;
+    private readonly StripePendingPaymentReconciler? _stripePendingPaymentReconciler;
 
-    public AdminController(PrintCraftDb db, IEmailService emailService)
+    public AdminController(
+        PrintCraftDb db,
+        IEmailService emailService,
+        StripePendingPaymentReconciler? stripePendingPaymentReconciler = null)
     {
         _db = db;
         _emailService = emailService;
+        _stripePendingPaymentReconciler = stripePendingPaymentReconciler;
+    }
+
+    [HttpPost("payments/reconcile-pending")]
+    public async Task<IActionResult> ReconcilePendingPayments(CancellationToken cancellationToken)
+    {
+        if (_stripePendingPaymentReconciler == null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Stripe pending payment reconciler is unavailable." });
+
+        var started = await _stripePendingPaymentReconciler.RunOnceAsync(cancellationToken);
+        return Ok(new
+        {
+            started,
+            message = started
+                ? "Stripe pending payment reconciliation completed."
+                : "Stripe pending payment reconciliation is already running."
+        });
     }
 
     [HttpGet("summary")]
