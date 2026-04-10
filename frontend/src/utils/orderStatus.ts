@@ -23,6 +23,11 @@ const POST_PAYMENT_STATUSES = new Set([
 ]);
 
 const TERMINAL_STATUSES = new Set(["cancelled", "completed"]);
+const CUSTOMER_PAYMENT_RETRYABLE_STATUSES = new Set([
+  "quoted",
+  "pending_payment",
+  "failed",
+]);
 
 const STATUS_LABEL_BY_VALUE = new Map<string, string>(
   ADMIN_ORDER_STATUS_OPTIONS.map((option) => [option.value, option.label]),
@@ -188,4 +193,28 @@ export function isOrderPricingLocked(status: string, isPaid: boolean): boolean {
 
   const normalized = normalizeOrderStatus(status);
   return POST_PAYMENT_STATUSES.has(normalized);
+}
+
+export function canCustomerRetryPayment(status: string, isPaid: boolean): boolean {
+  if (isPaid) return false;
+
+  const normalized = normalizeOrderStatus(status);
+  return CUSTOMER_PAYMENT_RETRYABLE_STATUSES.has(normalized);
+}
+
+export function getCustomerPaymentActionVariant(
+  status: string,
+): "pay_now" | "try_again" | "pay_again" | null {
+  const normalized = normalizeOrderStatus(status);
+
+  switch (normalized) {
+    case "quoted":
+      return "pay_now";
+    case "pending_payment":
+      return "try_again";
+    case "failed":
+      return "pay_again";
+    default:
+      return null;
+  }
 }

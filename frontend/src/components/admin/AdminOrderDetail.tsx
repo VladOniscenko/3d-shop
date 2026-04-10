@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
@@ -66,6 +67,7 @@ export default function AdminOrderDetail() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentFromDate, setPaymentFromDate] = useState("");
   const [paymentToDate, setPaymentToDate] = useState("");
+  const [reconcilingPayments, setReconcilingPayments] = useState(false);
   // Status dropdown state
   const [selectedStatus, setSelectedStatus] = useState("pending");
 
@@ -366,6 +368,34 @@ export default function AdminOrderDetail() {
       );
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  const reconcileOrderPayments = async () => {
+    if (!id) return;
+
+    setReconcilingPayments(true);
+    try {
+      const res = await api.post<{ started: boolean; message: string }>(
+        `/admin/orders/${id}/payments/reconcile`,
+      );
+      await refresh();
+
+      if (res.data?.started) {
+        notifySuccess(res.data?.message || t("admin.order.reconcilePaymentsSuccess"));
+      } else {
+        notifyError(
+          res.data?.message || t("admin.order.reconcilePaymentsAlreadyRunning"),
+        );
+      }
+    } catch (err: any) {
+      console.error(err);
+      notifyError(
+        err?.response?.data?.message ||
+          t("admin.order.reconcilePaymentsFailed"),
+      );
+    } finally {
+      setReconcilingPayments(false);
     }
   };
 
@@ -1059,6 +1089,24 @@ export default function AdminOrderDetail() {
             <h3 className="font-bold mb-2 text-[#1b2b25]">
               {t("admin.order.paymentAttempts")}
             </h3>
+            <p className="mb-3 text-xs text-[#5f736d]">
+              {t("admin.order.paymentAttemptsHelp")}
+            </p>
+            <button
+              type="button"
+              onClick={reconcileOrderPayments}
+              disabled={reconcilingPayments}
+              className="admin-btn admin-btn-secondary mb-3"
+            >
+              {reconcilingPayments ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={16} />
+                  {t("admin.order.reconcilingPayments")}
+                </span>
+              ) : (
+                t("admin.order.checkPaymentStatusButton")
+              )}
+            </button>
             <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <input
                 value={paymentSearch}

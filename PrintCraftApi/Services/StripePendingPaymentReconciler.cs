@@ -42,13 +42,23 @@ public class StripePendingPaymentReconciler : BackgroundService
 
     public async Task<bool> RunOnceAsync(CancellationToken cancellationToken = default)
     {
+        return await RunOnceInternalAsync(null, cancellationToken);
+    }
+
+    public async Task<bool> RunOnceForOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
+    {
+        return await RunOnceInternalAsync(orderId, cancellationToken);
+    }
+
+    private async Task<bool> RunOnceInternalAsync(Guid? orderId, CancellationToken cancellationToken)
+    {
         var acquired = await _runLock.WaitAsync(0, cancellationToken);
         if (!acquired)
             return false;
 
         try
         {
-            await ReconcilePendingPaymentsAsync(cancellationToken);
+            await ReconcilePendingPaymentsAsync(orderId, cancellationToken);
             return true;
         }
         finally
@@ -57,7 +67,7 @@ public class StripePendingPaymentReconciler : BackgroundService
         }
     }
 
-    private async Task ReconcilePendingPaymentsAsync(CancellationToken cancellationToken)
+    private async Task ReconcilePendingPaymentsAsync(Guid? orderId, CancellationToken cancellationToken)
     {
         try
         {
@@ -81,6 +91,7 @@ public class StripePendingPaymentReconciler : BackgroundService
                 .Include(p => p.Order)
                 .ThenInclude(o => o!.Items)
                 .Where(p => p.Provider == "stripe"
+                    && (!orderId.HasValue || p.OrderId == orderId.Value)
                     && p.Order != null
                     && !p.Order.IsPaid
                     && p.ProviderPaymentId != null
@@ -94,7 +105,10 @@ public class StripePendingPaymentReconciler : BackgroundService
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            _logger.LogInformation("Stripe pending payment reconciler found {Count} candidate payments.", pendingPayments.Count);
+            _logger.LogInformation(
+                "Stripe pending payment reconciler found {Count} candidate payments{Scope}.",
+                pendingPayments.Count,
+                orderId.HasValue ? $" for order {orderId.Value}" : string.Empty);
 
             if (pendingPayments.Count == 0)
                 return;
@@ -151,6 +165,24 @@ public class StripePendingPaymentReconciler : BackgroundService
                     }
                 }
 
+                if (stripePaymentIntent == null)
+                {
+                    try
+                    {
+                        var search = await paymentIntentService.SearchAsync(new PaymentIntentSearchOptions
+                        {
+                            Query = $"metadata['paymentId']:'{payment.Id}'",
+                            Limit = 1,
+                        }, cancellationToken: cancellationToken);
+
+                        stripePaymentIntent = search.Data.FirstOrDefault();
+                    }
+                    catch (StripeException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed searching Stripe payment intent by metadata paymentId {PaymentId} for order {OrderId}", payment.Id, order.Id);
+                    }
+                }
+
                 var previousOrderStatus = order.Status;
                 var wasAlreadyPaid = order.IsPaid;
 
@@ -158,6 +190,8 @@ public class StripePendingPaymentReconciler : BackgroundService
                 payment.Status = stripeSession != null
                     ? NormalizeStripeStatus(stripeSession.Status, stripeSession.PaymentStatus, stripePaymentIntent?.Status)
                     : NormalizeStripeIntentStatus(stripePaymentIntent?.Status);
+                if (!string.IsNullOrWhiteSpace(stripePaymentIntent?.LastPaymentError?.Message))
+                    payment.FailureReason = TruncateFailureReason(stripePaymentIntent.LastPaymentError.Message);
                 payment.UpdatedAt = now;
 
                 var isPaid = stripeSession != null
@@ -193,16 +227,15 @@ public class StripePendingPaymentReconciler : BackgroundService
                         || string.Equals(payment.Status, "canceled", StringComparison.OrdinalIgnoreCase))
                         payment.FailedAt ??= now;
 
-                    if (!hasAnyPaidPayment && isFailedLikeState && string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
+                    if (!hasAnyPaidPayment
+                        && isFailedLikeState
+                        && !order.IsPaid
+                        && !string.Equals(order.Status, "failed", StringComparison.OrdinalIgnoreCase)
+                        && !string.Equals(order.Status, "completed", StringComparison.OrdinalIgnoreCase))
                     {
-                        order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
-                            ? "quoted"
-                            : "failed";
+                        order.Status = "failed";
                         order.IsPaid = false;
                         order.UpdatedAt = now;
-
-                        if (string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
-                            QuoteLifecycle.ApplyQuoteExpiration(order, now);
                     }
                 }
 
@@ -232,12 +265,12 @@ public class StripePendingPaymentReconciler : BackgroundService
             if (paidOrderIds.Count == 0)
                 return;
 
-            foreach (var orderId in paidOrderIds.Distinct())
+            foreach (var paidOrderId in paidOrderIds.Distinct())
             {
                 var paidPayment = await db.Payments
                     .Include(p => p.Order)
                     .ThenInclude(o => o!.Items)
-                    .Where(p => p.OrderId == orderId)
+                    .Where(p => p.OrderId == paidOrderId)
                     .OrderByDescending(p => p.PaidAt ?? p.UpdatedAt)
                     .FirstOrDefaultAsync(cancellationToken);
 
@@ -341,4 +374,7 @@ public class StripePendingPaymentReconciler : BackgroundService
     private static bool IsFailedLikePaymentIntentStatus(string? paymentIntentStatus)
         => string.Equals(paymentIntentStatus, "requires_payment_method", StringComparison.OrdinalIgnoreCase)
             || string.Equals(paymentIntentStatus, "canceled", StringComparison.OrdinalIgnoreCase);
+
+    private static string TruncateFailureReason(string reason)
+        => reason.Length > 256 ? reason[..256] : reason;
 }

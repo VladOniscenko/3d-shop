@@ -241,11 +241,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.status.open": "Open",
     "admin.payments.reconcileNow": "Reconcile pending payments",
     "admin.payments.reconciling": "Reconciling...",
-    "admin.payments.reconcileSuccess": "Pending payment reconciliation completed.",
+    "admin.payments.reconcileSuccess":
+      "Pending payment reconciliation completed.",
     "admin.payments.reconcileAlreadyRunning":
       "Reconciliation is already running.",
-    "admin.payments.reconcileFailed":
-      "Could not run reconciliation right now.",
+    "admin.payments.reconcileFailed": "Could not run reconciliation right now.",
 
     "admin.dashboard.title": "Admin Dashboard",
     "admin.dashboard.overviewSubtitle":
@@ -509,6 +509,17 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.lastError": "Last error",
     "admin.order.statusUpdated": "Order status updated.",
     "admin.order.statusUpdateFailed": "Could not update order status.",
+    "admin.order.reconcilePaymentsButton": "Reconcile this order payment",
+    "admin.order.checkPaymentStatusButton": "Check payment status",
+    "admin.order.reconcilingPayments": "Reconciling payment...",
+    "admin.order.reconcilePaymentsSuccess":
+      "Order payment reconciliation completed.",
+    "admin.order.reconcilePaymentsAlreadyRunning":
+      "Reconciliation is already running.",
+    "admin.order.reconcilePaymentsFailed":
+      "Could not reconcile this order payment right now.",
+    "admin.order.paymentAttemptsHelp":
+      "Use this to ask Stripe for the latest state of this order's payment attempts.",
     "admin.order.trackingRequired": "Tracking code is required.",
     "admin.order.trackingSaved": "Tracking saved on order.",
     "admin.order.trackingSaveFailed": "Could not save tracking details.",
@@ -1023,7 +1034,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Total",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Reference ID",
-    "orderDetail.confirmPay": "Confirm + Pay",
+    "orderDetail.payNow": "Pay now",
+    "orderDetail.tryAgain": "Try again",
+    "orderDetail.payAgain": "Pay again",
     "orderDetail.requestNewQuote": "Request New Quote",
     "orderDetail.newQuoteRequested": "New quote request sent.",
     "orderDetail.newQuoteRequestFailed": "Could not request a new quote.",
@@ -1037,9 +1050,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.shippingModalStarting": "Starting checkout...",
     "orderDetail.paymentStartFailed":
       "Could not start payment. Please try again.",
+    "orderDetail.processingPayment": "Processing payment...",
     "orderDetail.paymentSyncSuccess": "Payment status updated.",
     "orderDetail.paymentSyncPending":
       "Payment is still processing. Refresh this page shortly.",
+    "orderDetail.paymentSyncSuccessAfterCancel":
+      "Payment status checked after cancel.",
     "orderDetail.paymentCancelled": "Payment was canceled.",
     "orderDetail.noPaymentAttempts": "No payment attempts yet.",
     "modelViewer.title": "3D Model Viewer",
@@ -1385,8 +1401,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.payments.reconciling": "Bezig met bijwerken...",
     "admin.payments.reconcileSuccess":
       "Bijwerken van openstaande betalingen is voltooid.",
-    "admin.payments.reconcileAlreadyRunning":
-      "Bijwerken is al bezig.",
+    "admin.payments.reconcileAlreadyRunning": "Bijwerken is al bezig.",
     "admin.payments.reconcileFailed":
       "Bijwerken kon nu niet worden uitgevoerd.",
 
@@ -1661,6 +1676,17 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.lastError": "Laatste fout",
     "admin.order.statusUpdated": "Orderstatus bijgewerkt.",
     "admin.order.statusUpdateFailed": "Kon orderstatus niet bijwerken.",
+    "admin.order.reconcilePaymentsButton": "Betaling van deze order bijwerken",
+    "admin.order.checkPaymentStatusButton": "Betaalstatus controleren",
+    "admin.order.reconcilingPayments": "Betaling wordt bijgewerkt...",
+    "admin.order.reconcilePaymentsSuccess":
+      "Bijwerken van orderbetaling is voltooid.",
+    "admin.order.reconcilePaymentsAlreadyRunning":
+      "Bijwerken is al bezig.",
+    "admin.order.reconcilePaymentsFailed":
+      "Deze orderbetaling kon nu niet worden bijgewerkt.",
+    "admin.order.paymentAttemptsHelp":
+      "Gebruik dit om Stripe om de nieuwste status van deze betalingspogingen te vragen.",
     "admin.order.trackingRequired": "Volgcode is verplicht.",
     "admin.order.trackingSaved": "Track & trace opgeslagen op order.",
     "admin.order.trackingSaveFailed": "Kon track & trace niet opslaan.",
@@ -2180,7 +2206,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.total": "Totaal",
     "orderDetail.status": "Status",
     "orderDetail.referenceId": "Referentie-ID",
-    "orderDetail.confirmPay": "Bevestig + Betaal",
+    "orderDetail.payNow": "Nu betalen",
+    "orderDetail.tryAgain": "Opnieuw proberen",
+    "orderDetail.payAgain": "Opnieuw betalen",
     "orderDetail.requestNewQuote": "Vraag Nieuwe Offerte Aan",
     "orderDetail.newQuoteRequested": "Nieuwe offerteaanvraag verstuurd.",
     "orderDetail.newQuoteRequestFailed":
@@ -2195,9 +2223,12 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.shippingModalStarting": "Checkout starten...",
     "orderDetail.paymentStartFailed":
       "Betaling starten is niet gelukt. Probeer opnieuw.",
+    "orderDetail.processingPayment": "Betaling wordt verwerkt...",
     "orderDetail.paymentSyncSuccess": "Betaalstatus is bijgewerkt.",
     "orderDetail.paymentSyncPending":
       "Betaling wordt nog verwerkt. Vernieuw deze pagina over enkele ogenblikken.",
+    "orderDetail.paymentSyncSuccessAfterCancel":
+      "Betaalstatus gecontroleerd na annuleren.",
     "orderDetail.paymentCancelled": "Betaling is geannuleerd.",
     "orderDetail.noPaymentAttempts": "Nog geen betaalpogingen.",
     "modelViewer.title": "3D-modelviewer",

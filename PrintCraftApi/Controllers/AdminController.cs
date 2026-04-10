@@ -161,6 +161,27 @@ public class AdminController : ControllerBase
         });
     }
 
+    [HttpPost("orders/{id:guid}/payments/reconcile")]
+    public async Task<IActionResult> ReconcileOrderPayments([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        if (_stripePendingPaymentReconciler == null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Stripe pending payment reconciler is unavailable." });
+
+        var orderExists = await _db.Orders.AnyAsync(o => o.Id == id, cancellationToken);
+        if (!orderExists)
+            return NotFound(new { message = "Order not found" });
+
+        var started = await _stripePendingPaymentReconciler.RunOnceForOrderAsync(id, cancellationToken);
+
+        return Ok(new
+        {
+            started,
+            message = started
+                ? "Order payment reconciliation completed."
+                : "Stripe pending payment reconciliation is already running."
+        });
+    }
+
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {

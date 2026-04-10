@@ -25,6 +25,10 @@ import {
   buildStatusSummary,
   getReachedDate,
 } from "./order-detail/utils";
+import {
+  canCustomerRetryPayment,
+  getCustomerPaymentActionVariant,
+} from "../utils/orderStatus";
 import { normalizeOrderStatus } from "../utils/orderStatus";
 
 const EMPTY_SHIPPING_DETAILS: ShippingDetails = {
@@ -203,19 +207,39 @@ export default function OrderDetail() {
 
     if (!id || !paymentState) return;
 
-    if (paymentState === "cancel") {
-      notifyError(t("orderDetail.paymentCancelled"));
+    const resolveSessionId = (): string | null => {
+      if (sessionId) return sessionId;
+
+      const latestCheckoutPayment =
+        payments.find((payment) =>
+          String(payment.providerPaymentId || "").startsWith("cs_"),
+        ) ?? payments[0] ?? null;
+
+      return latestCheckoutPayment?.providerPaymentId || null;
+    };
+
+    if (paymentState !== "return" && paymentState !== "cancel") return;
+
+    const resolvedSessionId = resolveSessionId();
+    if (!resolvedSessionId) {
+      if (paymentState === "cancel") {
+        notifyError(t("orderDetail.paymentCancelled"));
+      }
       navigate(`/orders/${id}`, { replace: true });
       return;
     }
 
-    if (paymentState !== "return" || !sessionId) return;
-
     const syncPayment = async () => {
       try {
-        await api.post(`/payments/orders/${id}/sync`, { sessionId });
+        await api.post(`/payments/orders/${id}/sync`, {
+          sessionId: resolvedSessionId,
+        });
         await refreshOrderData();
-        notifySuccess(t("orderDetail.paymentSyncSuccess"));
+        notifySuccess(
+          paymentState === "cancel"
+            ? t("orderDetail.paymentSyncSuccessAfterCancel")
+            : t("orderDetail.paymentSyncSuccess"),
+        );
       } catch (err: any) {
         console.error("Payment sync after redirect failed", err);
         notifyError(
@@ -227,7 +251,7 @@ export default function OrderDetail() {
     };
 
     syncPayment();
-  }, [id, navigate, notifyError, notifySuccess, searchParams, t]);
+  }, [id, navigate, notifyError, notifySuccess, payments, searchParams, t]);
 
   const handleRequestNewQuote = async () => {
     if (!id) return;
@@ -362,6 +386,14 @@ export default function OrderDetail() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
     : [];
+  const canRetryPayment = canCustomerRetryPayment(order.status, !!order.isPaid);
+  const paymentActionVariant = getCustomerPaymentActionVariant(order.status);
+  const paymentActionLabel =
+    paymentActionVariant === "try_again"
+      ? t("orderDetail.tryAgain")
+      : paymentActionVariant === "pay_again"
+        ? t("orderDetail.payAgain")
+        : t("orderDetail.payNow");
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -396,7 +428,7 @@ export default function OrderDetail() {
               </button>
             )}
 
-            {normalizedStatus === "quoted" && (
+            {canRetryPayment && (
               <button
                 onClick={handleConfirmAndPay}
                 disabled={isPaying}
@@ -407,7 +439,7 @@ export default function OrderDetail() {
                 ) : (
                   <CheckCircle2 size={18} />
                 )}
-                {t("orderDetail.confirmPay")}
+                {isPaying ? t("orderDetail.processingPayment") : paymentActionLabel}
               </button>
             )}
 

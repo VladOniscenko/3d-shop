@@ -83,8 +83,9 @@ public class PaymentsController : ControllerBase
             return BadRequest(new { message = "Quote has expired. Request a new quote to continue." });
 
         if (!string.Equals(order.Status, "quoted", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { message = "Only quoted orders can be paid." });
+            !string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(order.Status, "failed", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Only quoted, pending payment, or failed orders can be paid." });
 
         if (order.IsPaid)
             return BadRequest(new { message = "Order is already paid." });
@@ -323,16 +324,13 @@ public class PaymentsController : ControllerBase
                 }
                 else if (!hasAnyPaidPayment
                     && paymentWasFailure
-                    && string.Equals(order.Status, "pending_payment", StringComparison.OrdinalIgnoreCase))
+                    && !order.IsPaid
+                    && !string.Equals(order.Status, "failed", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(order.Status, "completed", StringComparison.OrdinalIgnoreCase))
                 {
-                    order.Status = string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase)
-                        ? "quoted"
-                        : "failed";
+                    order.Status = "failed";
                     order.IsPaid = false;
                     order.UpdatedAt = DateTime.UtcNow;
-
-                    if (string.Equals(order.OrderType, "quote", StringComparison.OrdinalIgnoreCase))
-                        QuoteLifecycle.ApplyQuoteExpiration(order, DateTime.UtcNow);
                 }
 
                 await _db.SaveChangesAsync();

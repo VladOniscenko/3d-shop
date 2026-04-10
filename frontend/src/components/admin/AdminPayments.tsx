@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
@@ -164,9 +165,14 @@ export default function AdminPayments() {
           disabled={isReconciling}
           className="admin-btn admin-btn-secondary"
         >
-          {isReconciling
-            ? t("admin.payments.reconciling")
-            : t("admin.payments.reconcileNow")}
+          {isReconciling ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="animate-spin" size={16} />
+              {t("admin.payments.reconciling")}
+            </span>
+          ) : (
+            t("admin.payments.reconcileNow")
+          )}
         </button>
       </div>
 
