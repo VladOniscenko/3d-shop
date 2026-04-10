@@ -195,7 +195,10 @@ export function isOrderPricingLocked(status: string, isPaid: boolean): boolean {
   return POST_PAYMENT_STATUSES.has(normalized);
 }
 
-export function canCustomerRetryPayment(status: string, isPaid: boolean): boolean {
+export function canCustomerRetryPayment(
+  status: string,
+  isPaid: boolean,
+): boolean {
   if (isPaid) return false;
 
   const normalized = normalizeOrderStatus(status);

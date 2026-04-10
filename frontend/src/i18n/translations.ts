@@ -1681,8 +1681,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.reconcilingPayments": "Betaling wordt bijgewerkt...",
     "admin.order.reconcilePaymentsSuccess":
       "Bijwerken van orderbetaling is voltooid.",
-    "admin.order.reconcilePaymentsAlreadyRunning":
-      "Bijwerken is al bezig.",
+    "admin.order.reconcilePaymentsAlreadyRunning": "Bijwerken is al bezig.",
     "admin.order.reconcilePaymentsFailed":
       "Deze orderbetaling kon nu niet worden bijgewerkt.",
     "admin.order.paymentAttemptsHelp":

@@ -213,7 +213,9 @@ export default function OrderDetail() {
       const latestCheckoutPayment =
         payments.find((payment) =>
           String(payment.providerPaymentId || "").startsWith("cs_"),
-        ) ?? payments[0] ?? null;
+        ) ??
+        payments[0] ??
+        null;
 
       return latestCheckoutPayment?.providerPaymentId || null;
     };
@@ -439,7 +441,9 @@ export default function OrderDetail() {
                 ) : (
                   <CheckCircle2 size={18} />
                 )}
-                {isPaying ? t("orderDetail.processingPayment") : paymentActionLabel}
+                {isPaying
+                  ? t("orderDetail.processingPayment")
+                  : paymentActionLabel}
               </button>
             )}
 

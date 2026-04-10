@@ -382,7 +382,9 @@ export default function AdminOrderDetail() {
       await refresh();
 
       if (res.data?.started) {
-        notifySuccess(res.data?.message || t("admin.order.reconcilePaymentsSuccess"));
+        notifySuccess(
+          res.data?.message || t("admin.order.reconcilePaymentsSuccess"),
+        );
       } else {
         notifyError(
           res.data?.message || t("admin.order.reconcilePaymentsAlreadyRunning"),

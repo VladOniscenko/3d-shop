@@ -437,18 +437,38 @@ public class PaymentsController : ControllerBase
         var previousOrderStatus = order.Status;
         var wasAlreadyPaid = order.IsPaid;
         var now = DateTime.UtcNow;
+        var paymentIntent = stripeSession.PaymentIntent;
+        var paymentIntentStatus = paymentIntent?.Status;
 
         trackedPayment.ProviderPaymentId ??= stripeSession.Id;
         trackedPayment.Method = stripeSession.PaymentMethodTypes?.FirstOrDefault();
         trackedPayment.Status = NormalizeStripeStatus(stripeSession.Status, stripeSession.PaymentStatus);
+        if (!string.IsNullOrWhiteSpace(paymentIntent?.LastPaymentError?.Message))
+            trackedPayment.FailureReason = TruncateError(paymentIntent.LastPaymentError.Message);
         trackedPayment.UpdatedAt = now;
 
-        var isPaid = string.Equals(stripeSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+        var isPaid = string.Equals(stripeSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(paymentIntentStatus, "succeeded", StringComparison.OrdinalIgnoreCase);
+
+        var isFailedLike = string.Equals(stripeSession.Status, "expired", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stripeSession.PaymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(paymentIntentStatus, "requires_payment_method", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(paymentIntentStatus, "canceled", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(paymentIntentStatus, "requires_action", StringComparison.OrdinalIgnoreCase);
+
         if (isPaid)
         {
             trackedPayment.PaidAt ??= now;
             order.Status = "paid";
             order.IsPaid = true;
+            order.UpdatedAt = now;
+        }
+        else if (!order.IsPaid && isFailedLike && !string.Equals(order.Status, "failed", StringComparison.OrdinalIgnoreCase) && !string.Equals(order.Status, "completed", StringComparison.OrdinalIgnoreCase))
+        {
+            trackedPayment.FailedAt ??= now;
+            trackedPayment.Status = "failed";
+            order.Status = "failed";
+            order.IsPaid = false;
             order.UpdatedAt = now;
         }
 
@@ -458,7 +478,7 @@ public class PaymentsController : ControllerBase
         {
             var note = isPaid
                 ? $"Payment marked as paid ({trackedPayment.Reference}) via checkout return sync"
-                : $"Payment status synced as {trackedPayment.Status} ({trackedPayment.Reference}) via checkout return sync";
+                : $"Payment marked as failed ({trackedPayment.Reference}) via checkout return sync";
             await LogStatusHistoryAsync(order.Id, previousOrderStatus, order.Status, "stripe_return_sync", note);
         }
 
