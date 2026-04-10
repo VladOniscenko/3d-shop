@@ -293,6 +293,7 @@ public class PaymentsController : ControllerBase
 
             var paymentWasPaid = false;
             var paymentWasFailure = false;
+            var previousPaymentStatus = trackedPayment.Status;
 
             try
             {
@@ -335,6 +336,12 @@ public class PaymentsController : ControllerBase
 
                 await _db.SaveChangesAsync();
 
+                if (!string.Equals(previousPaymentStatus, trackedPayment.Status, StringComparison.OrdinalIgnoreCase))
+                {
+                    var paymentNote = $"Payment status changed {previousPaymentStatus} -> {trackedPayment.Status} ({trackedPayment.Reference}) via webhook {stripeEvent.Type}";
+                    await LogPaymentEventAsync(order.Id, order.Status, "stripe_webhook", paymentNote);
+                }
+
                 if (!string.Equals(previousOrderStatus, order.Status, StringComparison.OrdinalIgnoreCase))
                 {
                     var note = paymentWasPaid
@@ -346,6 +353,11 @@ public class PaymentsController : ControllerBase
                 if (!wasAlreadyPaid && paymentWasPaid)
                 {
                     await NotifyPaymentReceivedBestEffortAsync(order, trackedPayment);
+                }
+
+                if (PaymentStateBecameIssue(previousPaymentStatus, trackedPayment.Status))
+                {
+                    await NotifyPaymentIssueBestEffortAsync(order, trackedPayment);
                 }
             }
             else
@@ -436,6 +448,7 @@ public class PaymentsController : ControllerBase
 
         var previousOrderStatus = order.Status;
         var wasAlreadyPaid = order.IsPaid;
+        var previousPaymentStatus = trackedPayment.Status;
         var now = DateTime.UtcNow;
         var paymentIntent = stripeSession.PaymentIntent;
         var paymentIntentStatus = paymentIntent?.Status;
@@ -474,6 +487,12 @@ public class PaymentsController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        if (!string.Equals(previousPaymentStatus, trackedPayment.Status, StringComparison.OrdinalIgnoreCase))
+        {
+            var paymentNote = $"Payment status changed {previousPaymentStatus} -> {trackedPayment.Status} ({trackedPayment.Reference}) via checkout return sync";
+            await LogPaymentEventAsync(order.Id, order.Status, "stripe_return_sync", paymentNote);
+        }
+
         if (!string.Equals(previousOrderStatus, order.Status, StringComparison.OrdinalIgnoreCase))
         {
             var note = isPaid
@@ -485,6 +504,11 @@ public class PaymentsController : ControllerBase
         if (!wasAlreadyPaid && isPaid)
         {
             await NotifyPaymentReceivedBestEffortAsync(order, trackedPayment);
+        }
+
+        if (PaymentStateBecameIssue(previousPaymentStatus, trackedPayment.Status))
+        {
+            await NotifyPaymentIssueBestEffortAsync(order, trackedPayment);
         }
 
         return Ok(new
@@ -507,6 +531,21 @@ public class PaymentsController : ControllerBase
             OrderId = orderId,
             PreviousStatus = previousStatus,
             NewStatus = newStatus,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = changedBy,
+            Note = note,
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task LogPaymentEventAsync(Guid orderId, string? currentOrderStatus, string changedBy, string note)
+    {
+        _db.OrderStatusHistory.Add(new OrderStatusHistory
+        {
+            OrderId = orderId,
+            PreviousStatus = currentOrderStatus,
+            NewStatus = string.IsNullOrWhiteSpace(currentOrderStatus) ? "pending_payment" : currentOrderStatus,
             ChangedAt = DateTime.UtcNow,
             ChangedBy = changedBy,
             Note = note,
@@ -852,6 +891,15 @@ public class PaymentsController : ControllerBase
         return error.Length > 1024 ? error[..1024] : error;
     }
 
+    private static bool IsIssuePaymentStatus(string? status)
+        => string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "create_failed", StringComparison.OrdinalIgnoreCase);
+
+    private static bool PaymentStateBecameIssue(string? previous, string? current)
+        => !IsIssuePaymentStatus(previous) && IsIssuePaymentStatus(current);
+
     private static IReadOnlyList<string> LoadStripeWebhookSecrets(IConfiguration configuration)
     {
         var single = configuration["StripeWebhookSecret"];
@@ -908,6 +956,30 @@ public class PaymentsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed sending payment received Discord notification for order {OrderId}", order.Id);
+        }
+    }
+
+    private async Task NotifyPaymentIssueBestEffortAsync(Order order, Payment trackedPayment)
+    {
+        var user = await _db.Users.FindAsync(order.UserId);
+        var amount = trackedPayment.Amount > 0
+            ? trackedPayment.Amount
+            : order.QuotedPrice
+                ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+
+        try
+        {
+            await _discordWebhookService.SendPaymentIssueAsync(
+                order,
+                user,
+                amount,
+                trackedPayment.Status,
+                trackedPayment.Reference,
+                trackedPayment.FailureReason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed sending payment issue Discord notification for order {OrderId}", order.Id);
         }
     }
 

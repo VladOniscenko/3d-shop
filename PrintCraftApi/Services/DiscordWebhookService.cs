@@ -11,6 +11,7 @@ public interface IDiscordWebhookService
     Task SendQuoteRequestedAsync(Order order, User? user, string? guestEmail = null, CancellationToken cancellationToken = default);
     Task SendBookingCreatedAsync(Order order, User? user, CancellationToken cancellationToken = default);
     Task SendPaymentReceivedAsync(Order order, User? user, decimal paidAmount, CancellationToken cancellationToken = default);
+    Task SendPaymentIssueAsync(Order order, User? user, decimal amount, string paymentStatus, string? reference, string? reason, CancellationToken cancellationToken = default);
 }
 
 public sealed class DiscordWebhookService : IDiscordWebhookService
@@ -164,6 +165,46 @@ public sealed class DiscordWebhookService : IDiscordWebhookService
         };
 
         return PostToWebhookAsync(webhookUrl, embed, "payment received notification", cancellationToken);
+    }
+
+    public Task SendPaymentIssueAsync(
+        Order order,
+        User? user,
+        decimal amount,
+        string paymentStatus,
+        string? reference,
+        string? reason,
+        CancellationToken cancellationToken = default)
+    {
+        var webhookUrl = _configuration["Discord:PaymentIssueWebhookUrl"];
+        if (string.IsNullOrWhiteSpace(webhookUrl))
+            webhookUrl = _configuration["Discord:ErrorWebhookUrl"];
+        if (string.IsNullOrWhiteSpace(webhookUrl)) return Task.CompletedTask;
+
+        var userName = user?.Name ?? order.FullName;
+        var userEmail = user?.Email ?? "unknown";
+        var normalizedStatus = string.IsNullOrWhiteSpace(paymentStatus) ? "unknown" : paymentStatus;
+
+        var embed = new DiscordEmbed
+        {
+            Title = "❌ Payment Issue Detected",
+            Color = 15158332,
+            Fields = new[]
+            {
+                new DiscordField { Name = "Order ID", Value = order.Id.ToString(), Inline = true },
+                new DiscordField { Name = "Detected At", Value = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"), Inline = true },
+                new DiscordField { Name = "Order Status", Value = order.Status, Inline = true },
+                new DiscordField { Name = "Payment Status", Value = normalizedStatus, Inline = true },
+                new DiscordField { Name = "Reference", Value = string.IsNullOrWhiteSpace(reference) ? "N/A" : reference, Inline = true },
+                new DiscordField { Name = "Amount", Value = $"€{amount:F2}", Inline = true },
+                new DiscordField { Name = "Customer", Value = userName, Inline = true },
+                new DiscordField { Name = "Email", Value = userEmail, Inline = true },
+                new DiscordField { Name = "Reason", Value = string.IsNullOrWhiteSpace(reason) ? "No detailed reason provided" : reason, Inline = false },
+            },
+            Timestamp = DateTime.UtcNow.ToString("o")
+        };
+
+        return PostToWebhookAsync(webhookUrl, embed, "payment issue notification", cancellationToken);
     }
 
     private async Task PostToWebhookAsync(string webhookUrl, DiscordEmbed embed, string logContext, CancellationToken cancellationToken)

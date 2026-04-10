@@ -167,11 +167,16 @@ public class AdminController : ControllerBase
         if (_stripePendingPaymentReconciler == null)
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Stripe pending payment reconciler is unavailable." });
 
-        var orderExists = await _db.Orders.AnyAsync(o => o.Id == id, cancellationToken);
-        if (!orderExists)
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+        if (order == null)
             return NotFound(new { message = "Order not found" });
 
         var started = await _stripePendingPaymentReconciler.RunOnceForOrderAsync(id, cancellationToken);
+
+        if (started)
+        {
+            await LogAdminActionAsync(order, "Triggered manual payment reconciliation for order");
+        }
 
         return Ok(new
         {
@@ -720,6 +725,7 @@ public class AdminController : ControllerBase
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, "Updated customer shipping details");
         return Ok(order);
     }
 
@@ -927,6 +933,7 @@ public class AdminController : ControllerBase
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Updated order item price for item {item.Id}");
 
         return Ok(order);
     }
@@ -949,6 +956,7 @@ public class AdminController : ControllerBase
         RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Updated service fee to {order.ServiceFeePrice:F2}");
         return Ok(order);
     }
 
@@ -970,6 +978,7 @@ public class AdminController : ControllerBase
         RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Updated delivery fee to {order.DeliveryPrice:F2}");
         return Ok(order);
     }
 
@@ -991,6 +1000,7 @@ public class AdminController : ControllerBase
         RecalculateQuotedPrice(order);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Updated order discount to {order.OrderDiscountAmount:F2}");
         return Ok(order);
     }
 
@@ -1009,6 +1019,7 @@ public class AdminController : ControllerBase
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, "Updated tracking information");
         return Ok(order);
     }
 
@@ -1045,6 +1056,7 @@ public class AdminController : ControllerBase
         order.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, "Updated order notes");
         return Ok(order);
     }
 
@@ -1073,6 +1085,7 @@ public class AdminController : ControllerBase
         _db.OrderNotes.Add(note);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Added {visibility} note");
 
         return Ok(note);
     }
@@ -1092,6 +1105,7 @@ public class AdminController : ControllerBase
             order.InternalNotes = null;
             order.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            await LogAdminActionAsync(order, "Deleted legacy internal note");
             return NoContent();
         }
 
@@ -1100,6 +1114,7 @@ public class AdminController : ControllerBase
             order.CustomerNotes = null;
             order.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            await LogAdminActionAsync(order, "Deleted legacy customer note");
             return NoContent();
         }
 
@@ -1112,6 +1127,7 @@ public class AdminController : ControllerBase
         _db.OrderNotes.Remove(note);
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await LogAdminActionAsync(order, $"Deleted note {note.Id}");
 
         return NoContent();
     }
@@ -1335,6 +1351,23 @@ public class AdminController : ControllerBase
             NewStatus = newStatus,
             ChangedAt = DateTime.UtcNow,
             ChangedBy = changedBy,
+            Note = note,
+        });
+
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task LogAdminActionAsync(Order order, string note)
+    {
+        var status = string.IsNullOrWhiteSpace(order.Status) ? "pending_quote" : order.Status;
+
+        _db.OrderStatusHistory.Add(new OrderStatusHistory
+        {
+            OrderId = order.Id,
+            PreviousStatus = status,
+            NewStatus = status,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = "admin_action",
             Note = note,
         });
 
