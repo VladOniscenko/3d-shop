@@ -347,18 +347,7 @@ public class PaymentsController : ControllerBase
 
                 if (!wasAlreadyPaid && paymentWasPaid)
                 {
-                    var user = await _db.Users.FindAsync(order.UserId);
-                    var paidAmount = trackedPayment.Amount > 0
-                        ? trackedPayment.Amount
-                        : order.QuotedPrice
-                            ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
-
-                    if (user != null)
-                    {
-                        await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
-                    }
-
-                    await _discordWebhookService.SendPaymentReceivedAsync(order, user, paidAmount);
+                    await NotifyPaymentReceivedBestEffortAsync(order, trackedPayment);
                 }
             }
             else
@@ -373,6 +362,121 @@ public class PaymentsController : ControllerBase
             _logger.LogError(ex, "Stripe webhook processing failed.");
             return Ok();
         }
+    }
+
+    [HttpPost("orders/{orderId:guid}/sync")]
+    [Authorize]
+    [EnableRateLimiting("CheckoutLimit")]
+    public async Task<IActionResult> SyncOrderPaymentFromSession([FromRoute] Guid orderId, [FromBody] PaymentSessionSyncRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.SessionId))
+            return BadRequest(new { message = "sessionId is required." });
+
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr))
+            return Unauthorized(new { message = "User not authenticated" });
+
+        var userId = Guid.Parse(userIdStr);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+
+        if (order == null)
+            return NotFound(new { message = "Order not found" });
+
+        Session stripeSession;
+        try
+        {
+            stripeSession = await _checkoutSessionService.GetAsync(req.SessionId, new SessionGetOptions
+            {
+                Expand = new List<string> { "payment_intent" }
+            });
+        }
+        catch (StripeException ex)
+        {
+            _logger.LogWarning(ex, "Failed loading Stripe session {SessionId} for order {OrderId}", req.SessionId, order.Id);
+            return BadRequest(new { message = "Unable to verify payment session." });
+        }
+
+        if (stripeSession == null)
+            return NotFound(new { message = "Payment session not found." });
+
+        if (stripeSession.Metadata != null
+            && stripeSession.Metadata.TryGetValue("orderId", out var metadataOrderId)
+            && Guid.TryParse(metadataOrderId, out var parsedOrderId)
+            && parsedOrderId != order.Id)
+        {
+            return BadRequest(new { message = "Session does not belong to this order." });
+        }
+
+        Payment? trackedPayment = null;
+
+        if (TryExtractPaymentId(stripeSession.Metadata, out var paymentId))
+        {
+            trackedPayment = await _db.Payments
+                .Include(p => p.Order)
+                .ThenInclude(o => o!.Items)
+                .FirstOrDefaultAsync(p => p.Id == paymentId && p.OrderId == order.Id);
+        }
+
+        trackedPayment ??= await _db.Payments
+            .Include(p => p.Order)
+            .ThenInclude(o => o!.Items)
+            .Where(p => p.OrderId == order.Id)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync(p => p.ProviderPaymentId == stripeSession.Id);
+
+        trackedPayment ??= await _db.Payments
+            .Include(p => p.Order)
+            .ThenInclude(o => o!.Items)
+            .Where(p => p.OrderId == order.Id)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (trackedPayment == null)
+            return NotFound(new { message = "Payment record not found for this order." });
+
+        var previousOrderStatus = order.Status;
+        var wasAlreadyPaid = order.IsPaid;
+        var now = DateTime.UtcNow;
+
+        trackedPayment.ProviderPaymentId ??= stripeSession.Id;
+        trackedPayment.Method = stripeSession.PaymentMethodTypes?.FirstOrDefault();
+        trackedPayment.Status = NormalizeStripeStatus(stripeSession.Status, stripeSession.PaymentStatus);
+        trackedPayment.UpdatedAt = now;
+
+        var isPaid = string.Equals(stripeSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+        if (isPaid)
+        {
+            trackedPayment.PaidAt ??= now;
+            order.Status = "paid";
+            order.IsPaid = true;
+            order.UpdatedAt = now;
+        }
+
+        await _db.SaveChangesAsync();
+
+        if (!string.Equals(previousOrderStatus, order.Status, StringComparison.OrdinalIgnoreCase))
+        {
+            var note = isPaid
+                ? $"Payment marked as paid ({trackedPayment.Reference}) via checkout return sync"
+                : $"Payment status synced as {trackedPayment.Status} ({trackedPayment.Reference}) via checkout return sync";
+            await LogStatusHistoryAsync(order.Id, previousOrderStatus, order.Status, "stripe_return_sync", note);
+        }
+
+        if (!wasAlreadyPaid && isPaid)
+        {
+            await NotifyPaymentReceivedBestEffortAsync(order, trackedPayment);
+        }
+
+        return Ok(new
+        {
+            orderId = order.Id,
+            orderStatus = order.Status,
+            isPaid = order.IsPaid,
+            paymentStatus = trackedPayment.Status,
+            paymentReference = trackedPayment.Reference
+        });
     }
 
     private async Task LogStatusHistoryAsync(Guid orderId, string? previousStatus, string? newStatus, string changedBy, string? note)
@@ -434,7 +538,11 @@ public class PaymentsController : ControllerBase
             };
 
             var amountMinor = ConvertToMinorUnits(amount);
-            var successUrl = AppendQueryString(AppendQueryString(returnUrl, "payment", "return"), "session_id", "{CHECKOUT_SESSION_ID}");
+            var successUrl = AppendQueryString(
+                AppendQueryString(returnUrl, "payment", "return"),
+                "session_id",
+                "{CHECKOUT_SESSION_ID}",
+                encodeValue: false);
             var cancelUrl = AppendQueryString(returnUrl, "payment", "cancel");
 
             var sessionOptions = new SessionCreateOptions
@@ -710,10 +818,12 @@ public class PaymentsController : ControllerBase
         return (long)(rounded * 100m);
     }
 
-    private static string AppendQueryString(string url, string key, string value)
+    private static string AppendQueryString(string url, string key, string value, bool encodeValue = true)
     {
         var separator = url.Contains('?') ? "&" : "?";
-        return $"{url}{separator}{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value)}";
+        var encodedKey = Uri.EscapeDataString(key);
+        var finalValue = encodeValue ? Uri.EscapeDataString(value) : value;
+        return $"{url}{separator}{encodedKey}={finalValue}";
     }
 
     private static string TruncateError(string? error)
@@ -753,6 +863,36 @@ public class PaymentsController : ControllerBase
             .ToArray();
     }
 
+    private async Task NotifyPaymentReceivedBestEffortAsync(Order order, Payment trackedPayment)
+    {
+        var user = await _db.Users.FindAsync(order.UserId);
+        var paidAmount = trackedPayment.Amount > 0
+            ? trackedPayment.Amount
+            : order.QuotedPrice
+                ?? order.Items.Sum(i => (decimal)i.Price * (i.Count <= 0 ? 1 : i.Count)) + order.DeliveryPrice;
+
+        try
+        {
+            if (user != null)
+            {
+                await _emailService.SendOrderPaidEmailAsync(user.Email, user.Name, order.Id, paidAmount);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed sending order paid email for order {OrderId}", order.Id);
+        }
+
+        try
+        {
+            await _discordWebhookService.SendPaymentReceivedAsync(order, user, paidAmount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed sending payment received Discord notification for order {OrderId}", order.Id);
+        }
+    }
+
     private bool TryConstructStripeEvent(string payload, string signatureHeader, out Event stripeEvent)
     {
         foreach (var secret in _stripeWebhookSecrets)
@@ -780,3 +920,5 @@ public record CheckoutRequest(
     string City,
     string PostalCode
 );
+
+public record PaymentSessionSyncRequest(string SessionId);

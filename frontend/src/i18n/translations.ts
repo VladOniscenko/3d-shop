@@ -1063,6 +1063,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.shippingModalStarting": "Starting checkout...",
     "orderDetail.paymentStartFailed":
       "Could not start payment. Please try again.",
+    "orderDetail.paymentSyncSuccess": "Payment status updated.",
+    "orderDetail.paymentSyncPending":
+      "Payment is still processing. Refresh this page shortly.",
     "orderDetail.noPaymentAttempts": "No payment attempts yet.",
     "modelViewer.title": "3D Model Viewer",
     "modelViewer.backToOrder": "Back to order",
@@ -2242,6 +2245,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.shippingModalStarting": "Checkout starten...",
     "orderDetail.paymentStartFailed":
       "Betaling starten is niet gelukt. Probeer opnieuw.",
+    "orderDetail.paymentSyncSuccess": "Betaalstatus is bijgewerkt.",
+    "orderDetail.paymentSyncPending":
+      "Betaling wordt nog verwerkt. Vernieuw deze pagina over enkele ogenblikken.",
     "orderDetail.noPaymentAttempts": "Nog geen betaalpogingen.",
     "modelViewer.title": "3D-modelviewer",
     "modelViewer.backToOrder": "Terug naar order",

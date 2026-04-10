@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -46,6 +46,7 @@ export default function OrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -116,6 +117,30 @@ export default function OrderDetail() {
     setShippingDetails(getShippingDetailsFromOrder(orderRes.data));
     setPayments(Array.isArray(paymentRes.data) ? paymentRes.data : []);
   };
+
+  useEffect(() => {
+    const paymentState = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+
+    if (!id || paymentState !== "return" || !sessionId) return;
+
+    const syncPayment = async () => {
+      try {
+        await api.post(`/payments/orders/${id}/sync`, { sessionId });
+        await refreshOrderData();
+        notifySuccess(t("orderDetail.paymentSyncSuccess"));
+      } catch (err: any) {
+        console.error("Payment sync after redirect failed", err);
+        notifyError(
+          err?.response?.data?.message || t("orderDetail.paymentSyncPending"),
+        );
+      } finally {
+        navigate(`/orders/${id}`, { replace: true });
+      }
+    };
+
+    syncPayment();
+  }, [id, navigate, notifyError, notifySuccess, searchParams, t]);
 
   const handleRequestNewQuote = async () => {
     if (!id) return;

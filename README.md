@@ -260,40 +260,13 @@ Email__Category=Integration Test
     - `stripe listen --forward-to http://localhost:5243/api/payments/webhook`
 
 - Production:
-  - Create a webhook endpoint in Stripe Dashboard pointing to:
+  - Create a webhook endpoint in Stripe Dashboard pointing to your public API URL:
     - `https://<your-domain>/api/payments/webhook`
   - Use that endpoint signing secret (`whsec_...`) as `StripeWebhookSecret`.
 
 - Optional secret rotation:
   - You can keep `StripeWebhookSecret` and add extra secrets in `StripeWebhookSecrets` (comma separated).
   - The API accepts any configured secret for signature verification.
-
-### Stripe Without CLI (Vhost Setup)
-
-If you don't want to use Stripe CLI, Stripe must call a public HTTPS endpoint.
-
-1. Deploy app with a public domain/subdomains (example):
-
-- Frontend: `https://app.your-domain.com`
-- API: `https://api.your-domain.com`
-
-2. Use the vhost template:
-
-- See `deploy/nginx/printcraft.vhost.conf`
-- Update domain names and certificate paths.
-
-3. Set backend env values:
-
-- `FrontendBaseUrl=https://app.your-domain.com`
-- `BackendBaseUrl=https://api.your-domain.com`
-
-4. In Stripe Dashboard (Developers -> Webhooks):
-
-- Endpoint URL: `https://api.your-domain.com/api/payments/webhook`
-- Add checkout and payment intent events.
-- Copy endpoint signing secret (`whsec_...`) to `StripeWebhookSecret`.
-
-5. Restart the API after updating env secrets.
 
 ---
 
