@@ -918,7 +918,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.addFile": "Add Files",
     "quote.guestContactTitle": "Contact details",
     "quote.guestContactSubtitle":
-      "Not logged in? No problem. Add your contact details so we can send your quote.",
+      "Not logged in? No problem. Add your contact details and we will create an account for you automatically.",
     "quote.guestEmail": "Email",
     "quote.guestRequiredName": "Please enter your full name.",
     "quote.guestRequiredEmail": "Please enter your email address.",
@@ -927,28 +927,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.guestSubmittedBody":
       "Thanks! We received your request and will email you once your quote is ready.",
     "quote.guestSubmittedReference": "Reference:",
-    "quote.guestTrackOpen": "Track this quote",
-    "quote.guestTrackTitle": "Track your quote",
-    "quote.guestTrackSubtitle":
-      "Enter your quote reference and email. We will send a secure access link.",
-    "quote.guestTrackOrderIdPlaceholder": "Quote reference (UUID)",
-    "quote.guestTrackEmailPlaceholder": "Email used for the quote",
-    "quote.guestTrackSendLink": "Send access link",
-    "quote.guestTrackLoading": "Loading quote details...",
-    "quote.guestTrackReference": "Quote reference",
-    "quote.guestTrackNoActiveSession":
-      "No active quote session. Request an access link above.",
-    "quote.guestTrackOrderIdRequired": "Please enter your quote reference.",
-    "quote.guestTrackEmailRequired": "Please enter your email address.",
-    "quote.guestTrackEmailInvalid": "Please enter a valid email address.",
-    "quote.guestTrackLinkSentGeneric":
-      "If the details match, an access link was sent.",
-    "quote.guestTrackLinkFailed":
-      "Could not send access link right now. Please try again.",
-    "quote.guestAccessInvalid": "This access link is invalid or expired.",
-    "quote.guestTrackResendWait": "Wait {seconds}s",
-    "quote.guestTrackResendHint":
-      "You can request another access link in {seconds} seconds.",
+    "quote.guestAccountCreatedTitle": "Account created",
+    "quote.guestAccountCreatedBody":
+      "We created your customer account and sent you an email to set your password. Once that is done, you can log in to see your quote history.",
+    "quote.guestAccountCreatedHint":
+      "Check your inbox for the password setup link, then log in to continue.",
     "quote.noFiles": "No files added yet.",
     "quote.dragDropHint": "Drag and drop files here",
     "quote.allowedFilesInline":
@@ -2112,7 +2095,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.addFile": "Bestanden Toevoegen",
     "quote.guestContactTitle": "Contactgegevens",
     "quote.guestContactSubtitle":
-      "Niet ingelogd? Geen probleem. Voeg je contactgegevens toe zodat we je offerte kunnen mailen.",
+      "Niet ingelogd? Geen probleem. Voeg je contactgegevens toe en we maken automatisch een account voor je aan.",
     "quote.guestEmail": "E-mail",
     "quote.guestRequiredName": "Vul je volledige naam in.",
     "quote.guestRequiredEmail": "Vul je e-mailadres in.",
@@ -2121,28 +2104,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.guestSubmittedBody":
       "Bedankt! We hebben je aanvraag ontvangen en mailen je zodra je offerte klaarstaat.",
     "quote.guestSubmittedReference": "Referentie:",
-    "quote.guestTrackOpen": "Deze offerte volgen",
-    "quote.guestTrackTitle": "Volg je offerte",
-    "quote.guestTrackSubtitle":
-      "Vul je offertreferentie en e-mail in. We sturen je een veilige toegangslink.",
-    "quote.guestTrackOrderIdPlaceholder": "Offertereferentie (UUID)",
-    "quote.guestTrackEmailPlaceholder": "E-mail gebruikt voor de offerte",
-    "quote.guestTrackSendLink": "Verstuur toegangslink",
-    "quote.guestTrackLoading": "Offertedetails laden...",
-    "quote.guestTrackReference": "Offertereferentie",
-    "quote.guestTrackNoActiveSession":
-      "Geen actieve offertesessie. Vraag hierboven een toegangslink aan.",
-    "quote.guestTrackOrderIdRequired": "Vul je offertereferentie in.",
-    "quote.guestTrackEmailRequired": "Vul je e-mailadres in.",
-    "quote.guestTrackEmailInvalid": "Vul een geldig e-mailadres in.",
-    "quote.guestTrackLinkSentGeneric":
-      "Als de gegevens kloppen, is een toegangslink verstuurd.",
-    "quote.guestTrackLinkFailed":
-      "Kon nu geen toegangslink versturen. Probeer opnieuw.",
-    "quote.guestAccessInvalid": "Deze toegangslink is ongeldig of verlopen.",
-    "quote.guestTrackResendWait": "Wacht {seconds}s",
-    "quote.guestTrackResendHint":
-      "Je kunt over {seconds} seconden opnieuw een toegangslink aanvragen.",
+    "quote.guestAccountCreatedTitle": "Account aangemaakt",
+    "quote.guestAccountCreatedBody":
+      "We hebben je klantaccount aangemaakt en een e-mail gestuurd om je wachtwoord in te stellen. Daarna kun je inloggen om je offertegeschiedenis te zien.",
+    "quote.guestAccountCreatedHint":
+      "Controleer je inbox voor de wachtwoord-link en log daarna in om verder te gaan.",
     "quote.noFiles": "Nog geen bestanden toegevoegd.",
     "quote.dragDropHint": "Sleep bestanden hierheen",
     "quote.allowedFilesInline":

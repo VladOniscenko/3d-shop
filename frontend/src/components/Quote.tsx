@@ -43,9 +43,8 @@ export default function Quote() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
-    string | null
-  >(null);
+  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<string | null>(null);
+  const [guestAccountCreated, setGuestAccountCreated] = useState(false);
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -263,6 +262,11 @@ export default function Quote() {
 
     setIsSubmitting(true);
     try {
+      if (!isLoggedIn) {
+        setGuestAccountCreated(false);
+        setGuestSubmittedOrderId(null);
+      }
+
       const payload: {
         items: OrderItem[];
         guestName?: string;
@@ -286,7 +290,8 @@ export default function Quote() {
       }
 
       setItems([]);
-      setGuestSubmittedOrderId(res?.data?.id || null);
+      setGuestSubmittedOrderId(res?.data?.order?.id || res?.data?.id || null);
+      setGuestAccountCreated(!!res?.data?.accountCreated);
     } catch (err: any) {
       const message = err?.response?.data?.message || t("quote.submitFailed");
       notifyError(message);
@@ -399,22 +404,23 @@ export default function Quote() {
         {!isLoggedIn && guestSubmittedOrderId && (
           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
             <h3 className="text-lg font-bold text-emerald-800">
-              {t("quote.guestSubmittedTitle")}
+              {guestAccountCreated
+                ? t("quote.guestAccountCreatedTitle")
+                : t("quote.guestSubmittedTitle")}
             </h3>
             <p className="mt-1 text-sm text-emerald-900/80">
-              {t("quote.guestSubmittedBody")}
+              {guestAccountCreated
+                ? t("quote.guestAccountCreatedBody")
+                : t("quote.guestSubmittedBody")}
             </p>
             <p className="mt-2 text-xs font-semibold text-emerald-800">
               {t("quote.guestSubmittedReference")} {guestSubmittedOrderId}
             </p>
-            <Link
-              to={`/quote/access?orderId=${encodeURIComponent(
-                guestSubmittedOrderId,
-              )}&email=${encodeURIComponent(guestEmail.trim())}`}
-              className="inline-flex mt-3 text-xs font-semibold text-[#0f766e] hover:underline"
-            >
-              {t("quote.guestTrackOpen")}
-            </Link>
+            {guestAccountCreated && (
+              <p className="mt-3 text-xs text-[#0f766e] font-semibold">
+                {t("quote.guestAccountCreatedHint")}
+              </p>
+            )}
           </div>
         )}
 

@@ -25,7 +25,6 @@ public interface IEmailService
 {
     Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink);
     Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId);
-    Task SendGuestOrderAccessEmailAsync(string toEmail, string toName, Guid orderId, string accessLink);
     Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage);
     Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl);
     Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount);
@@ -79,26 +78,6 @@ public sealed class MailtrapEmailService : IEmailService
             Reference: {orderId}
 
             Our team will review your files and send pricing soon.
-
-            - PrintCraft
-            """;
-
-        return SendTextEmailAsync(toEmail, subject, body);
-    }
-
-    public Task SendGuestOrderAccessEmailAsync(string toEmail, string toName, Guid orderId, string accessLink)
-    {
-        var subject = "Your secure quote access link";
-        var body = $"""
-            Hi {WebUtility.HtmlEncode(toName)},
-
-            Use this secure link to view your quote status:
-            {accessLink}
-
-            Reference: {orderId}
-            This link expires in 30 minutes.
-
-            If you did not request this, you can ignore this email.
 
             - PrintCraft
             """;

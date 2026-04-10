@@ -155,12 +155,6 @@ export default function SeoManager() {
         keywords: "3D print quote",
         index: false,
       },
-      "/quote/access": {
-        title: `${t("quote.guestTrackTitle")} | PrintCraft`,
-        description: `${t("quote.guestTrackSubtitle")} PrintCraft`,
-        keywords: "guest quote access",
-        index: false,
-      },
       "/orders": {
         title: `${t("nav.myOrders")} | PrintCraft`,
         description: `${t("nav.myOrders")} PrintCraft`,

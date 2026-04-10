@@ -136,6 +136,7 @@ public class OrdersController : ControllerBase
         string? guestEmail = null;
         string? guestName = null;
         string? guestPhone = null;
+        var accountCreated = false;
 
         if (isAuthenticated)
         {
@@ -158,6 +159,8 @@ public class OrdersController : ControllerBase
 
             if (!IsValidEmail(guestEmail))
                 return BadRequest(new { message = "A valid guest email is required." });
+
+            user = await _db.Users.FirstOrDefaultAsync(u => u.Email == guestEmail);
         }
 
         if (request.Items == null || request.Items.Count == 0)
@@ -178,6 +181,25 @@ public class OrdersController : ControllerBase
         if (request.Items.Any(i => i.Count > AppLimits.MaxItemQuantity))
         {
             return BadRequest(new { message = $"Item quantity cannot exceed {AppLimits.MaxItemQuantity} per model." });
+        }
+
+        if (!isAuthenticated && user == null)
+        {
+            user = new User
+            {
+                Name = guestName!,
+                Email = guestEmail!,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N")),
+                Role = "customer",
+            };
+
+            _db.Users.Add(user);
+            accountCreated = true;
+        }
+
+        if (user != null)
+        {
+            userId = user.Id;
         }
 
         var order = new Order
@@ -224,29 +246,30 @@ public class OrdersController : ControllerBase
             order.Id,
             null,
             order.Status,
-            user == null ? "guest" : "customer",
+            isAuthenticated ? "customer" : "guest",
             "Quote requested");
 
-        if (user == null && !string.IsNullOrWhiteSpace(guestEmail))
+        if (!isAuthenticated && accountCreated && user != null)
         {
-            _db.OrderNotes.Add(new OrderNote
+            var resetToken = GeneratePasswordResetToken(user);
+            var frontendBaseUrl = GetRequiredConfig("FrontendBaseUrl").TrimEnd('/');
+            var resetLink = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}";
+
+            try
             {
-                OrderId = order.Id,
-                Content = string.IsNullOrWhiteSpace(guestPhone)
-                    ? $"Guest quote contact email: {guestEmail}"
-                    : $"Guest quote contact email: {guestEmail}; phone: {guestPhone}",
-                Visibility = "internal",
-                CreatedBy = "system",
-                CreatedAt = DateTime.UtcNow,
-            });
-            await _db.SaveChangesAsync();
+                await _emailService.SendResetPasswordEmailAsync(user.Email, user.Name, resetLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed sending password setup email for newly created quote account {UserId}", user.Id);
+            }
         }
 
         _logger.LogInformation("About to send Discord quote notification for order {OrderId}", order.Id);
         try
         {
             _logger.LogInformation("Discord webhook service is available, calling SendQuoteRequestedAsync");
-            await _discordWebhookService.SendQuoteRequestedAsync(order, user, guestEmail);
+            await _discordWebhookService.SendQuoteRequestedAsync(order, user);
             _logger.LogInformation("Discord webhook call completed for order {OrderId}", order.Id);
         }
         catch (Exception ex)
@@ -256,9 +279,9 @@ public class OrdersController : ControllerBase
 
         try
         {
-            var recipientEmail = user?.Email ?? guestEmail;
+            var recipientEmail = user?.Email;
             var recipientName = string.IsNullOrWhiteSpace(user?.Name)
-                ? (user?.Email ?? guestName ?? "Customer")
+                ? (recipientEmail ?? guestName ?? "Customer")
                 : user!.Name;
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))
@@ -276,74 +299,7 @@ public class OrdersController : ControllerBase
             _logger.LogError(ex, "Failed sending quote-requested email for order {OrderId}", order.Id);
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = order.Id }, MapOrderForCustomer(order));
-    }
-
-    [HttpPost("guest/access-link")]
-    [AllowAnonymous]
-    [EnableRateLimiting("AuthBurst")]
-    public async Task<IActionResult> SendGuestAccessLink([FromBody] GuestOrderAccessLinkRequest request)
-    {
-        var normalizedEmail = request.Email?.Trim().ToLowerInvariant();
-        if (!Guid.TryParse(request.OrderId?.Trim(), out var orderId))
-            return BadRequest(new { message = "A valid order reference is required." });
-
-        if (!IsValidEmail(normalizedEmail))
-            return BadRequest(new { message = "A valid email is required." });
-
-        var order = await _db.Orders
-            .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order == null || order.UserId.HasValue)
-            return Ok(new { message = "If the details match, an access link was sent." });
-
-        var emailMatches = await IsGuestOrderEmailMatchAsync(order.Id, normalizedEmail!);
-        if (!emailMatches)
-            return Ok(new { message = "If the details match, an access link was sent." });
-
-        var token = GenerateGuestOrderAccessToken(order.Id, normalizedEmail!);
-        var frontendBaseUrl = GetRequiredConfig("FrontendBaseUrl").TrimEnd('/');
-        var accessLink = $"{frontendBaseUrl}/quote/access?token={Uri.EscapeDataString(token)}";
-
-        try
-        {
-            var toName = string.IsNullOrWhiteSpace(order.FullName)
-                ? normalizedEmail!
-                : order.FullName.Trim();
-            await _emailService.SendGuestOrderAccessEmailAsync(normalizedEmail!, toName, order.Id, accessLink);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed sending guest access link for order {OrderId}", order.Id);
-        }
-
-        return Ok(new { message = "If the details match, an access link was sent." });
-    }
-
-    [HttpGet("guest/access")]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetGuestOrderByAccessToken([FromQuery] string? token)
-    {
-        var resolved = ValidateGuestOrderAccessToken(token);
-        if (resolved == null)
-            return Unauthorized(new { message = "Access link is invalid or expired." });
-
-        var order = await _db.Orders
-            .Include(o => o.Items)
-            .Include(o => o.Payments)
-            .Include(o => o.Notes)
-            .FirstOrDefaultAsync(o => o.Id == resolved.Value.OrderId);
-
-        if (order == null || order.UserId.HasValue)
-            return NotFound(new { message = "Order not found." });
-
-        var emailMatches = await IsGuestOrderEmailMatchAsync(order.Id, resolved.Value.Email);
-        if (!emailMatches)
-            return Unauthorized(new { message = "Access link is invalid." });
-
-        await RefreshQuoteStatusesAsync(new[] { order }, "system");
-        return Ok(MapOrderForCustomer(order));
+        return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { id = order.Id, order = MapOrderForCustomer(order), accountCreated });
     }
 
     private static bool IsValidEmail(string? email)
@@ -360,57 +316,7 @@ public class OrdersController : ControllerBase
         }
     }
 
-    private async Task<bool> IsGuestOrderEmailMatchAsync(Guid orderId, string email)
-    {
-        var normalizedEmail = email.Trim().ToLowerInvariant();
-
-        var foundCommunicationMatch = await _db.OrderCommunications
-            .AsNoTracking()
-            .AnyAsync(c => c.OrderId == orderId
-                && c.RecipientEmail != null
-                && c.RecipientEmail.ToLower() == normalizedEmail);
-        if (foundCommunicationMatch)
-            return true;
-
-        var internalNotes = await _db.OrderNotes
-            .AsNoTracking()
-            .Where(n => n.OrderId == orderId && n.Visibility == "internal")
-            .OrderByDescending(n => n.CreatedAt)
-            .Select(n => n.Content)
-            .ToListAsync();
-
-        foreach (var content in internalNotes)
-        {
-            if (TryExtractGuestEmailFromNote(content, out var extracted)
-                && string.Equals(extracted, normalizedEmail, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool TryExtractGuestEmailFromNote(string? content, out string email)
-    {
-        email = string.Empty;
-        if (string.IsNullOrWhiteSpace(content)) return false;
-
-        const string prefix = "Guest quote contact email:";
-        var idx = content.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0) return false;
-
-        var value = content[(idx + prefix.Length)..].Trim();
-        var semicolonIdx = value.IndexOf(';');
-        if (semicolonIdx >= 0)
-            value = value[..semicolonIdx].Trim();
-
-        if (!IsValidEmail(value)) return false;
-        email = value.Trim().ToLowerInvariant();
-        return true;
-    }
-
-    private string GenerateGuestOrderAccessToken(Guid orderId, string email)
+    private string GeneratePasswordResetToken(User user)
     {
         var key = GetJwtSigningKey();
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -418,9 +324,9 @@ public class OrdersController : ControllerBase
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim("purpose", "guest_order_access"),
-                new Claim("order_id", orderId.ToString()),
-                new Claim(ClaimTypes.Email, email.Trim().ToLowerInvariant()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("purpose", "password_reset"),
             }),
             Expires = DateTime.UtcNow.AddMinutes(30),
             SigningCredentials = new SigningCredentials(
@@ -430,46 +336,6 @@ public class OrdersController : ControllerBase
 
         var token = tokenHandler.CreateToken(descriptor);
         return tokenHandler.WriteToken(token);
-    }
-
-    private (Guid OrderId, string Email)? ValidateGuestOrderAccessToken(string? token)
-    {
-        if (string.IsNullOrWhiteSpace(token)) return null;
-
-        var key = GetJwtSigningKey();
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        try
-        {
-            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromMinutes(1),
-            }, out _);
-
-            var purpose = principal.FindFirst("purpose")?.Value;
-            if (!string.Equals(purpose, "guest_order_access", StringComparison.Ordinal))
-                return null;
-
-            var orderIdValue = principal.FindFirst("order_id")?.Value;
-            var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-
-            if (!Guid.TryParse(orderIdValue, out var orderId))
-                return null;
-
-            if (!IsValidEmail(email))
-                return null;
-
-            return (orderId, email!.Trim().ToLowerInvariant());
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private byte[] GetJwtSigningKey()
@@ -800,11 +666,6 @@ public record QuoteRequest(
     string? GuestName,
     string? GuestEmail,
     string? GuestPhone
-);
-
-public record GuestOrderAccessLinkRequest(
-    string? OrderId,
-    string? Email
 );
 
 public record QuoteItemRequest(
