@@ -173,6 +173,11 @@ export default function OrderItemsCard({
                     <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">
                       <Palette size={12} /> {item.color}
                     </span>
+                    {item.size && (
+                      <span className="flex items-center gap-1 text-xs font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded border border-violet-100">
+                        {t("orderDetail.size")}: {item.size}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                       <Hash size={12} /> x{item.count || 1}
                     </span>

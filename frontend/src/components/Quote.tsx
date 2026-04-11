@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Vector3 } from "three";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import {
   Upload,
   Trash2,
@@ -10,6 +12,7 @@ import {
   Palette,
   MessageSquare,
   Hash,
+  Ruler,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -26,7 +29,8 @@ const ALLOWED_UPLOAD_ACCEPT =
   ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
 const MODEL_EXTENSIONS = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
-const MAX_FILES_PER_ITEM = 5;
+const MAX_FILES_PER_ITEM = 3;
+const MAX_DIMENSION_MM = 256;
 
 function getFileExtension(fileName: string): string {
   const dotIndex = fileName.lastIndexOf(".");
@@ -36,6 +40,61 @@ function getFileExtension(fileName: string): string {
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function hasDimensionValue(value?: number) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function formatDimensions(
+  x?: number,
+  y?: number,
+  z?: number,
+): string | undefined {
+  if (!hasDimensionValue(x) && !hasDimensionValue(y) && !hasDimensionValue(z)) {
+    return undefined;
+  }
+
+  if (!hasDimensionValue(x) || !hasDimensionValue(y) || !hasDimensionValue(z)) {
+    return undefined;
+  }
+
+  return `${x} x ${y} x ${z} mm`;
+}
+
+function roundMillimeters(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+async function detectStlDimensions(file: File): Promise<{
+  x: number;
+  y: number;
+  z: number;
+} | null> {
+  if (getFileExtension(file.name) !== ".stl") return null;
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const loader = new STLLoader();
+    const geometry = loader.parse(buffer);
+
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    if (!box) return null;
+
+    const size = new Vector3();
+    box.getSize(size);
+
+    const x = roundMillimeters(Math.abs(size.x));
+    const y = roundMillimeters(Math.abs(size.y));
+    const z = roundMillimeters(Math.abs(size.z));
+
+    if (x <= 0 || y <= 0 || z <= 0) return null;
+
+    return { x, y, z };
+  } catch {
+    return null;
+  }
 }
 
 export default function Quote() {
@@ -99,23 +158,53 @@ export default function Quote() {
   ) => {
     if (selectedFiles.length === 0) return;
 
-    const currentFileCount = items[itemIndex]?.files?.length || 0;
+    const existingFiles = items[itemIndex]?.files || [];
+    const currentFileCount = existingFiles.length;
     const remainingSlots = MAX_FILES_PER_ITEM - currentFileCount;
     if (remainingSlots <= 0) {
       notifyError(`Max ${MAX_FILES_PER_ITEM} files per item.`);
       return;
     }
 
-    const filesToUpload = selectedFiles.slice(0, remainingSlots);
-    if (filesToUpload.length < selectedFiles.length) {
+    let hasModelFile = existingFiles.some((file) => file.kind === "model");
+    const filesToUpload: File[] = [];
+    let skippedForModelConstraint = 0;
+
+    for (const file of selectedFiles) {
+      if (filesToUpload.length >= remainingSlots) break;
+
+      const extension = getFileExtension(file.name);
+      const isModel = MODEL_EXTENSIONS.has(extension);
+      if (isModel && hasModelFile) {
+        skippedForModelConstraint += 1;
+        continue;
+      }
+
+      filesToUpload.push(file);
+      if (isModel) {
+        hasModelFile = true;
+      }
+    }
+
+    const skippedForSlotConstraint =
+      selectedFiles.length - filesToUpload.length - skippedForModelConstraint;
+
+    if (skippedForModelConstraint > 0) {
+      notifyError(t("quote.singleModelPerItem"));
+    }
+
+    if (skippedForSlotConstraint > 0) {
       notifyError(
         `Max ${MAX_FILES_PER_ITEM} files per item. Only ${filesToUpload.length} file(s) were added.`,
       );
     }
 
+    if (filesToUpload.length === 0) return;
+
     setIsUploading(true);
     let failedCount = 0;
     let firstErrorMessage: string | null = null;
+    let detectedDimensions: { x: number; y: number; z: number } | null = null;
     const uploadedEntries: Array<{
       file: File;
       url: string;
@@ -164,6 +253,15 @@ export default function Quote() {
         }
       }
 
+      if (!detectedDimensions) {
+        const firstUploadedStl = uploadedEntries.find(
+          (entry) => getFileExtension(entry.file.name) === ".stl",
+        );
+        if (firstUploadedStl) {
+          detectedDimensions = await detectStlDimensions(firstUploadedStl.file);
+        }
+      }
+
       if (uploadedEntries.length > 0) {
         setItems((prev) => {
           const nextItems = [...prev];
@@ -191,6 +289,16 @@ export default function Quote() {
             fileUrl: firstModel?.url || firstAny?.url || "",
             fileName: firstModel?.name || firstAny?.name || "",
             imageUrl: firstImage?.url || nextItems[itemIndex].imageUrl || "",
+            ...(detectedDimensions &&
+            !hasDimensionValue(nextItems[itemIndex].dimensionX) &&
+            !hasDimensionValue(nextItems[itemIndex].dimensionY) &&
+            !hasDimensionValue(nextItems[itemIndex].dimensionZ)
+              ? {
+                  dimensionX: detectedDimensions.x,
+                  dimensionY: detectedDimensions.y,
+                  dimensionZ: detectedDimensions.z,
+                }
+              : {}),
           };
 
           return nextItems;
@@ -344,6 +452,10 @@ export default function Quote() {
       fileUrl: "",
       fileName: "",
       notes: "",
+      size: "",
+      dimensionX: undefined,
+      dimensionY: undefined,
+      dimensionZ: undefined,
       imageUrl: "",
       files: [],
       material: defaultMat,
@@ -404,6 +516,27 @@ export default function Quote() {
       return;
     }
 
+    for (const item of items) {
+      const dimensions = [item.dimensionX, item.dimensionY, item.dimensionZ];
+      const hasAnyDimension = dimensions.some((value) => hasDimensionValue(value));
+
+      if (!hasAnyDimension) continue;
+
+      const allProvided = dimensions.every((value) => hasDimensionValue(value));
+      if (!allProvided) {
+        notifyError(t("quote.dimensionsAllOrNone"));
+        return;
+      }
+
+      const allWithinMax = dimensions.every(
+        (value) => typeof value === "number" && value <= MAX_DIMENSION_MM,
+      );
+      if (!allWithinMax) {
+        notifyError(t("quote.dimensionsMaxExceeded"));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       if (!isLoggedIn) {
@@ -412,13 +545,30 @@ export default function Quote() {
       }
 
       const payload: {
-        items: OrderItem[];
+        items: Array<{
+          fileUrl?: string;
+          imageUrl?: string;
+          fileName?: string;
+          notes?: string;
+          size?: string;
+          material: string;
+          color: string;
+          count: number;
+          files: Array<{ url: string; name: string; kind: "model" | "image" | "other" }>;
+        }>;
         guestName?: string;
         guestEmail?: string;
         guestPhone?: string;
       } = {
         items: items.map((item) => ({
-          ...item,
+          fileUrl: item.fileUrl || undefined,
+          imageUrl: item.imageUrl || undefined,
+          fileName: item.fileName || undefined,
+          notes: item.notes?.trim() || undefined,
+          size: formatDimensions(item.dimensionX, item.dimensionY, item.dimensionZ),
+          material: item.material,
+          color: item.color,
+          count: item.count,
           files: (item.files || []).map((file) => ({
             url: file.url,
             name: file.name,
@@ -772,6 +922,100 @@ export default function Quote() {
                               )
                             }
                           />
+                        </div>
+
+                      </div>
+
+                      <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                            <Ruler size={12} /> {t("quote.size")}
+                          </label>
+                          <span className="text-[10px] font-semibold text-slate-500">
+                            {t("quote.optional")}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
+                            <span className="pl-2 text-[11px] font-bold text-slate-500">X</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={MAX_DIMENSION_MM}
+                              step="0.1"
+                              className="w-full bg-transparent p-2 text-sm outline-none"
+                              value={item.dimensionX ?? ""}
+                              placeholder={t("quote.dimensionX")}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                updateItem(
+                                  idx,
+                                  "dimensionX",
+                                  value === "" ? undefined : Number(value),
+                                );
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
+                            <span className="pl-2 text-[11px] font-bold text-slate-500">Y</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={MAX_DIMENSION_MM}
+                              step="0.1"
+                              className="w-full bg-transparent p-2 text-sm outline-none"
+                              value={item.dimensionY ?? ""}
+                              placeholder={t("quote.dimensionY")}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                updateItem(
+                                  idx,
+                                  "dimensionY",
+                                  value === "" ? undefined : Number(value),
+                                );
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
+                            <span className="pl-2 text-[11px] font-bold text-slate-500">Z</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={MAX_DIMENSION_MM}
+                              step="0.1"
+                              className="w-full bg-transparent p-2 text-sm outline-none"
+                              value={item.dimensionZ ?? ""}
+                              placeholder={t("quote.dimensionZ")}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                updateItem(
+                                  idx,
+                                  "dimensionZ",
+                                  value === "" ? undefined : Number(value),
+                                );
+                              }}
+                            />
+                          </div>
+
+                          <span className="text-[11px] font-semibold text-slate-500 md:justify-self-end">
+                            mm
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-[11px] text-slate-500">
+                            {t("quote.dimensionsMaxHint")}
+                          </p>
+                          {hasDimensionValue(item.dimensionX) &&
+                            hasDimensionValue(item.dimensionY) &&
+                            hasDimensionValue(item.dimensionZ) && (
+                              <span className="text-[11px] font-bold text-slate-700">
+                                {item.dimensionX} x {item.dimensionY} x {item.dimensionZ} mm
+                              </span>
+                            )}
                         </div>
                       </div>
 

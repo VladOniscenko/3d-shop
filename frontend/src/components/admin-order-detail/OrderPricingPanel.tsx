@@ -244,7 +244,7 @@ export default function OrderPricingPanel({
                   </div>
 
                   {/* Specs grid */}
-                  <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-[#eef4f1]">
+                  <div className="grid grid-cols-5 gap-4 mb-4 pb-4 border-b border-[#eef4f1]">
                     <div>
                       <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
                         {t("admin.orderDetail.materialLabel")}
@@ -259,6 +259,14 @@ export default function OrderPricingPanel({
                       </p>
                       <p className="text-sm font-medium text-[#22342f]">
                         {item.color}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                        {t("admin.orderDetail.sizeLabel")}
+                      </p>
+                      <p className="text-sm font-medium text-[#22342f]">
+                        {item.size || "-"}
                       </p>
                     </div>
                     <div>

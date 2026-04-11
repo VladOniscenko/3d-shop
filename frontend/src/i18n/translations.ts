@@ -624,6 +624,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.noItemsMessage": "No items in this order.",
     "admin.orderDetail.materialLabel": "Material",
     "admin.orderDetail.colorLabel": "Color",
+    "admin.orderDetail.sizeLabel": "Size",
     "admin.orderDetail.qtyLabel": "Qty",
     "admin.orderDetail.priceLabel": "Price",
     "admin.orderDetail.instructionsLabel": "Instructions",
@@ -934,6 +935,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.uploadFailed": "Upload failed. Please try again.",
     "quote.uploadPartialFailed":
       "Some files could not be uploaded. Please review and try again.",
+    "quote.singleModelPerItem": "Only one 3D model file is allowed per item.",
     "quote.invalidShipping": "Please fix shipping info before submitting.",
     "quote.submitFailed": "Failed to submit quote. Check your connection.",
     "quote.materialAvailabilityDisclaimer":
@@ -941,6 +943,15 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.material": "Material",
     "quote.color": "Color",
     "quote.quantity": "Quantity",
+    "quote.size": "Size",
+    "quote.sizePlaceholder": "e.g. 120 x 80 x 45 mm",
+    "quote.optional": "Optional",
+    "quote.dimensionX": "X (mm)",
+    "quote.dimensionY": "Y (mm)",
+    "quote.dimensionZ": "Z (mm)",
+    "quote.dimensionsMaxHint": "Build volume limit (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsAllOrNone": "If you add dimensions, please fill X, Y and Z.",
+    "quote.dimensionsMaxExceeded": "Each dimension must be 256 mm or less (Bambu Lab P2S).",
     "quote.notesPlaceholder": "Instructions (Infill, layer height, etc.)",
     "quote.fullName": "Full Name",
     "quote.phone": "Phone Number",
@@ -1025,6 +1036,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.fileTypeModel": "Model",
     "orderDetail.fileTypeImage": "Image",
     "orderDetail.fileTypeFile": "File",
+    "orderDetail.size": "Size",
     "orderDetail.filesRemovedDueCancellation":
       "Files were removed due to cancellation.",
     "orderDetail.timeline": "Project Timeline",
@@ -1801,6 +1813,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.noItemsMessage": "Geen items in deze order.",
     "admin.orderDetail.materialLabel": "Materiaal",
     "admin.orderDetail.colorLabel": "Kleur",
+    "admin.orderDetail.sizeLabel": "Afmeting",
     "admin.orderDetail.qtyLabel": "Aantal",
     "admin.orderDetail.priceLabel": "Prijs",
     "admin.orderDetail.instructionsLabel": "Instructies",
@@ -2114,6 +2127,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.uploadFailed": "Upload mislukt. Probeer opnieuw.",
     "quote.uploadPartialFailed":
       "Sommige bestanden konden niet worden geupload. Controleer en probeer opnieuw.",
+    "quote.singleModelPerItem":
+      "Per item is maar een 3D-modelbestand toegestaan.",
     "quote.invalidShipping":
       "Controleer je verzendgegevens voordat je verzendt.",
     "quote.submitFailed":
@@ -2123,6 +2138,15 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.material": "Materiaal",
     "quote.color": "Kleur",
     "quote.quantity": "Aantal",
+    "quote.size": "Afmeting",
+    "quote.sizePlaceholder": "bijv. 120 x 80 x 45 mm",
+    "quote.optional": "Optioneel",
+    "quote.dimensionX": "X (mm)",
+    "quote.dimensionY": "Y (mm)",
+    "quote.dimensionZ": "Z (mm)",
+    "quote.dimensionsMaxHint": "Maximale bouwruimte (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsAllOrNone": "Als je afmetingen invult, vul dan X, Y en Z in.",
+    "quote.dimensionsMaxExceeded": "Elke afmeting moet 256 mm of kleiner zijn (Bambu Lab P2S).",
     "quote.notesPlaceholder": "Instructies (Infill, laaghoogte, etc.)",
     "quote.fullName": "Volledige naam",
     "quote.phone": "Telefoonnummer",
@@ -2206,6 +2230,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.fileTypeModel": "Model",
     "orderDetail.fileTypeImage": "Afbeelding",
     "orderDetail.fileTypeFile": "Bestand",
+    "orderDetail.size": "Afmeting",
     "orderDetail.filesRemovedDueCancellation":
       "In verband met annulering zijn bestanden verwijderd.",
     "orderDetail.timeline": "Project Tijdlijn",

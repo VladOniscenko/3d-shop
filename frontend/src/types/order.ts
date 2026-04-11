@@ -86,6 +86,10 @@ export interface OrderItem {
   files?: QuoteItemFile[];
   attachments?: QuoteItemFile[];
   notes?: string;
+  size?: string;
+  dimensionX?: number;
+  dimensionY?: number;
+  dimensionZ?: number;
   material: string;
   color: string;
   price: number;

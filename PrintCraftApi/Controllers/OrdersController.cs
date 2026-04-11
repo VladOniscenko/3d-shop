@@ -20,6 +20,15 @@ namespace PrintCraftApi.Controllers;
 [Authorize]
 public class OrdersController : ControllerBase
 {
+    private static readonly HashSet<string> ModelFileExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".stl",
+        ".obj",
+        ".3mf",
+        ".step",
+        ".stp"
+    };
+
     private readonly PrintCraftDb _db;
     private readonly IWebHostEnvironment _env;
     private readonly IEmailService _emailService;
@@ -191,22 +200,40 @@ public class OrdersController : ControllerBase
         foreach (var item in request.Items)
         {
             var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var modelUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var file in item.Files ?? Enumerable.Empty<QuoteItemFileRequest>())
             {
                 if (string.IsNullOrWhiteSpace(file.Url)) continue;
-                urls.Add(file.Url.Trim());
+
+                var url = file.Url.Trim();
+                urls.Add(url);
+
+                if (IsModelFileKindOrExtension(file.Kind, url))
+                    modelUrls.Add(url);
             }
 
             if (!string.IsNullOrWhiteSpace(item.FileUrl))
-                urls.Add(item.FileUrl.Trim());
+            {
+                var fileUrl = item.FileUrl.Trim();
+                urls.Add(fileUrl);
+
+                // Legacy fileUrl is expected to be the model attachment.
+                if (IsModelFileKindOrExtension("model", fileUrl))
+                    modelUrls.Add(fileUrl);
+            }
 
             if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                 urls.Add(item.ImageUrl.Trim());
 
-            if (urls.Count > 5)
+            if (urls.Count > 3)
             {
-                return BadRequest(new { message = "Each item can contain at most 5 files." });
+                return BadRequest(new { message = "Each item can contain at most 3 files." });
+            }
+
+            if (modelUrls.Count > 1)
+            {
+                return BadRequest(new { message = "Only one 3D model file is allowed per item." });
             }
         }
 
@@ -278,6 +305,7 @@ public class OrdersController : ControllerBase
                     ImageUrl = imageUrl,
                     fileName = fileName,
                     Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
+                    Size = string.IsNullOrWhiteSpace(item.Size) ? null : item.Size.Trim(),
                     Material = string.IsNullOrWhiteSpace(item.Material) ? "Custom" : item.Material.Trim(),
                     Color = string.IsNullOrWhiteSpace(item.Color) ? "Custom" : item.Color.Trim(),
                     Count = item.Count,
@@ -385,6 +413,19 @@ public class OrdersController : ControllerBase
         {
             return false;
         }
+    }
+
+    private static bool IsModelFileKindOrExtension(string? kind, string? url)
+    {
+        if (string.Equals(kind, "model", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        var sanitizedUrl = url.Split('?', '#')[0];
+        var extension = Path.GetExtension(sanitizedUrl);
+        return !string.IsNullOrWhiteSpace(extension) && ModelFileExtensions.Contains(extension);
     }
 
     private string GeneratePasswordResetToken(User user)
@@ -769,6 +810,7 @@ public class OrdersController : ControllerBase
                     item.ImageUrl,
                     FileName = item.fileName,
                     item.Notes,
+                    item.Size,
                     item.Material,
                     item.Color,
                     item.Count,
@@ -858,6 +900,7 @@ public record QuoteItemRequest(
     string? ImageUrl,
     string? FileName,
     string? Notes,
+    string? Size,
     string? Material,
     string? Color,
     int Count,

@@ -8,6 +8,7 @@ public class OrderItem
     public string? ImageUrl { get; set; }
     public string? fileName { get; set; }
     public string? Notes { get; set; }
+    public string? Size { get; set; }
     public string Material { get; set; } = "PLA";
     public string Color { get; set; } = "Black";
     public int Count { get; set; }
