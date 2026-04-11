@@ -188,7 +188,14 @@ export default function OrderItemsCard({
               {!isCancelledOrder && itemFiles.length > 0 && (
                 <div className="mb-4 flex flex-wrap gap-2">
                   {itemFiles.map((file, fileIndex) => {
-                    const isStl = file.url.toLowerCase().includes(".stl");
+                    const lowerUrl = file.url.toLowerCase();
+                    const canOpenInViewer =
+                      lowerUrl.includes(".stl") ||
+                      lowerUrl.includes(".png") ||
+                      lowerUrl.includes(".jpg") ||
+                      lowerUrl.includes(".jpeg") ||
+                      lowerUrl.includes(".webp") ||
+                      lowerUrl.includes(".gif");
 
                     return (
                       <div
@@ -203,12 +210,14 @@ export default function OrderItemsCard({
                         <span className="max-w-[180px] truncate text-xs text-[#36504a]">
                           {file.name}
                         </span>
-                        {isStl ? (
+                        {canOpenInViewer ? (
                           <Link
                             to={`/orders/${order.id}/models/${idx}?file=${fileIndex}`}
                             className="text-xs font-bold text-teal-700 hover:underline"
                           >
-                            {t("orderDetail.viewModel")}
+                            {file.kind === "image"
+                              ? t("orderDetail.viewImage")
+                              : t("orderDetail.viewModel")}
                           </Link>
                         ) : (
                           <a

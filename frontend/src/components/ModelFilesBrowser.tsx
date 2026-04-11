@@ -16,6 +16,7 @@ type ModelFile = {
   orderId?: string | null;
   itemIndex?: number | null;
   linkedToProduct?: boolean;
+  linkedToOrder?: boolean;
   linkedToActiveOrder?: boolean;
   canDelete?: boolean;
 };
@@ -77,11 +78,9 @@ export default function ModelFilesBrowser() {
   };
 
   const cleanupOrphanFiles = async () => {
-    const candidates = files
-      .filter((file) => file.canDelete)
-      .map((file) => file.url);
+    const orphanCount = files.filter((file) => file.canDelete).length;
 
-    if (candidates.length === 0) {
+    if (orphanCount === 0) {
       setInfo(t("models.cleanupNone"));
       return;
     }
@@ -97,7 +96,7 @@ export default function ModelFilesBrowser() {
       const response = await api.post<{
         requestedCount: number;
         deletedCount: number;
-      }>("/upload/temp/cleanup", { fileUrls: candidates });
+      }>("/upload/models/cleanup-orphans");
 
       const deletedCount = response.data?.deletedCount ?? 0;
       setInfo(t("models.cleanupDone").replace("{count}", String(deletedCount)));
@@ -260,7 +259,13 @@ export default function ModelFilesBrowser() {
                               to={`/admin/models/view/${encodeURIComponent(file.fileName)}`}
                               className="inline-flex items-center rounded-lg border border-[#cfd9ff] px-3 py-1.5 font-semibold text-[#3048a0] hover:bg-[#eef1ff]"
                             >
-                              {t("models.view3d")}
+                              {file.extension === ".png" ||
+                              file.extension === ".jpg" ||
+                              file.extension === ".jpeg" ||
+                              file.extension === ".webp" ||
+                              file.extension === ".gif"
+                                ? t("models.viewImage")
+                                : t("models.view3d")}
                             </Link>
                           ) : null}
 

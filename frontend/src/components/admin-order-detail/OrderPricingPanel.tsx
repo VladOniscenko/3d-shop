@@ -204,9 +204,14 @@ export default function OrderPricingPanel({
                       ) : (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {itemFiles.map((file, fileIndex) => {
-                            const isStl = file.url
-                              .toLowerCase()
-                              .includes(".stl");
+                            const lowerUrl = file.url.toLowerCase();
+                            const canOpenInViewer =
+                              lowerUrl.includes(".stl") ||
+                              lowerUrl.includes(".png") ||
+                              lowerUrl.includes(".jpg") ||
+                              lowerUrl.includes(".jpeg") ||
+                              lowerUrl.includes(".webp") ||
+                              lowerUrl.includes(".gif");
                             return (
                               <div
                                 key={`${file.url}-${fileIndex}`}
@@ -228,12 +233,14 @@ export default function OrderPricingPanel({
                                 >
                                   ↓ {t("admin.orderDetail.downloadFile")}
                                 </a>
-                                {isStl && (
+                                {canOpenInViewer && (
                                   <Link
                                     to={`/admin/orders/${order.id}/models/${idx}?file=${fileIndex}`}
                                     className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
                                   >
-                                    {t("admin.orderDetail.viewModel")}
+                                    {file.kind === "image"
+                                      ? t("admin.orderDetail.viewImage")
+                                      : t("admin.orderDetail.viewModel")}
                                   </Link>
                                 )}
                               </div>

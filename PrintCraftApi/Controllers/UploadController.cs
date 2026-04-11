@@ -149,9 +149,13 @@ public class UploadController : ControllerBase
 
         var productFileNames = _db.Products
             .AsNoTracking()
-            .Select(p => p.FileUrl)
+            .Include(p => p.Images)
             .AsEnumerable()
-            .Select(ExtractFileNameFromAssetUrl)
+            .SelectMany(p => new[]
+            {
+                ExtractFileNameFromAssetUrl(p.FileUrl),
+                ExtractFileNameFromAssetUrl(p.ImageUrl),
+            }.Concat(p.Images.Select(i => ExtractFileNameFromAssetUrl(i.Url))))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -159,10 +163,28 @@ public class UploadController : ControllerBase
         var activeOrderFileNames = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .AsEnumerable()
             .Where(order => !IsOrderDone(order.Status))
-            .SelectMany(order => order.Items
-                .Select(item => ExtractFileNameFromAssetUrl(item.FileUrl)))
+            .SelectMany(order => order.Items.SelectMany(item => new[]
+            {
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                ExtractFileNameFromAssetUrl(item.ImageUrl),
+            }.Concat(item.Attachments.Select(a => ExtractFileNameFromAssetUrl(a.Url)))))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var linkedOrderFileNames = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
+            .AsEnumerable()
+            .SelectMany(order => order.Items.SelectMany(item => new[]
+            {
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                ExtractFileNameFromAssetUrl(item.ImageUrl),
+            }.Concat(item.Attachments.Select(a => ExtractFileNameFromAssetUrl(a.Url)))))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -170,15 +192,21 @@ public class UploadController : ControllerBase
         var orderLinksByFileName = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .OrderByDescending(o => o.CreatedAt)
             .AsEnumerable()
-            .SelectMany(order => order.Items
-                .Select((item, index) => new
+            .SelectMany(order => order.Items.SelectMany((item, index) => new[]
+                {
+                    ExtractFileNameFromAssetUrl(item.FileUrl),
+                    ExtractFileNameFromAssetUrl(item.ImageUrl),
+                }.Concat(item.Attachments.Select(a => ExtractFileNameFromAssetUrl(a.Url)))
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => new
                 {
                     orderId = order.Id,
                     itemIndex = index,
-                    fileName = ExtractFileNameFromAssetUrl(item.FileUrl),
-                }))
+                    fileName = name,
+                })))
             .Where(x => !string.IsNullOrWhiteSpace(x.fileName))
             .GroupBy(x => x.fileName!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -189,13 +217,14 @@ public class UploadController : ControllerBase
         var files = Directory
             .EnumerateFiles(uploadsFolder)
             .Select(path => new FileInfo(path))
-            .Where(info => ModelExtensions.Contains(info.Extension))
+            .Where(info => AllowedExtensions.Contains(info.Extension))
             .OrderByDescending(info => info.LastWriteTimeUtc)
             .Select(info =>
             {
                 orderLinksByFileName.TryGetValue(info.Name, out var link);
                 var linkedToProduct = productFileNames.Contains(info.Name);
                 var linkedToActiveOrder = activeOrderFileNames.Contains(info.Name);
+                var linkedToOrder = linkedOrderFileNames.Contains(info.Name);
 
                 return new
                 {
@@ -207,8 +236,9 @@ public class UploadController : ControllerBase
                     orderId = link?.orderId,
                     itemIndex = link?.itemIndex,
                     linkedToProduct,
+                    linkedToOrder,
                     linkedToActiveOrder,
-                    canDelete = !linkedToProduct && !linkedToActiveOrder,
+                    canDelete = !linkedToProduct && !linkedToOrder,
                 };
             })
             .ToArray();
@@ -235,29 +265,45 @@ public class UploadController : ControllerBase
 
         var linkedToProduct = _db.Products
             .AsNoTracking()
-            .Select(p => p.FileUrl)
+            .Include(p => p.Images)
             .AsEnumerable()
-            .Any(url => string.Equals(
-                ExtractFileNameFromAssetUrl(url),
-                normalizedFileName,
-                StringComparison.OrdinalIgnoreCase));
+            .Any(p => string.Equals(
+                    ExtractFileNameFromAssetUrl(p.FileUrl),
+                    normalizedFileName,
+                    StringComparison.OrdinalIgnoreCase)
+                || string.Equals(
+                    ExtractFileNameFromAssetUrl(p.ImageUrl),
+                    normalizedFileName,
+                    StringComparison.OrdinalIgnoreCase)
+                || p.Images.Any(i => string.Equals(
+                    ExtractFileNameFromAssetUrl(i.Url),
+                    normalizedFileName,
+                    StringComparison.OrdinalIgnoreCase)));
 
         if (linkedToProduct)
             return Conflict(new { message = "File is linked to a product and cannot be deleted." });
 
-        var linkedToActiveOrder = _db.Orders
+        var linkedToAnyOrder = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .AsEnumerable()
-            .Where(order => !IsOrderDone(order.Status))
             .SelectMany(order => order.Items)
             .Any(item => string.Equals(
                 ExtractFileNameFromAssetUrl(item.FileUrl),
                 normalizedFileName,
-                StringComparison.OrdinalIgnoreCase));
+                StringComparison.OrdinalIgnoreCase)
+                || string.Equals(
+                    ExtractFileNameFromAssetUrl(item.ImageUrl),
+                    normalizedFileName,
+                    StringComparison.OrdinalIgnoreCase)
+                || item.Attachments.Any(a => string.Equals(
+                    ExtractFileNameFromAssetUrl(a.Url),
+                    normalizedFileName,
+                    StringComparison.OrdinalIgnoreCase)));
 
-        if (linkedToActiveOrder)
-            return Conflict(new { message = "File is linked to an order that is not completed yet." });
+        if (linkedToAnyOrder)
+            return Conflict(new { message = "File is linked to an order and cannot be deleted." });
 
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
         var filePath = Path.Combine(uploadsFolder, normalizedFileName);
@@ -268,6 +314,62 @@ public class UploadController : ControllerBase
         System.IO.File.Delete(filePath);
         DeleteUploadMetadataIfExists(filePath);
         return Ok(new { message = "File deleted." });
+    }
+
+    [HttpPost("models/cleanup-orphans")]
+    [Authorize(Roles = "admin")]
+    [EnableRateLimiting("AuthBurst")]
+    public IActionResult CleanupOrphanUploads()
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        if (!Directory.Exists(uploadsFolder))
+            return Ok(new { requestedCount = 0, deletedCount = 0 });
+
+        var linkedProductFileNames = _db.Products
+            .AsNoTracking()
+            .Include(p => p.Images)
+            .AsEnumerable()
+            .SelectMany(p => new[]
+            {
+                ExtractFileNameFromAssetUrl(p.FileUrl),
+                ExtractFileNameFromAssetUrl(p.ImageUrl),
+            }.Concat(p.Images.Select(i => ExtractFileNameFromAssetUrl(i.Url))))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var linkedOrderFileNames = _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
+            .AsEnumerable()
+            .SelectMany(order => order.Items.SelectMany(item => new[]
+            {
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                ExtractFileNameFromAssetUrl(item.ImageUrl),
+            }.Concat(item.Attachments.Select(a => ExtractFileNameFromAssetUrl(a.Url)))))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var candidates = Directory
+            .EnumerateFiles(uploadsFolder)
+            .Select(path => new FileInfo(path))
+            .Where(info => AllowedExtensions.Contains(info.Extension))
+            .ToArray();
+
+        var deletedCount = 0;
+        foreach (var candidate in candidates)
+        {
+            if (linkedProductFileNames.Contains(candidate.Name) || linkedOrderFileNames.Contains(candidate.Name))
+                continue;
+
+            System.IO.File.Delete(candidate.FullName);
+            DeleteUploadMetadataIfExists(candidate.FullName);
+            deletedCount += 1;
+        }
+
+        return Ok(new { requestedCount = candidates.Length, deletedCount });
     }
 
     [HttpDelete("temp")]

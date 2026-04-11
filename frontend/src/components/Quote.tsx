@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Vector3 } from "three";
+import { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { STLExporter } from "three/examples/jsm/exporters/STLExporter.js";
 import {
   Upload,
   Trash2,
@@ -24,6 +25,7 @@ import Footer from "./Footer";
 import { useNotify } from "../context/NotifyContext";
 import ModelDiscoveryCards from "./ModelDiscoveryCards";
 import { getOrCreateVisitorId } from "../services/api";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
 const ALLOWED_UPLOAD_ACCEPT =
   ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
@@ -69,12 +71,24 @@ function roundMillimeters(value: number): number {
 
 function getMaximumScaleForBase(x: number, y: number, z: number): number {
   if (x <= 0 || y <= 0 || z <= 0) return 1;
-  return Math.min(MAX_DIMENSION_MM / x, MAX_DIMENSION_MM / y, MAX_DIMENSION_MM / z);
+  return Math.min(
+    MAX_DIMENSION_MM / x,
+    MAX_DIMENSION_MM / y,
+    MAX_DIMENSION_MM / z,
+  );
 }
 
 function clampScale(scale: number, maxScale: number): number {
   const safeMaxScale = Math.max(0, maxScale);
   return Math.max(0, Math.min(scale, safeMaxScale));
+}
+
+function almostEqual(a: number, b: number, epsilon = 0.001) {
+  return Math.abs(a - b) <= epsilon;
+}
+
+function formatScaleForFileName(scale: number): string {
+  return scale.toFixed(2).replace(/\.00$/, "").replace(/(\.\d*[1-9])0$/, "$1");
 }
 
 async function detectStlDimensions(file: File): Promise<{
@@ -462,7 +476,7 @@ export default function Quote() {
         fileUrl: firstModel?.url || firstAny?.url || "",
         fileName: firstModel?.name || firstAny?.name || "",
         imageUrl: firstImage?.url || "",
-        ...((removed?.kind === "model" && !firstModel)
+        ...(removed?.kind === "model" && !firstModel
           ? {
               dimensionX: undefined,
               dimensionY: undefined,
@@ -653,6 +667,107 @@ export default function Quote() {
         setGuestSubmittedOrderId(null);
       }
 
+      let replacedOriginalModelUrls: string[] = [];
+
+      const itemsForPayload = await Promise.all(
+        items.map(async (item) => {
+          const modelFileIndex = (item.files || []).findIndex(
+            (file) => file.kind === "model",
+          );
+
+          if (
+            modelFileIndex < 0 ||
+            !hasDimensionValue(item.dimensionScale) ||
+            almostEqual(item.dimensionScale, 1)
+          ) {
+            return item;
+          }
+
+          const modelFile = item.files?.[modelFileIndex];
+          if (!modelFile?.url) return item;
+
+          const extension = getFileExtension(modelFile.name || "");
+          if (extension !== ".stl") return item;
+
+          try {
+            const sourceUrl = resolveAssetUrl(modelFile.url);
+            const sourceResponse = await fetch(sourceUrl);
+            if (!sourceResponse.ok) {
+              throw new Error("Failed to fetch STL for scaling.");
+            }
+
+            const sourceBuffer = await sourceResponse.arrayBuffer();
+            const loader = new STLLoader();
+            const geometry = loader.parse(sourceBuffer);
+            geometry.scale(
+              item.dimensionScale,
+              item.dimensionScale,
+              item.dimensionScale,
+            );
+
+            const exporter = new STLExporter();
+            const mesh = new Mesh(geometry, new MeshStandardMaterial());
+            const exported = exporter.parse(mesh, {
+              binary: true,
+            }) as DataView | ArrayBuffer | string;
+
+            let scaledBlob: Blob;
+            if (typeof exported === "string") {
+              scaledBlob = new Blob([exported], { type: "model/stl" });
+            } else if (exported instanceof DataView) {
+              const bytes = new Uint8Array(exported.byteLength);
+              for (let i = 0; i < exported.byteLength; i += 1) {
+                bytes[i] = exported.getUint8(i);
+              }
+              scaledBlob = new Blob(
+                [bytes],
+                { type: "model/stl" },
+              );
+            } else {
+              scaledBlob = new Blob([exported], { type: "model/stl" });
+            }
+
+            const scaleLabel = formatScaleForFileName(item.dimensionScale);
+            const scaledFileName = modelFile.name.endsWith(".stl")
+              ? modelFile.name.replace(/\.stl$/i, "") + `_scaled_${scaleLabel}x.stl`
+              : modelFile.name + `_scaled_${scaleLabel}x.stl`;
+
+            const scaledFile = new File([scaledBlob], scaledFileName, {
+              type: "model/stl",
+            });
+
+            const uploadFormData = new FormData();
+            uploadFormData.append("file", scaledFile);
+
+            const uploadRes = await api.post("/upload", uploadFormData);
+            const scaledUrl = uploadRes.data?.url;
+            if (typeof scaledUrl !== "string" || !scaledUrl) {
+              throw new Error("Failed to upload scaled STL.");
+            }
+
+            uploadedFileUrlsRef.current.add(scaledUrl);
+
+            const nextFiles = [...(item.files || [])];
+            nextFiles[modelFileIndex] = {
+              ...nextFiles[modelFileIndex],
+              url: scaledUrl,
+              name: scaledFileName,
+            };
+
+            replacedOriginalModelUrls.push(modelFile.url);
+
+            return {
+              ...item,
+              files: nextFiles,
+              fileUrl: scaledUrl,
+              fileName: scaledFileName,
+            };
+          } catch {
+            throw new Error(t("quote.scaleFailed"));
+          }
+        }),
+      );
+
       const payload: {
         items: Array<{
           fileUrl?: string;
@@ -673,7 +788,7 @@ export default function Quote() {
         guestEmail?: string;
         guestPhone?: string;
       } = {
-        items: items.map((item) => ({
+        items: itemsForPayload.map((item) => ({
           fileUrl: item.fileUrl || undefined,
           imageUrl: item.imageUrl || undefined,
           fileName: item.fileName || undefined,
@@ -703,6 +818,10 @@ export default function Quote() {
       const res = await api.post("/orders/quote", payload);
       submittedRef.current = true;
       uploadedFileUrlsRef.current.clear();
+
+      for (const originalUrl of replacedOriginalModelUrls) {
+        void deleteTempUpload(originalUrl);
+      }
 
       if (isLoggedIn) {
         navigate("/orders");

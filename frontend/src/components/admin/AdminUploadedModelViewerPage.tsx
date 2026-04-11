@@ -14,6 +14,10 @@ function getFileExtension(fileName: string): string {
   return (parts[parts.length - 1] ?? "").toLowerCase();
 }
 
+function isImageExtension(ext: string): boolean {
+  return ["png", "jpg", "jpeg", "webp", "gif"].includes(ext);
+}
+
 export default function AdminUploadedModelViewerPage() {
   const { t } = useI18n();
   const { fileName } = useParams<{ fileName: string }>();
@@ -33,7 +37,8 @@ export default function AdminUploadedModelViewerPage() {
     ? resolveAssetUrl(`/uploads/${safeFileName}`)
     : "";
   const modelExt = getFileExtension(safeFileName);
-  const canPreview = modelExt === "stl" && !!modelUrl;
+  const canPreview3d = modelExt === "stl" && !!modelUrl;
+  const canPreviewImage = isImageExtension(modelExt) && !!modelUrl;
 
   return (
     <AdminLayout>
@@ -80,7 +85,7 @@ export default function AdminUploadedModelViewerPage() {
             </div>
 
             <div className="relative w-full h-[460px] sm:h-[560px] rounded-2xl border border-white/15 bg-[#0e3128]/35 backdrop-blur-sm overflow-hidden">
-              {canPreview ? (
+              {canPreview3d ? (
                 <Suspense
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center text-sm text-white/75">
@@ -90,6 +95,14 @@ export default function AdminUploadedModelViewerPage() {
                 >
                   <HeroModelViewer src={modelUrl} />
                 </Suspense>
+              ) : canPreviewImage ? (
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <img
+                    src={modelUrl}
+                    alt={safeFileName}
+                    className="max-h-full max-w-full rounded-xl object-contain"
+                  />
+                </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 text-white/85">
                   <p className="text-lg font-semibold">
