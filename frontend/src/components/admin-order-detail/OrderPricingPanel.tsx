@@ -65,6 +65,11 @@ function getItemFiles(item: {
     name: string;
     kind?: "model" | "image" | "other";
   }>;
+  attachments?: Array<{
+    url: string;
+    fileName?: string;
+    kind?: "model" | "image" | "other";
+  }>;
   fileUrl?: string;
   fileName?: string;
   imageUrl?: string;
@@ -77,6 +82,18 @@ function getItemFiles(item: {
       url: file.url,
       name: file.name || "file",
       kind: file.kind || getFileKindFromName(file.name),
+    });
+  }
+
+  for (const file of item.attachments || []) {
+    if (!file?.url) continue;
+    const name = file.fileName || "file";
+    const exists = entries.some((entry) => entry.url === file.url);
+    if (exists) continue;
+    entries.push({
+      url: file.url,
+      name,
+      kind: file.kind || getFileKindFromName(name),
     });
   }
 

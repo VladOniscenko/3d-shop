@@ -84,6 +84,7 @@ export interface OrderItem {
   fileUrl?: string;
   fileName: string;
   files?: QuoteItemFile[];
+  attachments?: QuoteItemFile[];
   notes?: string;
   material: string;
   color: string;

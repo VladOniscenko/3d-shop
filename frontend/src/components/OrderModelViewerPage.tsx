@@ -47,8 +47,21 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
     if (!selectedItem)
       return [] as Array<{ url: string; name: string; kind?: string }>;
 
-    const fromItem = (selectedItem.files || []).filter((file) => !!file?.url);
-    const merged = [...fromItem];
+    const fromFiles = (selectedItem.files || []).filter((file) => !!file?.url);
+    const fromAttachments = (selectedItem.attachments || [])
+      .filter((file) => !!file?.url)
+      .map((file) => ({
+        url: file.url,
+        name: file.name || t("modelViewer.unnamed"),
+        kind: file.kind,
+      }));
+
+    const merged = [...fromFiles];
+    for (const file of fromAttachments) {
+      if (!merged.some((f) => f.url === file.url)) {
+        merged.push(file);
+      }
+    }
 
     if (
       selectedItem.fileUrl &&
