@@ -629,6 +629,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.instructionsLabel": "Instructions",
     "admin.orderDetail.downloadFile": "Download/Preview file",
     "admin.orderDetail.viewModel": "View 3D model",
+    "admin.orderDetail.fileTypeModel": "Model",
+    "admin.orderDetail.fileTypeImage": "Image",
+    "admin.orderDetail.fileTypeFile": "File",
     "admin.orderDetail.filesRemovedDueCancellation":
       "Files were removed due to cancellation.",
     "admin.orderDetail.deliveryLabel": "Delivery",
@@ -1019,6 +1022,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.deleteQuote": "Delete Quote",
     "orderDetail.modelsInProject": "3D Models in this Project",
     "orderDetail.viewModel": "View 3D",
+    "orderDetail.fileTypeModel": "Model",
+    "orderDetail.fileTypeImage": "Image",
+    "orderDetail.fileTypeFile": "File",
     "orderDetail.filesRemovedDueCancellation":
       "Files were removed due to cancellation.",
     "orderDetail.timeline": "Project Timeline",
@@ -1800,6 +1806,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.instructionsLabel": "Instructies",
     "admin.orderDetail.downloadFile": "Bestand Downloaden/Bekijken",
     "admin.orderDetail.viewModel": "Bekijk 3D-model",
+    "admin.orderDetail.fileTypeModel": "Model",
+    "admin.orderDetail.fileTypeImage": "Afbeelding",
+    "admin.orderDetail.fileTypeFile": "Bestand",
     "admin.orderDetail.filesRemovedDueCancellation":
       "In verband met annulering zijn bestanden verwijderd.",
     "admin.orderDetail.deliveryLabel": "Levering",
@@ -2194,6 +2203,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.deleteQuote": "Offerte Verwijderen",
     "orderDetail.modelsInProject": "3D Modellen in dit Project",
     "orderDetail.viewModel": "Bekijk 3D",
+    "orderDetail.fileTypeModel": "Model",
+    "orderDetail.fileTypeImage": "Afbeelding",
+    "orderDetail.fileTypeFile": "Bestand",
     "orderDetail.filesRemovedDueCancellation":
       "In verband met annulering zijn bestanden verwijderd.",
     "orderDetail.timeline": "Project Tijdlijn",

@@ -28,6 +28,94 @@ interface OrderPricingPanelProps {
   pricingLocked: boolean;
 }
 
+type ItemFile = {
+  url: string;
+  name: string;
+  kind: "model" | "image" | "other";
+};
+
+function getFileKindFromName(name?: string): "model" | "image" | "other" {
+  const value = (name || "").toLowerCase();
+  if (
+    value.endsWith(".stl") ||
+    value.endsWith(".obj") ||
+    value.endsWith(".3mf") ||
+    value.endsWith(".step") ||
+    value.endsWith(".stp")
+  ) {
+    return "model";
+  }
+
+  if (
+    value.endsWith(".png") ||
+    value.endsWith(".jpg") ||
+    value.endsWith(".jpeg") ||
+    value.endsWith(".webp") ||
+    value.endsWith(".gif")
+  ) {
+    return "image";
+  }
+
+  return "other";
+}
+
+function getItemFiles(item: {
+  files?: Array<{ url: string; name: string; kind?: "model" | "image" | "other" }>;
+  fileUrl?: string;
+  fileName?: string;
+  imageUrl?: string;
+}): ItemFile[] {
+  const entries: ItemFile[] = [];
+
+  for (const file of item.files || []) {
+    if (!file?.url) continue;
+    entries.push({
+      url: file.url,
+      name: file.name || "file",
+      kind: file.kind || getFileKindFromName(file.name),
+    });
+  }
+
+  if (item.fileUrl) {
+    const exists = entries.some((file) => file.url === item.fileUrl);
+    if (!exists) {
+      entries.push({
+        url: item.fileUrl,
+        name: item.fileName || "model",
+        kind: "model",
+      });
+    }
+  }
+
+  if (item.imageUrl) {
+    const exists = entries.some((file) => file.url === item.imageUrl);
+    if (!exists) {
+      entries.push({
+        url: item.imageUrl,
+        name: "image",
+        kind: "image",
+      });
+    }
+  }
+
+  return entries;
+}
+
+function getFileTypeBadgeClass(kind: ItemFile["kind"]): string {
+  if (kind === "model") return "bg-indigo-50 text-indigo-700 border-indigo-200";
+  if (kind === "image") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  return "bg-slate-50 text-slate-700 border-slate-200";
+}
+
+function getFileTypeBadgeLabel(
+  kind: ItemFile["kind"],
+  t: (key: string) => string,
+): string {
+  if (kind === "model") return t("admin.orderDetail.fileTypeModel");
+  if (kind === "image") return t("admin.orderDetail.fileTypeImage");
+  return t("admin.orderDetail.fileTypeFile");
+}
+
 export default function OrderPricingPanel({
   order,
   t,
@@ -62,11 +150,13 @@ export default function OrderPricingPanel({
         <p className="admin-note">{t("admin.orderDetail.noItemsMessage")}</p>
       ) : (
         <div className="space-y-5">
-          {order.items.map((item, idx) => (
-            <div
-              key={item.id || item.fileName}
-              className="rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-            >
+          {order.items.map((item, idx) => {
+            const itemFiles = getItemFiles(item);
+            return (
+              <div
+                key={item.id || item.fileName}
+                className="rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+              >
               {/* Header with item number */}
               <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
                 <h3 className="font-bold text-[#1b2b25] text-sm">
@@ -84,27 +174,47 @@ export default function OrderPricingPanel({
                   <p className="text-sm font-medium text-[#1b2b25] break-all">
                     {item.fileName ?? item.fileUrl ?? "—"}
                   </p>
-                  {item.fileUrl &&
+                  {itemFiles.length > 0 &&
                     (isCancelledOrder ? (
                       <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
                         {t("admin.orderDetail.filesRemovedDueCancellation")}
                       </p>
                     ) : (
-                      <div className="mt-1 flex items-center gap-3">
-                        <a
-                          href={resolveAssetUrl(item.fileUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline inline-block"
-                        >
-                          ↓ {t("admin.orderDetail.downloadFile")}
-                        </a>
-                        <Link
-                          to={`/admin/orders/${order.id}/models/${idx}`}
-                          className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
-                        >
-                          {t("admin.orderDetail.viewModel")}
-                        </Link>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {itemFiles.map((file, fileIndex) => {
+                          const isStl = file.url.toLowerCase().includes(".stl");
+                          return (
+                            <div
+                              key={`${file.url}-${fileIndex}`}
+                              className="inline-flex items-center gap-2 rounded-lg border border-[#d9e4df] bg-[#fbfefd] px-2 py-1"
+                            >
+                              <span
+                                className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getFileTypeBadgeClass(file.kind)}`}
+                              >
+                                {getFileTypeBadgeLabel(file.kind, t)}
+                              </span>
+                              <span className="max-w-[180px] truncate text-xs text-[#2f4a42]">
+                                {file.name}
+                              </span>
+                              <a
+                                href={resolveAssetUrl(file.url)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline"
+                              >
+                                ↓ {t("admin.orderDetail.downloadFile")}
+                              </a>
+                              {isStl && (
+                                <Link
+                                  to={`/admin/orders/${order.id}/models/${idx}?file=${fileIndex}`}
+                                  className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+                                >
+                                  {t("admin.orderDetail.viewModel")}
+                                </Link>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     ))}
                 </div>
@@ -192,8 +302,9 @@ export default function OrderPricingPanel({
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
 

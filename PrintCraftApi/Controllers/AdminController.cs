@@ -541,6 +541,7 @@ public class AdminController : ControllerBase
     {
         var order = await _db.Orders
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .Include(o => o.Payments)
             .Include(o => o.Notes)
             .FirstOrDefaultAsync(o => o.Id == id);

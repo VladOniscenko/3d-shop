@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Download } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Order, OrderItem } from "../types";
 import api from "../services/api";
 import Navbar from "./Navbar";
@@ -25,6 +25,7 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { id, itemIndex } = useParams();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
@@ -37,8 +38,39 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
     return order.items[parsedItemIndex] ?? null;
   }, [order, parsedItemIndex]);
 
-  const modelUrl = resolveAssetUrl(selectedItem?.fileUrl);
-  const modelExt = getFileExtension(selectedItem?.fileUrl);
+  const itemFiles = useMemo(() => {
+    if (!selectedItem) return [] as Array<{ url: string; name: string; kind?: string }>;
+
+    const fromItem = (selectedItem.files || []).filter((file) => !!file?.url);
+    const merged = [...fromItem];
+
+    if (selectedItem.fileUrl && !merged.some((f) => f.url === selectedItem.fileUrl)) {
+      merged.push({
+        url: selectedItem.fileUrl,
+        name: selectedItem.fileName || t("modelViewer.unnamed"),
+        kind: "model",
+      });
+    }
+
+    if (selectedItem.imageUrl && !merged.some((f) => f.url === selectedItem.imageUrl)) {
+      merged.push({
+        url: selectedItem.imageUrl,
+        name: "image",
+        kind: "image",
+      });
+    }
+
+    return merged;
+  }, [selectedItem, t]);
+
+  const requestedFileIndex = Number.parseInt(searchParams.get("file") ?? "", 10);
+  const selectedFileIndex = Number.isNaN(requestedFileIndex)
+    ? 0
+    : Math.min(Math.max(requestedFileIndex, 0), Math.max(itemFiles.length - 1, 0));
+  const selectedFile = itemFiles[selectedFileIndex] ?? null;
+
+  const modelUrl = resolveAssetUrl(selectedFile?.url || selectedItem?.fileUrl);
+  const modelExt = getFileExtension(selectedFile?.url || selectedItem?.fileUrl);
   const canPreview = modelExt === "stl" && !!modelUrl;
 
   useEffect(() => {
@@ -104,13 +136,34 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
               {t("modelViewer.orderItem")} #{parsedItemIndex + 1}
             </p>
             <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight break-all">
-              {selectedItem.fileName || t("modelViewer.unnamed")}
+              {selectedFile?.name || selectedItem.fileName || t("modelViewer.unnamed")}
             </h1>
             <p className="mt-2 text-emerald-50/85 text-sm">
               {selectedItem.material} · {selectedItem.color} · x
               {selectedItem.count || 1}
             </p>
           </div>
+
+          {itemFiles.length > 1 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {itemFiles.map((file, index) => {
+                const isActive = index === selectedFileIndex;
+                return (
+                  <Link
+                    key={`${file.url}-${index}`}
+                    to={`${mode === "admin" ? `/admin/orders/${id}/models/${parsedItemIndex}` : `/orders/${id}/models/${parsedItemIndex}`}?file=${index}`}
+                    className={`rounded-lg border px-3 py-1 text-xs font-semibold ${
+                      isActive
+                        ? "border-white/60 bg-white/20 text-white"
+                        : "border-white/20 bg-white/5 text-emerald-50/90 hover:bg-white/15"
+                    }`}
+                  >
+                    {file.name || t("modelViewer.unnamed")}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
           <div className="relative w-full h-[460px] sm:h-[560px] rounded-2xl border border-white/15 bg-[#0e3128]/35 backdrop-blur-sm overflow-hidden">
             {canPreview ? (
