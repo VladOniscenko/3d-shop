@@ -101,11 +101,8 @@ public class UploadController : ControllerBase
         if (string.IsNullOrWhiteSpace(extension))
             return BadRequest(new { message = "Unsupported file type." });
 
-        // Check if the current user is an admin
-        bool isAdmin = User.IsInRole("admin");
-
-        // If they are an admin, let them use the big list. Otherwise, restrict them to the small list.
-        var validExtensions = isAdmin ? AllowedExtensions : ModelExtensions;
+        // Allow both model files and reference images for all quote flows.
+        var validExtensions = AllowedExtensions;
 
         if (!validExtensions.Contains(extension))
             return BadRequest(new { message = "Unsupported file type." });
@@ -233,8 +230,8 @@ public class UploadController : ControllerBase
             return BadRequest(new { message = "Invalid file name." });
 
         var extension = Path.GetExtension(normalizedFileName);
-        if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
-            return BadRequest(new { message = "Only model files can be deleted from this endpoint." });
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+            return BadRequest(new { message = "Only uploaded model or image files can be deleted from this endpoint." });
 
         var linkedToProduct = _db.Products
             .AsNoTracking()
@@ -313,7 +310,11 @@ public class UploadController : ControllerBase
             .Any(item => string.Equals(
                 ExtractFileNameFromAssetUrl(item.FileUrl),
                 fileName,
-                StringComparison.OrdinalIgnoreCase));
+                StringComparison.OrdinalIgnoreCase)
+                || string.Equals(
+                    ExtractFileNameFromAssetUrl(item.ImageUrl),
+                    fileName,
+                    StringComparison.OrdinalIgnoreCase));
 
         if (linkedToAnyOrder)
             return Conflict(new { message = "File is linked to an order and cannot be deleted." });
@@ -364,8 +365,11 @@ public class UploadController : ControllerBase
             .AsNoTracking()
             .Include(o => o.Items)
             .AsEnumerable()
-            .SelectMany(order => order.Items)
-            .Select(item => ExtractFileNameFromAssetUrl(item.FileUrl))
+            .SelectMany(order => order.Items.SelectMany(item => new[]
+            {
+                ExtractFileNameFromAssetUrl(item.FileUrl),
+                ExtractFileNameFromAssetUrl(item.ImageUrl),
+            }))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -379,7 +383,7 @@ public class UploadController : ControllerBase
         foreach (var fileName in fileNames)
         {
             var extension = Path.GetExtension(fileName);
-            if (string.IsNullOrWhiteSpace(extension) || !ModelExtensions.Contains(extension))
+            if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
                 continue;
 
             if (!IsOwnedTempUpload(fileName, ownerKey))

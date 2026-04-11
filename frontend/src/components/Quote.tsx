@@ -22,7 +22,16 @@ import { useNotify } from "../context/NotifyContext";
 import ModelDiscoveryCards from "./ModelDiscoveryCards";
 import { getOrCreateVisitorId } from "../services/api";
 
-const ALLOWED_UPLOAD_ACCEPT = ".stl,.obj,.3mf,.step,.stp";
+const ALLOWED_UPLOAD_ACCEPT =
+  ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
+const MODEL_EXTENSIONS = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
+function getFileExtension(fileName: string): string {
+  const dotIndex = fileName.lastIndexOf(".");
+  if (dotIndex < 0) return "";
+  return fileName.slice(dotIndex).toLowerCase();
+}
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -89,7 +98,7 @@ export default function Quote() {
     setIsUploading(true);
     let failedCount = 0;
     let firstErrorMessage: string | null = null;
-    const uploadedItems: OrderItem[] = [];
+    const uploadedEntries: Array<{ file: File; url: string; isImage: boolean }> = [];
 
     try {
       for (const file of selectedFiles) {
@@ -99,25 +108,17 @@ export default function Quote() {
         try {
           const res = await api.post("/upload", formData);
 
-          const defaultMat = finalMaterials[0];
-          const defaultColor = getColorsForMaterial(defaultMat)[0];
-
-          const newItem: OrderItem = {
-            fileUrl: res.data.url,
-            fileName: file.name,
-            notes: "",
-            imageUrl: "",
-            material: defaultMat,
-            color: defaultColor,
-            price: 0,
-            count: 1,
-          };
+          const extension = getFileExtension(file.name);
+          const isImage = IMAGE_EXTENSIONS.has(extension);
 
           if (typeof res.data?.url === "string" && res.data.url.length > 0) {
             uploadedFileUrlsRef.current.add(res.data.url);
+            uploadedEntries.push({
+              file,
+              url: res.data.url,
+              isImage,
+            });
           }
-
-          uploadedItems.push(newItem);
         } catch (err: any) {
           failedCount += 1;
 
@@ -138,12 +139,79 @@ export default function Quote() {
         }
       }
 
-      if (uploadedItems.length > 0) {
-        setItems((prev) => [...prev, ...uploadedItems]);
+      if (uploadedEntries.length > 0) {
+        setItems((prev) => {
+          const defaultMat = finalMaterials[0];
+          const defaultColor = getColorsForMaterial(defaultMat)[0];
+
+          const nextItems = [...prev];
+          const modelEntries = uploadedEntries.filter((entry) => !entry.isImage);
+          const imageEntries = uploadedEntries.filter((entry) => entry.isImage);
+          const newModelItemIndexes: number[] = [];
+
+          for (const entry of modelEntries) {
+            const newItem: OrderItem = {
+              fileUrl: entry.url,
+              fileName: entry.file.name,
+              notes: "",
+              imageUrl: "",
+              material: defaultMat,
+              color: defaultColor,
+              price: 0,
+              count: 1,
+            };
+
+            nextItems.push(newItem);
+            newModelItemIndexes.push(nextItems.length - 1);
+          }
+
+          for (const entry of imageEntries) {
+            const pendingNewModelIndex = newModelItemIndexes.find(
+              (index) => !nextItems[index].imageUrl,
+            );
+
+            if (pendingNewModelIndex !== undefined) {
+              nextItems[pendingNewModelIndex] = {
+                ...nextItems[pendingNewModelIndex],
+                imageUrl: entry.url,
+              };
+              continue;
+            }
+
+            const existingModelIndex =
+              nextItems.findLastIndex(
+                (item) =>
+                  !!item.fileUrl &&
+                  MODEL_EXTENSIONS.has(getFileExtension(item.fileName || "")) &&
+                  !item.imageUrl,
+              );
+
+            if (existingModelIndex >= 0) {
+              nextItems[existingModelIndex] = {
+                ...nextItems[existingModelIndex],
+                imageUrl: entry.url,
+              };
+              continue;
+            }
+
+            nextItems.push({
+              fileUrl: "",
+              fileName: entry.file.name,
+              notes: "",
+              imageUrl: entry.url,
+              material: defaultMat,
+              color: defaultColor,
+              price: 0,
+              count: 1,
+            });
+          }
+
+          return nextItems;
+        });
       }
 
       if (failedCount > 0) {
-        const hasSuccessfulUploads = uploadedItems.length > 0;
+        const hasSuccessfulUploads = uploadedEntries.length > 0;
         if (hasSuccessfulUploads) {
           notifyError(
             `${t("quote.uploadPartialFailed")} (${failedCount}/${selectedFiles.length})`,
@@ -204,6 +272,10 @@ export default function Quote() {
     if (removed?.fileUrl) {
       void deleteTempUpload(removed.fileUrl);
     }
+
+    if (removed?.imageUrl) {
+      void deleteTempUpload(removed.imageUrl);
+    }
   };
 
   const addTextOnlyItem = () => {
@@ -258,8 +330,8 @@ export default function Quote() {
     }
 
     // Validate each item has either a file or notes
-    if (items.some((item) => !item.fileUrl && !item.notes)) {
-      notifyError("Each item must have either a file or description.");
+    if (items.some((item) => !item.fileUrl && !item.imageUrl && !item.notes)) {
+      notifyError("Each item must have either a model, reference image, or description.");
       return;
     }
 

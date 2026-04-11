@@ -28,8 +28,7 @@ export default function OrderTimeline({
 }: OrderTimelineProps) {
   const normalizedStatus = normalizeOrderStatus(currentStatus);
   const shippingKey =
-    normalizedStatus === "shipped" ||
-    normalizedStatus === "sent"
+    normalizedStatus === "shipped" || normalizedStatus === "sent"
       ? getOrderStatusTranslationKey(normalizedStatus)
       : "orderStatus.sent";
   const terminalState = getOrderTerminalState(currentStatus);
@@ -69,12 +68,6 @@ export default function OrderTimeline({
           title={t("orderDetail.printing")}
           date={statusStep >= 4 ? reachedDate : t("orderDetail.pending")}
           active={statusStep >= 4}
-        />
-        <TimelineItem
-          icon={<CheckCircle2 size={16} />}
-          title={t("orderDetail.completed")}
-          date={statusStep >= 5 ? reachedDate : t("orderDetail.pending")}
-          active={statusStep >= 5}
         />
         <TimelineItem
           icon={<Truck size={16} />}

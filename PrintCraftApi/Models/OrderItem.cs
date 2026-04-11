@@ -5,6 +5,7 @@ public class OrderItem
     public Guid OrderId { get; set; }
 
     public string? FileUrl { get; set; }
+    public string? ImageUrl { get; set; }
     public string? fileName { get; set; }
     public string? Notes { get; set; }
     public string Material { get; set; } = "PLA";

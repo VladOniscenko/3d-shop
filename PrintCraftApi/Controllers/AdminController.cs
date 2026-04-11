@@ -825,6 +825,11 @@ public class AdminController : ControllerBase
             {
                 DeleteUploadFileIfExists(item.FileUrl);
             }
+
+            if (!string.IsNullOrEmpty(item.ImageUrl))
+            {
+                DeleteUploadFileIfExists(item.ImageUrl);
+            }
         }
 
         _db.Orders.Remove(order);

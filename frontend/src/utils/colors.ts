@@ -1,7 +1,15 @@
-// utils/colors.ts
 export const getColorStyle = (color: string) => {
   if (!color || color.toLowerCase() === "transparent") {
     return { backgroundColor: "transparent", color: "#111827" };
+  }
+
+  if (color.includes(",")) {
+    const colors = color.split(",").map((c) => c.trim());
+
+    return {
+      background: `linear-gradient(90deg, ${colors.join(", ")})`,
+      color: "#111827", // fixed text color for readability
+    };
   }
 
   const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(color);
@@ -9,8 +17,8 @@ export const getColorStyle = (color: string) => {
     return { backgroundColor: "#D1FAE5", color: "#111827" }; // fallback
   }
 
-  // Compute text color for contrast
   let r: number, g: number, b: number;
+
   if (color.length === 4) {
     r = parseInt(color[1] + color[1], 16);
     g = parseInt(color[2] + color[2], 16);
@@ -24,5 +32,8 @@ export const getColorStyle = (color: string) => {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   const textColor = yiq >= 128 ? "#111827" : "#FFFFFF";
 
-  return { backgroundColor: color, color: textColor };
+  return {
+    backgroundColor: color,
+    color: textColor,
+  };
 };
