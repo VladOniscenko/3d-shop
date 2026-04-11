@@ -69,6 +69,7 @@ public class OrdersController : ControllerBase
         var orders = await _db.Orders
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .Include(o => o.Payments)
             .Include(o => o.Notes)
             .OrderByDescending(o => o.CreatedAt)
@@ -92,6 +93,7 @@ public class OrdersController : ControllerBase
 
         var order = await _db.Orders
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .Include(o => o.Payments)
             .Include(o => o.Notes)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
@@ -221,18 +223,54 @@ public class OrdersController : ControllerBase
             AddressLine1 = string.Empty,
             City = string.Empty,
             PostalCode = string.Empty,
-            Items = request.Items.Select(item => new OrderItem
+            Items = request.Items.Select(item =>
             {
-                Id = Guid.NewGuid(),
-                OrderId = Guid.Empty,
-                FileUrl = string.IsNullOrWhiteSpace(item.FileUrl) ? null : item.FileUrl.Trim(),
-                ImageUrl = string.IsNullOrWhiteSpace(item.ImageUrl) ? null : item.ImageUrl.Trim(),
-                fileName = string.IsNullOrWhiteSpace(item.FileName) ? null : item.FileName.Trim(),
-                Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
-                Material = string.IsNullOrWhiteSpace(item.Material) ? "Custom" : item.Material.Trim(),
-                Color = string.IsNullOrWhiteSpace(item.Color) ? "Custom" : item.Color.Trim(),
-                Count = item.Count,
-                Price = 0,
+                var files = (item.Files ?? new List<QuoteItemFileRequest>())
+                    .Where(f => !string.IsNullOrWhiteSpace(f.Url))
+                    .Select(f => new QuoteItemFileRequest(
+                        f.Url.Trim(),
+                        string.IsNullOrWhiteSpace(f.Name) ? string.Empty : f.Name.Trim(),
+                        string.IsNullOrWhiteSpace(f.Kind) ? "other" : f.Kind.Trim().ToLowerInvariant()))
+                    .ToList();
+
+                var firstModelFile = files.FirstOrDefault(f => string.Equals(f.Kind, "model", StringComparison.OrdinalIgnoreCase));
+                var firstImageFile = files.FirstOrDefault(f => string.Equals(f.Kind, "image", StringComparison.OrdinalIgnoreCase));
+                var fallbackFile = files.FirstOrDefault();
+
+                var fileUrl = firstModelFile?.Url
+                    ?? (string.IsNullOrWhiteSpace(item.FileUrl) ? null : item.FileUrl.Trim())
+                    ?? fallbackFile?.Url;
+
+                var imageUrl = firstImageFile?.Url
+                    ?? (string.IsNullOrWhiteSpace(item.ImageUrl) ? null : item.ImageUrl.Trim());
+
+                var fileName = firstModelFile?.Name
+                    ?? (string.IsNullOrWhiteSpace(item.FileName) ? null : item.FileName.Trim())
+                    ?? fallbackFile?.Name;
+
+                var orderItem = new OrderItem
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = Guid.Empty,
+                    FileUrl = fileUrl,
+                    ImageUrl = imageUrl,
+                    fileName = fileName,
+                    Notes = string.IsNullOrWhiteSpace(item.Notes) ? null : item.Notes.Trim(),
+                    Material = string.IsNullOrWhiteSpace(item.Material) ? "Custom" : item.Material.Trim(),
+                    Color = string.IsNullOrWhiteSpace(item.Color) ? "Custom" : item.Color.Trim(),
+                    Count = item.Count,
+                    Price = 0,
+                    Attachments = files.Select(f => new OrderItemAttachment
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderItemId = Guid.Empty,
+                        Url = f.Url,
+                        FileName = f.Name,
+                        Kind = f.Kind,
+                    }).ToList(),
+                };
+
+                return orderItem;
             }).ToList(),
         };
 
@@ -241,6 +279,13 @@ public class OrdersController : ControllerBase
             foreach (var item in order.Items)
             {
                 item.OrderId = order.Id;
+                if (item.Attachments != null)
+                {
+                    foreach (var attachment in item.Attachments)
+                    {
+                        attachment.OrderItemId = item.Id;
+                    }
+                }
             }
         }
 
@@ -724,7 +769,14 @@ public record QuoteItemRequest(
     string? Notes,
     string? Material,
     string? Color,
-    int Count
+    int Count,
+    List<QuoteItemFileRequest>? Files
+);
+
+public record QuoteItemFileRequest(
+    string Url,
+    string Name,
+    string? Kind
 );
 
 public record SaveQuoteShippingRequest(

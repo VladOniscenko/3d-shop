@@ -83,9 +83,16 @@ export interface OrderItem {
   imageUrl: string;
   fileUrl?: string;
   fileName: string;
+  files?: QuoteItemFile[];
   notes?: string;
   material: string;
   color: string;
   price: number;
   count: number;
+}
+
+export interface QuoteItemFile {
+  url: string;
+  name: string;
+  kind?: "model" | "image" | "other";
 }

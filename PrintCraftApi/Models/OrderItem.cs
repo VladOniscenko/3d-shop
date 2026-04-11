@@ -12,4 +12,5 @@ public class OrderItem
     public string Color { get; set; } = "Black";
     public int Count { get; set; }
     public double Price { get; set; } = 0;
+    public List<OrderItemAttachment> Attachments { get; set; } = new();
 }

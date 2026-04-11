@@ -92,13 +92,21 @@ export default function Quote() {
     return colors.length > 0 ? colors : finalColors;
   };
 
-  const uploadSelectedFiles = async (selectedFiles: File[]) => {
+  const uploadSelectedFilesForItem = async (
+    selectedFiles: File[],
+    itemIndex: number,
+  ) => {
     if (selectedFiles.length === 0) return;
 
     setIsUploading(true);
     let failedCount = 0;
     let firstErrorMessage: string | null = null;
-    const uploadedEntries: Array<{ file: File; url: string; isImage: boolean }> = [];
+    const uploadedEntries: Array<{
+      file: File;
+      url: string;
+      isImage: boolean;
+      isModel: boolean;
+    }> = [];
 
     try {
       for (const file of selectedFiles) {
@@ -110,6 +118,7 @@ export default function Quote() {
 
           const extension = getFileExtension(file.name);
           const isImage = IMAGE_EXTENSIONS.has(extension);
+          const isModel = MODEL_EXTENSIONS.has(extension);
 
           if (typeof res.data?.url === "string" && res.data.url.length > 0) {
             uploadedFileUrlsRef.current.add(res.data.url);
@@ -117,6 +126,7 @@ export default function Quote() {
               file,
               url: res.data.url,
               isImage,
+              isModel,
             });
           }
         } catch (err: any) {
@@ -141,70 +151,32 @@ export default function Quote() {
 
       if (uploadedEntries.length > 0) {
         setItems((prev) => {
-          const defaultMat = finalMaterials[0];
-          const defaultColor = getColorsForMaterial(defaultMat)[0];
-
           const nextItems = [...prev];
-          const modelEntries = uploadedEntries.filter((entry) => !entry.isImage);
-          const imageEntries = uploadedEntries.filter((entry) => entry.isImage);
-          const newModelItemIndexes: number[] = [];
+          if (!nextItems[itemIndex]) return nextItems;
 
-          for (const entry of modelEntries) {
-            const newItem: OrderItem = {
-              fileUrl: entry.url,
-              fileName: entry.file.name,
-              notes: "",
-              imageUrl: "",
-              material: defaultMat,
-              color: defaultColor,
-              price: 0,
-              count: 1,
-            };
+          const existingFiles = nextItems[itemIndex].files || [];
+          const newFiles = uploadedEntries.map((entry) => ({
+            url: entry.url,
+            name: entry.file.name,
+            kind: (entry.isModel
+              ? "model"
+              : entry.isImage
+                ? "image"
+                : "other") as "model" | "image" | "other",
+          }));
 
-            nextItems.push(newItem);
-            newModelItemIndexes.push(nextItems.length - 1);
-          }
+          const mergedFiles = [...existingFiles, ...newFiles];
+          const firstModel = mergedFiles.find((file) => file.kind === "model");
+          const firstImage = mergedFiles.find((file) => file.kind === "image");
+          const firstAny = mergedFiles[0];
 
-          for (const entry of imageEntries) {
-            const pendingNewModelIndex = newModelItemIndexes.find(
-              (index) => !nextItems[index].imageUrl,
-            );
-
-            if (pendingNewModelIndex !== undefined) {
-              nextItems[pendingNewModelIndex] = {
-                ...nextItems[pendingNewModelIndex],
-                imageUrl: entry.url,
-              };
-              continue;
-            }
-
-            const existingModelIndex =
-              nextItems.findLastIndex(
-                (item) =>
-                  !!item.fileUrl &&
-                  MODEL_EXTENSIONS.has(getFileExtension(item.fileName || "")) &&
-                  !item.imageUrl,
-              );
-
-            if (existingModelIndex >= 0) {
-              nextItems[existingModelIndex] = {
-                ...nextItems[existingModelIndex],
-                imageUrl: entry.url,
-              };
-              continue;
-            }
-
-            nextItems.push({
-              fileUrl: "",
-              fileName: entry.file.name,
-              notes: "",
-              imageUrl: entry.url,
-              material: defaultMat,
-              color: defaultColor,
-              price: 0,
-              count: 1,
-            });
-          }
+          nextItems[itemIndex] = {
+            ...nextItems[itemIndex],
+            files: mergedFiles,
+            fileUrl: firstModel?.url || firstAny?.url || "",
+            fileName: firstModel?.name || firstAny?.name || "",
+            imageUrl: firstImage?.url || nextItems[itemIndex].imageUrl || "",
+          };
 
           return nextItems;
         });
@@ -225,9 +197,12 @@ export default function Quote() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    itemIndex: number,
+  ) => {
     const selectedFiles = Array.from(e.target.files ?? []);
-    await uploadSelectedFiles(selectedFiles);
+    await uploadSelectedFilesForItem(selectedFiles, itemIndex);
     e.target.value = "";
   };
 
@@ -243,13 +218,16 @@ export default function Quote() {
     setIsDragOver(false);
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (
+    e: React.DragEvent<HTMLDivElement>,
+    itemIndex: number,
+  ) => {
     e.preventDefault();
     setIsDragOver(false);
     if (isUploading) return;
 
     const droppedFiles = Array.from(e.dataTransfer.files ?? []);
-    await uploadSelectedFiles(droppedFiles);
+    await uploadSelectedFilesForItem(droppedFiles, itemIndex);
   };
 
   const deleteTempUpload = async (fileUrl?: string | null) => {
@@ -276,6 +254,14 @@ export default function Quote() {
     if (removed?.imageUrl) {
       void deleteTempUpload(removed.imageUrl);
     }
+
+    if (Array.isArray(removed?.files)) {
+      for (const file of removed.files) {
+        if (!file?.url) continue;
+        if (file.url === removed.fileUrl || file.url === removed.imageUrl) continue;
+        void deleteTempUpload(file.url);
+      }
+    }
   };
 
   const addTextOnlyItem = () => {
@@ -287,6 +273,7 @@ export default function Quote() {
       fileName: "",
       notes: "",
       imageUrl: "",
+      files: [],
       material: defaultMat,
       color: defaultColor,
       price: 0,
@@ -329,9 +316,19 @@ export default function Quote() {
       return;
     }
 
-    // Validate each item has either a file or notes
-    if (items.some((item) => !item.fileUrl && !item.imageUrl && !item.notes)) {
-      notifyError("Each item must have either a model, reference image, or description.");
+    // Validate each item has either uploaded files or description
+    if (
+      items.some(
+        (item) =>
+          (!item.files || item.files.length === 0) &&
+          !item.fileUrl &&
+          !item.imageUrl &&
+          !item.notes,
+      )
+    ) {
+      notifyError(
+        "Each item must have either a model, reference image, or description.",
+      );
       return;
     }
 
@@ -347,7 +344,16 @@ export default function Quote() {
         guestName?: string;
         guestEmail?: string;
         guestPhone?: string;
-      } = { items };
+      } = {
+        items: items.map((item) => ({
+          ...item,
+          files: (item.files || []).map((file) => ({
+            url: file.url,
+            name: file.name,
+            kind: file.kind || "other",
+          })),
+        })),
+      };
 
       if (!isLoggedIn) {
         payload.guestName = guestName.trim();
@@ -513,29 +519,13 @@ export default function Quote() {
                   {t("quote.models")}
                 </h3>
                 <div className="flex gap-2">
-                  <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center gap-2">
-                    {isUploading ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      <Plus size={16} />
-                    )}
-                    {t("quote.addFile")}
-                    <input
-                      type="file"
-                      multiple
-                      accept={ALLOWED_UPLOAD_ACCEPT}
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      disabled={isUploading}
-                    />
-                  </label>
                   <button
                     type="button"
                     onClick={addTextOnlyItem}
                     className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    {t("quote.addDescription")}
+                    {t("quote.addItem")}
                   </button>
                 </div>
               </div>
@@ -550,7 +540,9 @@ export default function Quote() {
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                  }}
                   className={`border-2 border-dashed rounded-xl py-12 text-center transition-colors ${
                     isDragOver
                       ? "border-emerald-400 bg-emerald-50/50"
@@ -560,7 +552,7 @@ export default function Quote() {
                   <Upload className="mx-auto text-gray-300 mb-2" size={32} />
                   <p className="text-gray-400">{t("quote.noFiles")}</p>
                   <p className="mt-2 text-xs text-[#5f736d]">
-                    {t("quote.dragDropHint")}
+                    {t("quote.addItem")}
                   </p>
                 </div>
               ) : (
@@ -569,19 +561,53 @@ export default function Quote() {
                     <div
                       key={idx}
                       className="p-5 border border-gray-200 rounded-xl bg-gray-50/50"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, idx)}
                     >
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-bold text-gray-800 truncate max-w-[300px]">
                           {item.fileName || t("quote.textDescription")}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(idx)}
-                          className="text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                            {isUploading ? (
+                              <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                              <Plus size={14} />
+                            )}
+                            {t("quote.addFile")}
+                            <input
+                              type="file"
+                              multiple
+                              accept={ALLOWED_UPLOAD_ACCEPT}
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, idx)}
+                              disabled={isUploading}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(idx)}
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
+
+                      {(item.files || []).length > 0 && (
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {(item.files || []).map((file, fileIndex) => (
+                            <span
+                              key={`${file.url}-${fileIndex}`}
+                              className="inline-flex items-center rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs text-[#2e423d]"
+                            >
+                              {file.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="space-y-1">

@@ -622,7 +622,10 @@ public class AdminController : ControllerBase
     [HttpPut("orders/{id:guid}")]
     public async Task<IActionResult> UpdateOrder([FromRoute] Guid id, [FromBody] Order updated)
     {
-        var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null)
             return NotFound(new { message = "Order not found" });
 
@@ -829,6 +832,14 @@ public class AdminController : ControllerBase
             if (!string.IsNullOrEmpty(item.ImageUrl))
             {
                 DeleteUploadFileIfExists(item.ImageUrl);
+            }
+
+            foreach (var attachment in item.Attachments)
+            {
+                if (!string.IsNullOrWhiteSpace(attachment.Url))
+                {
+                    DeleteUploadFileIfExists(attachment.Url);
+                }
             }
         }
 

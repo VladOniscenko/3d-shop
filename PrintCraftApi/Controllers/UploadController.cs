@@ -305,6 +305,7 @@ public class UploadController : ControllerBase
         var linkedToAnyOrder = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .AsEnumerable()
             .SelectMany(order => order.Items)
             .Any(item => string.Equals(
@@ -314,7 +315,11 @@ public class UploadController : ControllerBase
                 || string.Equals(
                     ExtractFileNameFromAssetUrl(item.ImageUrl),
                     fileName,
-                    StringComparison.OrdinalIgnoreCase));
+                    StringComparison.OrdinalIgnoreCase)
+                || item.Attachments.Any(a => string.Equals(
+                    ExtractFileNameFromAssetUrl(a.Url),
+                    fileName,
+                    StringComparison.OrdinalIgnoreCase)));
 
         if (linkedToAnyOrder)
             return Conflict(new { message = "File is linked to an order and cannot be deleted." });
@@ -364,12 +369,13 @@ public class UploadController : ControllerBase
         var linkedOrderFileNames = _db.Orders
             .AsNoTracking()
             .Include(o => o.Items)
+            .ThenInclude(i => i.Attachments)
             .AsEnumerable()
             .SelectMany(order => order.Items.SelectMany(item => new[]
             {
                 ExtractFileNameFromAssetUrl(item.FileUrl),
                 ExtractFileNameFromAssetUrl(item.ImageUrl),
-            }))
+            }.Concat(item.Attachments.Select(a => ExtractFileNameFromAssetUrl(a.Url)))))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

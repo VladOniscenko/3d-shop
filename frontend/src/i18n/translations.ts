@@ -810,6 +810,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.materialPlaceholder": "PLA, PETG, ABS, Nylon...",
     "quote.colorPlaceholder": "Black, White, Red, Transparent...",
     "quote.addDescription": "Add Description",
+    "quote.addItem": "Add Item",
 
     // FAQ
     "faq.title": "Frequently Asked Questions",
@@ -1979,6 +1980,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.materialPlaceholder": "PLA, PETG, ABS, Nylon...",
     "quote.colorPlaceholder": "Zwart, Wit, Rood, Transparant...",
     "quote.addDescription": "Beschrijving Toevoegen",
+    "quote.addItem": "Item Toevoegen",
 
     // FAQ
     "faq.title": "Veelgestelde Vragen",
