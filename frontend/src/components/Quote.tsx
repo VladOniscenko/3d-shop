@@ -31,6 +31,7 @@ const MODEL_EXTENSIONS = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
 const MAX_FILES_PER_ITEM = 3;
 const MAX_DIMENSION_MM = 256;
+const SCALE_STEP = 0.01;
 
 function getFileExtension(fileName: string): string {
   const dotIndex = fileName.lastIndexOf(".");
@@ -42,7 +43,7 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function hasDimensionValue(value?: number) {
+function hasDimensionValue(value?: number): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
@@ -64,6 +65,16 @@ function formatDimensions(
 
 function roundMillimeters(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+function getMaximumScaleForBase(x: number, y: number, z: number): number {
+  if (x <= 0 || y <= 0 || z <= 0) return 1;
+  return Math.min(MAX_DIMENSION_MM / x, MAX_DIMENSION_MM / y, MAX_DIMENSION_MM / z);
+}
+
+function clampScale(scale: number, maxScale: number): number {
+  const safeMaxScale = Math.max(0, maxScale);
+  return Math.max(0, Math.min(scale, safeMaxScale));
 }
 
 async function detectStlDimensions(file: File): Promise<{
@@ -294,9 +305,50 @@ export default function Quote() {
             !hasDimensionValue(nextItems[itemIndex].dimensionY) &&
             !hasDimensionValue(nextItems[itemIndex].dimensionZ)
               ? {
-                  dimensionX: detectedDimensions.x,
-                  dimensionY: detectedDimensions.y,
-                  dimensionZ: detectedDimensions.z,
+                  dimensionBaseX: detectedDimensions.x,
+                  dimensionBaseY: detectedDimensions.y,
+                  dimensionBaseZ: detectedDimensions.z,
+                  dimensionScale: clampScale(
+                    1,
+                    getMaximumScaleForBase(
+                      detectedDimensions.x,
+                      detectedDimensions.y,
+                      detectedDimensions.z,
+                    ),
+                  ),
+                  dimensionX: roundMillimeters(
+                    detectedDimensions.x *
+                      clampScale(
+                        1,
+                        getMaximumScaleForBase(
+                          detectedDimensions.x,
+                          detectedDimensions.y,
+                          detectedDimensions.z,
+                        ),
+                      ),
+                  ),
+                  dimensionY: roundMillimeters(
+                    detectedDimensions.y *
+                      clampScale(
+                        1,
+                        getMaximumScaleForBase(
+                          detectedDimensions.x,
+                          detectedDimensions.y,
+                          detectedDimensions.z,
+                        ),
+                      ),
+                  ),
+                  dimensionZ: roundMillimeters(
+                    detectedDimensions.z *
+                      clampScale(
+                        1,
+                        getMaximumScaleForBase(
+                          detectedDimensions.x,
+                          detectedDimensions.y,
+                          detectedDimensions.z,
+                        ),
+                      ),
+                  ),
                 }
               : {}),
           };
@@ -410,6 +462,17 @@ export default function Quote() {
         fileUrl: firstModel?.url || firstAny?.url || "",
         fileName: firstModel?.name || firstAny?.name || "",
         imageUrl: firstImage?.url || "",
+        ...((removed?.kind === "model" && !firstModel)
+          ? {
+              dimensionX: undefined,
+              dimensionY: undefined,
+              dimensionZ: undefined,
+              dimensionBaseX: undefined,
+              dimensionBaseY: undefined,
+              dimensionBaseZ: undefined,
+              dimensionScale: undefined,
+            }
+          : {}),
       };
 
       if (removed?.url) {
@@ -438,6 +501,13 @@ export default function Quote() {
         fileUrl: "",
         fileName: "",
         imageUrl: "",
+        dimensionX: undefined,
+        dimensionY: undefined,
+        dimensionZ: undefined,
+        dimensionBaseX: undefined,
+        dimensionBaseY: undefined,
+        dimensionBaseZ: undefined,
+        dimensionScale: undefined,
       };
 
       return nextItems;
@@ -456,6 +526,10 @@ export default function Quote() {
       dimensionX: undefined,
       dimensionY: undefined,
       dimensionZ: undefined,
+      dimensionBaseX: undefined,
+      dimensionBaseY: undefined,
+      dimensionBaseZ: undefined,
+      dimensionScale: undefined,
       imageUrl: "",
       files: [],
       material: defaultMat,
@@ -470,6 +544,39 @@ export default function Quote() {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
+  };
+
+  const updateItemScale = (index: number, nextScale: number) => {
+    setItems((prev) => {
+      const nextItems = [...prev];
+      const item = nextItems[index];
+      if (!item) return nextItems;
+
+      if (
+        !hasDimensionValue(item.dimensionBaseX) ||
+        !hasDimensionValue(item.dimensionBaseY) ||
+        !hasDimensionValue(item.dimensionBaseZ)
+      ) {
+        return nextItems;
+      }
+
+      const maxScale = getMaximumScaleForBase(
+        item.dimensionBaseX,
+        item.dimensionBaseY,
+        item.dimensionBaseZ,
+      );
+      const clampedScale = clampScale(nextScale, maxScale);
+
+      nextItems[index] = {
+        ...item,
+        dimensionScale: clampedScale,
+        dimensionX: roundMillimeters(item.dimensionBaseX * clampedScale),
+        dimensionY: roundMillimeters(item.dimensionBaseY * clampedScale),
+        dimensionZ: roundMillimeters(item.dimensionBaseZ * clampedScale),
+      };
+
+      return nextItems;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -518,7 +625,9 @@ export default function Quote() {
 
     for (const item of items) {
       const dimensions = [item.dimensionX, item.dimensionY, item.dimensionZ];
-      const hasAnyDimension = dimensions.some((value) => hasDimensionValue(value));
+      const hasAnyDimension = dimensions.some((value) =>
+        hasDimensionValue(value),
+      );
 
       if (!hasAnyDimension) continue;
 
@@ -554,7 +663,11 @@ export default function Quote() {
           material: string;
           color: string;
           count: number;
-          files: Array<{ url: string; name: string; kind: "model" | "image" | "other" }>;
+          files: Array<{
+            url: string;
+            name: string;
+            kind: "model" | "image" | "other";
+          }>;
         }>;
         guestName?: string;
         guestEmail?: string;
@@ -565,7 +678,11 @@ export default function Quote() {
           imageUrl: item.imageUrl || undefined,
           fileName: item.fileName || undefined,
           notes: item.notes?.trim() || undefined,
-          size: formatDimensions(item.dimensionX, item.dimensionY, item.dimensionZ),
+          size: formatDimensions(
+            item.dimensionX,
+            item.dimensionY,
+            item.dimensionZ,
+          ),
           material: item.material,
           color: item.color,
           count: item.count,
@@ -923,7 +1040,6 @@ export default function Quote() {
                             }
                           />
                         </div>
-
                       </div>
 
                       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
@@ -931,79 +1047,46 @@ export default function Quote() {
                           <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
                             <Ruler size={12} /> {t("quote.size")}
                           </label>
-                          <span className="text-[10px] font-semibold text-slate-500">
-                            {t("quote.optional")}
-                          </span>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
-                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
-                            <span className="pl-2 text-[11px] font-bold text-slate-500">X</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max={MAX_DIMENSION_MM}
-                              step="0.1"
-                              className="w-full bg-transparent p-2 text-sm outline-none"
-                              value={item.dimensionX ?? ""}
-                              placeholder={t("quote.dimensionX")}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                updateItem(
-                                  idx,
-                                  "dimensionX",
-                                  value === "" ? undefined : Number(value),
-                                );
-                              }}
-                            />
+                        {hasDimensionValue(item.dimensionBaseX) &&
+                        hasDimensionValue(item.dimensionBaseY) &&
+                        hasDimensionValue(item.dimensionBaseZ) ? (
+                          <div className="grid grid-cols-1 gap-2.5">
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                              <div className="mb-1 flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-slate-600">
+                                  {t("quote.scale")}
+                                </span>
+                                <span className="text-[11px] font-semibold text-slate-500">
+                                  {(item.dimensionScale ?? 0).toFixed(2)}x
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max={getMaximumScaleForBase(
+                                  item.dimensionBaseX,
+                                  item.dimensionBaseY,
+                                  item.dimensionBaseZ,
+                                )}
+                                step={SCALE_STEP}
+                                value={item.dimensionScale ?? 0}
+                                className="w-full accent-emerald-600"
+                                onChange={(e) =>
+                                  updateItemScale(idx, Number(e.target.value))
+                                }
+                              />
+                              <p className="mt-1 text-[11px] text-slate-500">
+                                {t("quote.scaleHint")}
+                              </p>
+                            </div>
                           </div>
-
-                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
-                            <span className="pl-2 text-[11px] font-bold text-slate-500">Y</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max={MAX_DIMENSION_MM}
-                              step="0.1"
-                              className="w-full bg-transparent p-2 text-sm outline-none"
-                              value={item.dimensionY ?? ""}
-                              placeholder={t("quote.dimensionY")}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                updateItem(
-                                  idx,
-                                  "dimensionY",
-                                  value === "" ? undefined : Number(value),
-                                );
-                              }}
-                            />
-                          </div>
-
-                          <div className="flex items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-emerald-500">
-                            <span className="pl-2 text-[11px] font-bold text-slate-500">Z</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max={MAX_DIMENSION_MM}
-                              step="0.1"
-                              className="w-full bg-transparent p-2 text-sm outline-none"
-                              value={item.dimensionZ ?? ""}
-                              placeholder={t("quote.dimensionZ")}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                updateItem(
-                                  idx,
-                                  "dimensionZ",
-                                  value === "" ? undefined : Number(value),
-                                );
-                              }}
-                            />
-                          </div>
-
-                          <span className="text-[11px] font-semibold text-slate-500 md:justify-self-end">
-                            mm
-                          </span>
-                        </div>
+                        ) : (
+                          <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-[11px] text-slate-500">
+                            {t("quote.scaleNeedsStl")}
+                          </p>
+                        )}
 
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                           <p className="text-[11px] text-slate-500">
@@ -1013,7 +1096,8 @@ export default function Quote() {
                             hasDimensionValue(item.dimensionY) &&
                             hasDimensionValue(item.dimensionZ) && (
                               <span className="text-[11px] font-bold text-slate-700">
-                                {item.dimensionX} x {item.dimensionY} x {item.dimensionZ} mm
+                                {item.dimensionX} x {item.dimensionY} x{" "}
+                                {item.dimensionZ} mm
                               </span>
                             )}
                         </div>

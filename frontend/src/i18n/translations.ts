@@ -949,9 +949,15 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.dimensionX": "X (mm)",
     "quote.dimensionY": "Y (mm)",
     "quote.dimensionZ": "Z (mm)",
-    "quote.dimensionsMaxHint": "Build volume limit (Bambu Lab P2S): 256 x 256 x 256 mm.",
-    "quote.dimensionsAllOrNone": "If you add dimensions, please fill X, Y and Z.",
-    "quote.dimensionsMaxExceeded": "Each dimension must be 256 mm or less (Bambu Lab P2S).",
+    "quote.scale": "Scale",
+    "quote.scaleHint": "One slider scales X/Y/Z together to keep proportions.",
+    "quote.scaleNeedsStl": "Upload an STL file to enable proportional scaling.",
+    "quote.dimensionsMaxHint":
+      "Build volume limit (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsAllOrNone":
+      "If you add dimensions, please fill X, Y and Z.",
+    "quote.dimensionsMaxExceeded":
+      "Each dimension must be 256 mm or less (Bambu Lab P2S).",
     "quote.notesPlaceholder": "Instructions (Infill, layer height, etc.)",
     "quote.fullName": "Full Name",
     "quote.phone": "Phone Number",
@@ -2144,9 +2150,17 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.dimensionX": "X (mm)",
     "quote.dimensionY": "Y (mm)",
     "quote.dimensionZ": "Z (mm)",
-    "quote.dimensionsMaxHint": "Maximale bouwruimte (Bambu Lab P2S): 256 x 256 x 256 mm.",
-    "quote.dimensionsAllOrNone": "Als je afmetingen invult, vul dan X, Y en Z in.",
-    "quote.dimensionsMaxExceeded": "Elke afmeting moet 256 mm of kleiner zijn (Bambu Lab P2S).",
+    "quote.scale": "Schaal",
+    "quote.scaleHint":
+      "Een enkele slider schaalt X/Y/Z samen zodat verhoudingen behouden blijven.",
+    "quote.scaleNeedsStl":
+      "Upload een STL-bestand om proportioneel schalen te gebruiken.",
+    "quote.dimensionsMaxHint":
+      "Maximale bouwruimte (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsAllOrNone":
+      "Als je afmetingen invult, vul dan X, Y en Z in.",
+    "quote.dimensionsMaxExceeded":
+      "Elke afmeting moet 256 mm of kleiner zijn (Bambu Lab P2S).",
     "quote.notesPlaceholder": "Instructies (Infill, laaghoogte, etc.)",
     "quote.fullName": "Volledige naam",
     "quote.phone": "Telefoonnummer",

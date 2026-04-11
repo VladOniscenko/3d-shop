@@ -90,6 +90,10 @@ export interface OrderItem {
   dimensionX?: number;
   dimensionY?: number;
   dimensionZ?: number;
+  dimensionBaseX?: number;
+  dimensionBaseY?: number;
+  dimensionBaseZ?: number;
+  dimensionScale?: number;
   material: string;
   color: string;
   price: number;
