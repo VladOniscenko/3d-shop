@@ -632,6 +632,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.filesRemovedDueCancellation":
       "Files were removed due to cancellation.",
     "admin.orderDetail.deliveryLabel": "Delivery",
+    "admin.orderDetail.serviceFeeLabel": "Service Fee",
     "admin.orderDetail.orderDiscountLabel": "Order discount",
     "admin.orderDetail.savingButton": "Saving...",
     "admin.orderDetail.saveButton": "Save",
@@ -902,6 +903,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.subtitle": "Upload models and choose from our live inventory.",
     "quote.models": "Your 3D Models",
     "quote.addFile": "Add Files",
+    "quote.removeAllFiles": "Remove all files",
     "quote.guestContactTitle": "Contact details",
     "quote.guestContactSubtitle":
       "Not logged in? No problem. Add your contact details and we will create an account for you automatically.",
@@ -1801,6 +1803,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.orderDetail.filesRemovedDueCancellation":
       "In verband met annulering zijn bestanden verwijderd.",
     "admin.orderDetail.deliveryLabel": "Levering",
+    "admin.orderDetail.serviceFeeLabel": "Servicekosten",
     "admin.orderDetail.orderDiscountLabel": "Order korting",
     "admin.orderDetail.savingButton": "Bezig met opslaan...",
     "admin.orderDetail.saveButton": "Opslaan",
@@ -2074,6 +2077,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.subtitle": "Upload modellen en kies uit onze actuele voorraad.",
     "quote.models": "Jouw 3D Modellen",
     "quote.addFile": "Bestanden Toevoegen",
+    "quote.removeAllFiles": "Alle bestanden verwijderen",
     "quote.guestContactTitle": "Contactgegevens",
     "quote.guestContactSubtitle":
       "Niet ingelogd? Geen probleem. Voeg je contactgegevens toe en we maken automatisch een account voor je aan.",

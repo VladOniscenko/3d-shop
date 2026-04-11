@@ -258,10 +258,67 @@ export default function Quote() {
     if (Array.isArray(removed?.files)) {
       for (const file of removed.files) {
         if (!file?.url) continue;
-        if (file.url === removed.fileUrl || file.url === removed.imageUrl) continue;
+        if (file.url === removed.fileUrl || file.url === removed.imageUrl)
+          continue;
         void deleteTempUpload(file.url);
       }
     }
+  };
+
+  const removeItemFile = (itemIndex: number, fileIndex: number) => {
+    setItems((prev) => {
+      const nextItems = [...prev];
+      const item = nextItems[itemIndex];
+      if (!item) return nextItems;
+
+      const existingFiles = item.files || [];
+      if (fileIndex < 0 || fileIndex >= existingFiles.length) return nextItems;
+
+      const removed = existingFiles[fileIndex];
+      const nextFiles = existingFiles.filter((_, index) => index !== fileIndex);
+
+      const firstModel = nextFiles.find((file) => file.kind === "model");
+      const firstImage = nextFiles.find((file) => file.kind === "image");
+      const firstAny = nextFiles[0];
+
+      nextItems[itemIndex] = {
+        ...item,
+        files: nextFiles,
+        fileUrl: firstModel?.url || firstAny?.url || "",
+        fileName: firstModel?.name || firstAny?.name || "",
+        imageUrl: firstImage?.url || "",
+      };
+
+      if (removed?.url) {
+        void deleteTempUpload(removed.url);
+      }
+
+      return nextItems;
+    });
+  };
+
+  const clearItemFiles = (itemIndex: number) => {
+    setItems((prev) => {
+      const nextItems = [...prev];
+      const item = nextItems[itemIndex];
+      if (!item) return nextItems;
+
+      const existingFiles = item.files || [];
+      for (const file of existingFiles) {
+        if (!file?.url) continue;
+        void deleteTempUpload(file.url);
+      }
+
+      nextItems[itemIndex] = {
+        ...item,
+        files: [],
+        fileUrl: "",
+        fileName: "",
+        imageUrl: "",
+      };
+
+      return nextItems;
+    });
   };
 
   const addTextOnlyItem = () => {
@@ -597,13 +654,34 @@ export default function Quote() {
                       </div>
 
                       {(item.files || []).length > 0 && (
+                        <div className="mb-3">
+                          <button
+                            type="button"
+                            onClick={() => clearItemFiles(idx)}
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
+                          >
+                            {t("quote.removeAllFiles")}
+                          </button>
+                        </div>
+                      )}
+
+                      {(item.files || []).length > 0 && (
                         <div className="mb-4 flex flex-wrap gap-2">
                           {(item.files || []).map((file, fileIndex) => (
                             <span
                               key={`${file.url}-${fileIndex}`}
-                              className="inline-flex items-center rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs text-[#2e423d]"
+                              className="inline-flex items-center gap-1 rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs text-[#2e423d]"
                             >
-                              {file.name}
+                              <span>{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeItemFile(idx, fileIndex)}
+                                className="text-rose-500 hover:text-rose-700 leading-none"
+                                aria-label={`Remove ${file.name}`}
+                                title={`Remove ${file.name}`}
+                              >
+                                x
+                              </button>
                             </span>
                           ))}
                         </div>
