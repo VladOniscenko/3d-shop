@@ -26,6 +26,7 @@ const ALLOWED_UPLOAD_ACCEPT =
   ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
 const MODEL_EXTENSIONS = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+const MAX_FILES_PER_ITEM = 5;
 
 function getFileExtension(fileName: string): string {
   const dotIndex = fileName.lastIndexOf(".");
@@ -98,6 +99,20 @@ export default function Quote() {
   ) => {
     if (selectedFiles.length === 0) return;
 
+    const currentFileCount = items[itemIndex]?.files?.length || 0;
+    const remainingSlots = MAX_FILES_PER_ITEM - currentFileCount;
+    if (remainingSlots <= 0) {
+      notifyError(`Max ${MAX_FILES_PER_ITEM} files per item.`);
+      return;
+    }
+
+    const filesToUpload = selectedFiles.slice(0, remainingSlots);
+    if (filesToUpload.length < selectedFiles.length) {
+      notifyError(
+        `Max ${MAX_FILES_PER_ITEM} files per item. Only ${filesToUpload.length} file(s) were added.`,
+      );
+    }
+
     setIsUploading(true);
     let failedCount = 0;
     let firstErrorMessage: string | null = null;
@@ -109,7 +124,7 @@ export default function Quote() {
     }> = [];
 
     try {
-      for (const file of selectedFiles) {
+      for (const file of filesToUpload) {
         const formData = new FormData();
         formData.append("file", file);
 
@@ -640,7 +655,7 @@ export default function Quote() {
                               accept={ALLOWED_UPLOAD_ACCEPT}
                               className="hidden"
                               onChange={(e) => handleFileUpload(e, idx)}
-                              disabled={isUploading}
+                              disabled={isUploading || (item.files || []).length >= MAX_FILES_PER_ITEM}
                             />
                           </label>
                           <button

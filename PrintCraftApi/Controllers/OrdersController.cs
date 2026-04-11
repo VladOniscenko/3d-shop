@@ -188,6 +188,28 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = $"Item quantity cannot exceed {AppLimits.MaxItemQuantity} per model." });
         }
 
+        foreach (var item in request.Items)
+        {
+            var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var file in item.Files ?? Enumerable.Empty<QuoteItemFileRequest>())
+            {
+                if (string.IsNullOrWhiteSpace(file.Url)) continue;
+                urls.Add(file.Url.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.FileUrl))
+                urls.Add(item.FileUrl.Trim());
+
+            if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                urls.Add(item.ImageUrl.Trim());
+
+            if (urls.Count > 5)
+            {
+                return BadRequest(new { message = "Each item can contain at most 5 files." });
+            }
+        }
+
         if (!isAuthenticated && user == null)
         {
             user = new User
@@ -688,6 +710,75 @@ public class OrdersController : ControllerBase
             });
         }
 
+        var orderItems = (order.Items ?? new List<OrderItem>())
+            .Select(item =>
+            {
+                var files = new List<object>();
+                var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                if (item.Attachments != null)
+                {
+                    foreach (var attachment in item.Attachments)
+                    {
+                        if (string.IsNullOrWhiteSpace(attachment.Url)) continue;
+                        var url = attachment.Url.Trim();
+                        if (!seenUrls.Add(url)) continue;
+
+                        files.Add(new
+                        {
+                            url,
+                            name = string.IsNullOrWhiteSpace(attachment.FileName) ? "file" : attachment.FileName,
+                            kind = string.IsNullOrWhiteSpace(attachment.Kind) ? "other" : attachment.Kind,
+                        });
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.FileUrl))
+                {
+                    var fileUrl = item.FileUrl.Trim();
+                    if (seenUrls.Add(fileUrl))
+                    {
+                        files.Add(new
+                        {
+                            url = fileUrl,
+                            name = string.IsNullOrWhiteSpace(item.fileName) ? "model" : item.fileName,
+                            kind = "model",
+                        });
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                {
+                    var imageUrl = item.ImageUrl.Trim();
+                    if (seenUrls.Add(imageUrl))
+                    {
+                        files.Add(new
+                        {
+                            url = imageUrl,
+                            name = "image",
+                            kind = "image",
+                        });
+                    }
+                }
+
+                return new
+                {
+                    item.Id,
+                    item.OrderId,
+                    item.FileUrl,
+                    item.ImageUrl,
+                    FileName = item.fileName,
+                    item.Notes,
+                    item.Material,
+                    item.Color,
+                    item.Count,
+                    item.Price,
+                    files,
+                    attachments = files,
+                };
+            })
+            .ToList();
+
         return new
         {
             order.Id,
@@ -716,7 +807,7 @@ public class OrdersController : ControllerBase
             order.IsPaid,
             order.UpdatedAt,
             order.CreatedAt,
-            order.Items,
+            Items = orderItems,
             order.Payments,
             Notes = noteItems,
         };
