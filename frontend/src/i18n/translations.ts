@@ -955,7 +955,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.scale": "Scale",
     "quote.scaleHint": "One slider scales X/Y/Z together to keep proportions.",
     "quote.scaleNeedsStl": "Upload an STL file to enable proportional scaling.",
-    "quote.scaleFailed": "Could not apply STL scaling. Please try uploading the model again.",
+    "quote.scaleFailed":
+      "Could not apply STL scaling. Please try uploading the model again.",
     "quote.dimensionsMaxHint":
       "Build volume limit (Bambu Lab P2S): 256 x 256 x 256 mm.",
     "quote.dimensionsAllOrNone":

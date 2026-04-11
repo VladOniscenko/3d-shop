@@ -88,7 +88,10 @@ function almostEqual(a: number, b: number, epsilon = 0.001) {
 }
 
 function formatScaleForFileName(scale: number): string {
-  return scale.toFixed(2).replace(/\.00$/, "").replace(/(\.\d*[1-9])0$/, "$1");
+  return scale
+    .toFixed(2)
+    .replace(/\.00$/, "")
+    .replace(/(\.\d*[1-9])0$/, "$1");
 }
 
 async function detectStlDimensions(file: File): Promise<{
@@ -719,17 +722,15 @@ export default function Quote() {
               for (let i = 0; i < exported.byteLength; i += 1) {
                 bytes[i] = exported.getUint8(i);
               }
-              scaledBlob = new Blob(
-                [bytes],
-                { type: "model/stl" },
-              );
+              scaledBlob = new Blob([bytes], { type: "model/stl" });
             } else {
               scaledBlob = new Blob([exported], { type: "model/stl" });
             }
 
             const scaleLabel = formatScaleForFileName(item.dimensionScale);
             const scaledFileName = modelFile.name.endsWith(".stl")
-              ? modelFile.name.replace(/\.stl$/i, "") + `_scaled_${scaleLabel}x.stl`
+              ? modelFile.name.replace(/\.stl$/i, "") +
+                `_scaled_${scaleLabel}x.stl`
               : modelFile.name + `_scaled_${scaleLabel}x.stl`;
 
             const scaledFile = new File([scaledBlob], scaledFileName, {
