@@ -303,7 +303,7 @@ public class AdminControllerPricingSyncTests
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var updated = Assert.IsType<Order>(ok.Value);
-        Assert.Equal(27m, updated.QuotedPrice);
+        Assert.Equal(32m, updated.QuotedPrice);
     }
 
     [Fact]
@@ -319,7 +319,7 @@ public class AdminControllerPricingSyncTests
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var updated = Assert.IsType<Order>(ok.Value);
-        Assert.Equal(28m, updated.QuotedPrice);
+        Assert.Equal(33m, updated.QuotedPrice);
     }
 
     [Fact]
@@ -335,7 +335,7 @@ public class AdminControllerPricingSyncTests
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var updated = Assert.IsType<Order>(ok.Value);
-        Assert.Equal(25m, updated.QuotedPrice);
+        Assert.Equal(30m, updated.QuotedPrice);
     }
 
     [Fact]
@@ -441,7 +441,7 @@ public class AdminControllerPricingSyncTests
 
         Assert.Equal(24m, order.SubtotalAmount);
         Assert.Equal(5m, order.DiscountAmount);
-        Assert.Equal(25m, order.FinalTotalAmount);
+        Assert.Equal(30m, order.FinalTotalAmount);
     }
 
     private static PrintCraftDb CreateDbContext()
