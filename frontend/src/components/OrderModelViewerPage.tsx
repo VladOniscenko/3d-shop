@@ -1,6 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Download } from "lucide-react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import type { Order, OrderItem } from "../types";
 import api from "../services/api";
 import Navbar from "./Navbar";
@@ -39,12 +44,16 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
   }, [order, parsedItemIndex]);
 
   const itemFiles = useMemo(() => {
-    if (!selectedItem) return [] as Array<{ url: string; name: string; kind?: string }>;
+    if (!selectedItem)
+      return [] as Array<{ url: string; name: string; kind?: string }>;
 
     const fromItem = (selectedItem.files || []).filter((file) => !!file?.url);
     const merged = [...fromItem];
 
-    if (selectedItem.fileUrl && !merged.some((f) => f.url === selectedItem.fileUrl)) {
+    if (
+      selectedItem.fileUrl &&
+      !merged.some((f) => f.url === selectedItem.fileUrl)
+    ) {
       merged.push({
         url: selectedItem.fileUrl,
         name: selectedItem.fileName || t("modelViewer.unnamed"),
@@ -52,7 +61,10 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
       });
     }
 
-    if (selectedItem.imageUrl && !merged.some((f) => f.url === selectedItem.imageUrl)) {
+    if (
+      selectedItem.imageUrl &&
+      !merged.some((f) => f.url === selectedItem.imageUrl)
+    ) {
       merged.push({
         url: selectedItem.imageUrl,
         name: "image",
@@ -63,10 +75,16 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
     return merged;
   }, [selectedItem, t]);
 
-  const requestedFileIndex = Number.parseInt(searchParams.get("file") ?? "", 10);
+  const requestedFileIndex = Number.parseInt(
+    searchParams.get("file") ?? "",
+    10,
+  );
   const selectedFileIndex = Number.isNaN(requestedFileIndex)
     ? 0
-    : Math.min(Math.max(requestedFileIndex, 0), Math.max(itemFiles.length - 1, 0));
+    : Math.min(
+        Math.max(requestedFileIndex, 0),
+        Math.max(itemFiles.length - 1, 0),
+      );
   const selectedFile = itemFiles[selectedFileIndex] ?? null;
 
   const modelUrl = resolveAssetUrl(selectedFile?.url || selectedItem?.fileUrl);
@@ -136,7 +154,9 @@ export default function OrderModelViewerPage({ mode }: { mode: ViewerMode }) {
               {t("modelViewer.orderItem")} #{parsedItemIndex + 1}
             </p>
             <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight break-all">
-              {selectedFile?.name || selectedItem.fileName || t("modelViewer.unnamed")}
+              {selectedFile?.name ||
+                selectedItem.fileName ||
+                t("modelViewer.unnamed")}
             </h1>
             <p className="mt-2 text-emerald-50/85 text-sm">
               {selectedItem.material} · {selectedItem.color} · x

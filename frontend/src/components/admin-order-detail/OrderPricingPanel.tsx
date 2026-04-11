@@ -60,7 +60,11 @@ function getFileKindFromName(name?: string): "model" | "image" | "other" {
 }
 
 function getItemFiles(item: {
-  files?: Array<{ url: string; name: string; kind?: "model" | "image" | "other" }>;
+  files?: Array<{
+    url: string;
+    name: string;
+    kind?: "model" | "image" | "other";
+  }>;
   fileUrl?: string;
   fileName?: string;
   imageUrl?: string;
@@ -103,7 +107,8 @@ function getItemFiles(item: {
 
 function getFileTypeBadgeClass(kind: ItemFile["kind"]): string {
   if (kind === "model") return "bg-indigo-50 text-indigo-700 border-indigo-200";
-  if (kind === "image") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (kind === "image")
+    return "bg-emerald-50 text-emerald-700 border-emerald-200";
   return "bg-slate-50 text-slate-700 border-slate-200";
 }
 
@@ -157,151 +162,153 @@ export default function OrderPricingPanel({
                 key={item.id || item.fileName}
                 className="rounded-xl border border-[#d9e4df] bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-              {/* Header with item number */}
-              <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
-                <h3 className="font-bold text-[#1b2b25] text-sm">
-                  {t("admin.orderDetail.itemLabel")} #{idx + 1}
-                </h3>
-              </div>
-
-              {/* Content area */}
-              <div className="p-5">
-                {/* File info */}
-                <div className="mb-4">
-                  <p className="text-xs uppercase text-[#6c817a] font-semibold mb-1">
-                    {t("admin.orderDetail.fileLabel")}
-                  </p>
-                  <p className="text-sm font-medium text-[#1b2b25] break-all">
-                    {item.fileName ?? item.fileUrl ?? "—"}
-                  </p>
-                  {itemFiles.length > 0 &&
-                    (isCancelledOrder ? (
-                      <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                        {t("admin.orderDetail.filesRemovedDueCancellation")}
-                      </p>
-                    ) : (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {itemFiles.map((file, fileIndex) => {
-                          const isStl = file.url.toLowerCase().includes(".stl");
-                          return (
-                            <div
-                              key={`${file.url}-${fileIndex}`}
-                              className="inline-flex items-center gap-2 rounded-lg border border-[#d9e4df] bg-[#fbfefd] px-2 py-1"
-                            >
-                              <span
-                                className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getFileTypeBadgeClass(file.kind)}`}
-                              >
-                                {getFileTypeBadgeLabel(file.kind, t)}
-                              </span>
-                              <span className="max-w-[180px] truncate text-xs text-[#2f4a42]">
-                                {file.name}
-                              </span>
-                              <a
-                                href={resolveAssetUrl(file.url)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline"
-                              >
-                                ↓ {t("admin.orderDetail.downloadFile")}
-                              </a>
-                              {isStl && (
-                                <Link
-                                  to={`/admin/orders/${order.id}/models/${idx}?file=${fileIndex}`}
-                                  className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
-                                >
-                                  {t("admin.orderDetail.viewModel")}
-                                </Link>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                {/* Header with item number */}
+                <div className="bg-gradient-to-r from-[#eef4f1] to-[#f7fcf9] px-5 py-3 border-b border-[#d9e4df]">
+                  <h3 className="font-bold text-[#1b2b25] text-sm">
+                    {t("admin.orderDetail.itemLabel")} #{idx + 1}
+                  </h3>
                 </div>
 
-                {/* Specs grid */}
-                <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-[#eef4f1]">
-                  <div>
-                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
-                      {t("admin.orderDetail.materialLabel")}
+                {/* Content area */}
+                <div className="p-5">
+                  {/* File info */}
+                  <div className="mb-4">
+                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-1">
+                      {t("admin.orderDetail.fileLabel")}
                     </p>
-                    <p className="text-sm font-medium text-[#22342f]">
-                      {item.material}
+                    <p className="text-sm font-medium text-[#1b2b25] break-all">
+                      {item.fileName ?? item.fileUrl ?? "—"}
                     </p>
+                    {itemFiles.length > 0 &&
+                      (isCancelledOrder ? (
+                        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                          {t("admin.orderDetail.filesRemovedDueCancellation")}
+                        </p>
+                      ) : (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {itemFiles.map((file, fileIndex) => {
+                            const isStl = file.url
+                              .toLowerCase()
+                              .includes(".stl");
+                            return (
+                              <div
+                                key={`${file.url}-${fileIndex}`}
+                                className="inline-flex items-center gap-2 rounded-lg border border-[#d9e4df] bg-[#fbfefd] px-2 py-1"
+                              >
+                                <span
+                                  className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getFileTypeBadgeClass(file.kind)}`}
+                                >
+                                  {getFileTypeBadgeLabel(file.kind, t)}
+                                </span>
+                                <span className="max-w-[180px] truncate text-xs text-[#2f4a42]">
+                                  {file.name}
+                                </span>
+                                <a
+                                  href={resolveAssetUrl(file.url)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline"
+                                >
+                                  ↓ {t("admin.orderDetail.downloadFile")}
+                                </a>
+                                {isStl && (
+                                  <Link
+                                    to={`/admin/orders/${order.id}/models/${idx}?file=${fileIndex}`}
+                                    className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+                                  >
+                                    {t("admin.orderDetail.viewModel")}
+                                  </Link>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
                   </div>
-                  <div>
-                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
-                      {t("admin.orderDetail.colorLabel")}
-                    </p>
-                    <p className="text-sm font-medium text-[#22342f]">
-                      {item.color}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
-                      {t("admin.orderDetail.qtyLabel")}
-                    </p>
-                    <p className="text-sm font-bold text-[#1b2b25]">
-                      {item.count}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
-                      {t("admin.orderDetail.priceLabel")}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-[#6c817a]">
-                        {CURRENCY_CODE}
-                      </span>
-                      <input
-                        type="number"
-                        value={item.id ? itemPrices[item.id] || 0 : 0}
-                        disabled={!item.id || pricingLocked}
-                        onChange={(e) => {
-                          if (!item.id) return;
-                          const newPrice = parseFloat(e.target.value) || 0;
-                          setItemPrices((prev) => ({
-                            ...prev,
-                            [item.id!]: newPrice,
-                          }));
-                        }}
-                        className="admin-field w-20 h-8 text-sm"
-                      />
+
+                  {/* Specs grid */}
+                  <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-[#eef4f1]">
+                    <div>
+                      <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                        {t("admin.orderDetail.materialLabel")}
+                      </p>
+                      <p className="text-sm font-medium text-[#22342f]">
+                        {item.material}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                        {t("admin.orderDetail.colorLabel")}
+                      </p>
+                      <p className="text-sm font-medium text-[#22342f]">
+                        {item.color}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                        {t("admin.orderDetail.qtyLabel")}
+                      </p>
+                      <p className="text-sm font-bold text-[#1b2b25]">
+                        {item.count}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase text-[#6c817a] font-semibold mb-2">
+                        {t("admin.orderDetail.priceLabel")}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-[#6c817a]">
+                          {CURRENCY_CODE}
+                        </span>
+                        <input
+                          type="number"
+                          value={item.id ? itemPrices[item.id] || 0 : 0}
+                          disabled={!item.id || pricingLocked}
+                          onChange={(e) => {
+                            if (!item.id) return;
+                            const newPrice = parseFloat(e.target.value) || 0;
+                            setItemPrices((prev) => ({
+                              ...prev,
+                              [item.id!]: newPrice,
+                            }));
+                          }}
+                          className="admin-field w-20 h-8 text-sm"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Instructions section */}
-                {item.notes && (
-                  <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
-                    <p className="text-xs font-bold uppercase text-amber-900 mb-2">
-                      {t("admin.orderDetail.instructionsLabel")}
-                    </p>
-                    <p className="text-sm text-amber-800 leading-relaxed">
-                      {item.notes}
-                    </p>
+                  {/* Instructions section */}
+                  {item.notes && (
+                    <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
+                      <p className="text-xs font-bold uppercase text-amber-900 mb-2">
+                        {t("admin.orderDetail.instructionsLabel")}
+                      </p>
+                      <p className="text-sm text-amber-800 leading-relaxed">
+                        {item.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Save button for price */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      disabled={
+                        !item.id || savingItemId === item.id || pricingLocked
+                      }
+                      onClick={() =>
+                        item.id &&
+                        updateItemPrice(item.id, itemPrices[item.id] || 0)
+                      }
+                      className="admin-btn admin-btn-primary text-sm px-4 py-2"
+                    >
+                      {savingItemId === item.id
+                        ? t("admin.orderDetail.savingButton")
+                        : t("admin.orderDetail.saveButton")}
+                    </button>
                   </div>
-                )}
-
-                {/* Save button for price */}
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    disabled={
-                      !item.id || savingItemId === item.id || pricingLocked
-                    }
-                    onClick={() =>
-                      item.id &&
-                      updateItemPrice(item.id, itemPrices[item.id] || 0)
-                    }
-                    className="admin-btn admin-btn-primary text-sm px-4 py-2"
-                  >
-                    {savingItemId === item.id
-                      ? t("admin.orderDetail.savingButton")
-                      : t("admin.orderDetail.saveButton")}
-                  </button>
                 </div>
-              </div>
               </div>
             );
           })}
