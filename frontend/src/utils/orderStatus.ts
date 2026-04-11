@@ -4,12 +4,12 @@ export const ADMIN_ORDER_STATUS_OPTIONS = [
   { value: "quoted", label: "Quoted" },
   { value: "expired_quote", label: "Expired Quote" },
   { value: "pending_payment", label: "Pending Payment" },
+  { value: "paid", label: "Paid" },
   { value: "printing", label: "Printing" },
   { value: "sent", label: "Sent" },
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
   { value: "completed", label: "Completed" },
-  { value: "paid", label: "Paid" },
   { value: "failed", label: "Failed" },
   { value: "cancelled", label: "Cancelled" },
 ] as const;
@@ -18,6 +18,7 @@ const POST_PAYMENT_STATUSES = new Set([
   "paid",
   "printing",
   "sent",
+  "shipped",
   "delivered",
   "completed",
 ]);
@@ -151,12 +152,13 @@ export function getOrderStatusTimelineStep(status: string): number {
       return 3;
     case "printing":
       return 4;
-    case "completed":
-      return 5;
-    case "shipped":
     case "sent":
+    case "shipped":
+      return 5;
     case "delivered":
       return 6;
+    case "completed":
+      return 7;
     case "cancelled":
       return 1;
     default:

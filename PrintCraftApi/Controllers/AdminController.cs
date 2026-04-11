@@ -39,6 +39,7 @@ public class AdminController : ControllerBase
         "paid",
         "printing",
         "sent",
+        "shipped",
         "delivered",
         "completed",
     };
@@ -72,7 +73,7 @@ public class AdminController : ControllerBase
         if (order.IsPaid) return true;
 
         var status = NormalizeStatus(order.Status);
-        return status is "paid" or "printing" or "sent" or "delivered" or "completed";
+        return status is "paid" or "printing" or "sent" or "shipped" or "delivered" or "completed";
     }
 
     private static bool CanTransitionStatus(string? currentStatus, string? nextStatus, bool isPaid)
