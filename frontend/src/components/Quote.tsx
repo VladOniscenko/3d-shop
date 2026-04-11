@@ -655,7 +655,10 @@ export default function Quote() {
                               accept={ALLOWED_UPLOAD_ACCEPT}
                               className="hidden"
                               onChange={(e) => handleFileUpload(e, idx)}
-                              disabled={isUploading || (item.files || []).length >= MAX_FILES_PER_ITEM}
+                              disabled={
+                                isUploading ||
+                                (item.files || []).length >= MAX_FILES_PER_ITEM
+                              }
                             />
                           </label>
                           <button
