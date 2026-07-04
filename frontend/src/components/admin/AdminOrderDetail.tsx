@@ -52,6 +52,7 @@ export default function AdminOrderDetail() {
   const [savingOrderDiscount, setSavingOrderDiscount] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailType, setEmailType] = useState("quote_requested");
+  const [paymentFlow, setPaymentFlow] = useState("stripe");
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
@@ -93,6 +94,7 @@ export default function AdminOrderDetail() {
       setServiceFee(data.serviceFeePrice || 0);
       setOrderDiscountAmount(data.orderDiscountAmount || 0);
       setSelectedStatus(data.status || "pending");
+      setPaymentFlow(data.paymentFlow || "stripe");
       setTrackingCode(data.trackingCode || "");
       setTrackingUrl(data.trackingUrl || "");
     };
@@ -144,6 +146,7 @@ export default function AdminOrderDetail() {
     setOrder(res.data);
     setTrackingCode(res.data.trackingCode || "");
     setTrackingUrl(res.data.trackingUrl || "");
+    setPaymentFlow(res.data.paymentFlow || "stripe");
     setCommunications(commsRes.data || []);
     setStatusHistory(statusRes.data || []);
     setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
@@ -359,6 +362,8 @@ export default function AdminOrderDetail() {
           emailType === "order_sent_tracking" ? trackingCode.trim() : null,
         trackingUrl:
           emailType === "order_sent_tracking" ? trackingUrl.trim() : null,
+        paymentFlow:
+          emailType === "quote_confirmation" ? paymentFlow : null,
       });
       notifySuccess(t("admin.order.emailSent"));
     } catch (err: any) {
@@ -900,9 +905,30 @@ export default function AdminOrderDetail() {
               </div>
 
               {emailType === "quote_confirmation" && (
-                <p className="text-sm text-[#5b706a]">
-                  {t("admin.order.emailConfirmationNote")}
-                </p>
+                <>
+                  <div>
+                    <label className="block text-xs uppercase text-[#6c817a]">
+                      {t("admin.order.paymentFlowLabel")}
+                    </label>
+                    <select
+                      value={paymentFlow}
+                      onChange={(e) => setPaymentFlow(e.target.value)}
+                      className="admin-select"
+                    >
+                      <option value="stripe">
+                        {t("admin.order.paymentFlowStripe")}
+                      </option>
+                      <option value="bank_transfer">
+                        {t("admin.order.paymentFlowBankTransfer")}
+                      </option>
+                    </select>
+                  </div>
+                  <p className="text-sm text-[#5b706a]">
+                    {paymentFlow === "bank_transfer"
+                      ? t("admin.order.emailBankTransferNote")
+                      : t("admin.order.emailConfirmationNote")}
+                  </p>
+                </>
               )}
 
               {emailType === "order_sent_tracking" && (

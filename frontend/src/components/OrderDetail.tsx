@@ -29,6 +29,7 @@ import {
 import {
   canCustomerRetryPayment,
   getCustomerPaymentActionVariant,
+  normalizePaymentFlow,
 } from "../utils/orderStatus";
 import { normalizeOrderStatus } from "../utils/orderStatus";
 
@@ -396,6 +397,7 @@ export default function OrderDetail() {
   const reachedDate = getReachedDate(order);
   const paymentAttempts = payments.length > 0 ? payments : order.payments || [];
   const normalizedStatus = normalizeOrderStatus(order.status);
+  const normalizedPaymentFlow = normalizePaymentFlow(order.paymentFlow);
   const quoteExpiresAt = order.quoteExpiresAt
     ? new Date(order.quoteExpiresAt)
     : null;
@@ -411,8 +413,15 @@ export default function OrderDetail() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
     : [];
-  const canRetryPayment = canCustomerRetryPayment(order.status, !!order.isPaid);
-  const paymentActionVariant = getCustomerPaymentActionVariant(order.status);
+  const canRetryPayment = canCustomerRetryPayment(
+    order.status,
+    !!order.isPaid,
+    order.paymentFlow,
+  );
+  const paymentActionVariant = getCustomerPaymentActionVariant(
+    order.status,
+    order.paymentFlow,
+  );
   const paymentActionLabel =
     paymentActionVariant === "try_again"
       ? t("orderDetail.tryAgain")
@@ -468,6 +477,23 @@ export default function OrderDetail() {
                   ? t("orderDetail.processingPayment")
                   : paymentActionLabel}
               </button>
+            )}
+
+            {normalizedPaymentFlow === "bank_transfer" && !order.isPaid && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p className="font-semibold">
+                  {t("orderDetail.bankTransferNotice")}
+                </p>
+                <p className="mt-1">
+                  {t("orderDetail.bankTransferEmailHint")}
+                </p>
+                {paymentAttempts.find((payment) => payment.provider === "bank_transfer")?.reference && (
+                  <p className="mt-2 font-mono text-xs text-amber-800">
+                    {t("orderDetail.bankTransferReference")}:{" "}
+                    {paymentAttempts.find((payment) => payment.provider === "bank_transfer")?.reference}
+                  </p>
+                )}
+              </div>
             )}
 
             {normalizedStatus === "expired_quote" && (

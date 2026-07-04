@@ -90,6 +90,14 @@ public class PaymentsController : ControllerBase
         if (order.IsPaid)
             return BadRequest(new { message = "Order is already paid." });
 
+        if (string.Equals(order.PaymentFlow, "bank_transfer", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new
+            {
+                message = "This order uses bank transfer payment instructions. Please follow the instructions sent by email instead of Stripe checkout."
+            });
+        }
+
         if (!order.QuotedPrice.HasValue || order.QuotedPrice.Value <= 0)
             return BadRequest(new { message = "Quoted price is missing for this order." });
 
@@ -208,6 +216,7 @@ public class PaymentsController : ControllerBase
             City = shippingValidation.City,
             PostalCode = shippingValidation.PostalCode,
             PhoneNumber = shippingValidation.PhoneNumber,
+            PaymentFlow = "stripe",
             DeliveryPrice = deliveryPrice,
             Status = "pending_payment",
             OrderType = "online",

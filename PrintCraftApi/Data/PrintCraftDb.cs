@@ -89,6 +89,11 @@ public class PrintCraftDb : DbContext
         modelBuilder.Entity<VisitEvent>()
             .HasIndex(v => new { v.CountryCode, v.VisitedAt });
 
+        modelBuilder.Entity<Order>()
+            .Property(o => o.PaymentFlow)
+            .HasMaxLength(32)
+            .HasDefaultValue("stripe");
+
         modelBuilder.Entity<Payment>()
             .HasIndex(p => new { p.OrderId, p.CreatedAt });
 

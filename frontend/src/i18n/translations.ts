@@ -590,8 +590,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.emailTypeQuote": "Quote Requested",
     "admin.order.emailTypeConfirmation": "Quote Confirmation + Price",
     "admin.order.emailTypeTracking": "Order Sent + Track & Trace",
+    "admin.order.paymentFlowLabel": "Payment Flow",
+    "admin.order.paymentFlowStripe": "Stripe checkout",
+    "admin.order.paymentFlowBankTransfer": "Bank transfer / invoice",
     "admin.order.emailConfirmationNote":
       "This email includes the quoted price and final order details.",
+    "admin.order.emailBankTransferNote":
+      "This email includes the quoted price, bank details, and a payment reference.",
     "admin.order.emailTrackingNote":
       "This email includes tracking information for the shipped order.",
     "admin.order.sendingButton": "Sending...",
@@ -1070,6 +1075,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.payNow": "Pay now",
     "orderDetail.tryAgain": "Try again",
     "orderDetail.payAgain": "Pay again",
+    "orderDetail.bankTransferNotice": "Bank transfer payment instructions were sent by email.",
+    "orderDetail.bankTransferEmailHint": "Use the payment reference from the email when transferring the amount.",
+    "orderDetail.bankTransferReference": "Payment reference",
     "orderDetail.requestNewQuote": "Request New Quote",
     "orderDetail.newQuoteRequested": "New quote request sent.",
     "orderDetail.newQuoteRequestFailed": "Could not request a new quote.",
@@ -1790,8 +1798,13 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.emailTypeQuote": "Offerte Aangevraagd",
     "admin.order.emailTypeConfirmation": "Offerte Bevestiging + Prijs",
     "admin.order.emailTypeTracking": "Order Verzonden + Track & Trace",
+    "admin.order.paymentFlowLabel": "Betaalroute",
+    "admin.order.paymentFlowStripe": "Stripe checkout",
+    "admin.order.paymentFlowBankTransfer": "Bankoverschrijving / factuur",
     "admin.order.emailConfirmationNote":
       "Deze e-mail bevat de geoffreerde prijs en definitieve ordergegevens.",
+    "admin.order.emailBankTransferNote":
+      "Deze e-mail bevat de geoffreerde prijs, bankgegevens en een betalingsreferentie.",
     "admin.order.emailTrackingNote":
       "Deze e-mail bevat trackinginformatie voor de verzonden order.",
     "admin.order.sendingButton": "Bezig met verzenden...",
@@ -2277,6 +2290,9 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.payNow": "Nu betalen",
     "orderDetail.tryAgain": "Opnieuw proberen",
     "orderDetail.payAgain": "Opnieuw betalen",
+    "orderDetail.bankTransferNotice": "Betaalinstructies voor bankoverschrijving zijn per e-mail verstuurd.",
+    "orderDetail.bankTransferEmailHint": "Gebruik de betalingsreferentie uit de e-mail bij het overmaken van het bedrag.",
+    "orderDetail.bankTransferReference": "Betalingsreferentie",
     "orderDetail.requestNewQuote": "Vraag Nieuwe Offerte Aan",
     "orderDetail.newQuoteRequested": "Nieuwe offerteaanvraag verstuurd.",
     "orderDetail.newQuoteRequestFailed":

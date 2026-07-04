@@ -40,7 +40,7 @@ var frontendBaseUrl = builder.Configuration["FrontendBaseUrl"]!.TrimEnd('/');
 builder.Services.AddDbContext<PrintCraftDb>(opt => opt.UseNpgsql(connectionString));
 builder.Services.AddSingleton<IDiscordWebhookService, DiscordWebhookService>();
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
-builder.Services.AddHttpClient<IEmailService, MailtrapEmailService>();
+builder.Services.AddTransient<IEmailService, GmailSmtpEmailService>();
 builder.Services.AddSingleton<StripePendingPaymentReconciler>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<StripePendingPaymentReconciler>());
 builder.Services.AddEndpointsApiExplorer();
@@ -238,6 +238,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PrintCraftDb>();
     db.Database.Migrate();
+    db.Database.ExecuteSqlRaw("ALTER TABLE \"Orders\" ADD COLUMN IF NOT EXISTS \"PaymentFlow\" character varying(32) NOT NULL DEFAULT 'stripe';");
 }
 
 app.Run();

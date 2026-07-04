@@ -10,7 +10,7 @@ services:
     volumes:
       - printcraft_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U printcraft -d printcraft"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -40,15 +40,16 @@ services:
       StripeWebhookSecret: ${StripeWebhookSecret:?StripeWebhookSecret is required}
       CurrencyCode: ${CurrencyCode:-EUR}
       Email__SenderName: ${Email__SenderName}
-      Email__SenderEmail: ${Email__SenderEmail}
-      Email__SmtpHost: ${Email__SmtpHost}
       Email__SmtpPort: ${Email__SmtpPort}
       Email__EnableSsl: ${Email__EnableSsl}
-      Email__ApiBaseUrl: ${Email__ApiBaseUrl}
-      Email__Category: ${Email__Category}
-      Email__ApiToken: ${Email__ApiToken}
-      Email__Username: ${Email__Username}
-      Email__Password: ${Email__Password}
+      Email__Username: ${Email__Username:?Email username is required}
+      Email__Password: ${Email__Password:?Email password is required}
+      Email__SenderEmail: ${Email__SenderEmail:?Sender email required}
+      Email__SmtpHost: ${Email__SmtpHost:?SMTP host required}
+
+      BankTransfer__AccountName: ${BankTransfer__AccountName}
+      BankTransfer__Iban: ${BankTransfer__Iban}
+      BankTransfer__Bic: ${BankTransfer__Bic}
     ports:
       - "5001:5001"
     volumes:

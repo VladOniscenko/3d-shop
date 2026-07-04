@@ -827,6 +827,7 @@ public class OrdersController : ControllerBase
             order.UserId,
             order.Status,
             order.OrderType,
+            order.PaymentFlow,
             order.FullName,
             order.AddressLine1,
             order.AddressLine2,

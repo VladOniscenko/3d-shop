@@ -238,6 +238,11 @@ namespace PrintCraftApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PaymentFlow")
+                        .HasMaxLength(32)
+                        .HasDefaultValue("stripe")
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");

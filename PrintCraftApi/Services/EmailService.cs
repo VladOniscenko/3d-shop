@@ -1,8 +1,8 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Mail;
 using System.Text;
-using System.Text.Json;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using Microsoft.Extensions.Options;
 
 namespace PrintCraftApi.Services;
@@ -16,9 +16,6 @@ public sealed class EmailOptions
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public bool EnableSsl { get; set; } = true;
-    public string ApiBaseUrl { get; set; } = "https://send.api.mailtrap.io/api/send";
-    public string ApiToken { get; set; } = string.Empty;
-    public string Category { get; set; } = "PrintCraft";
 }
 
 public interface IEmailService
@@ -26,27 +23,28 @@ public interface IEmailService
     Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink);
     Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId);
     Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage);
+    Task SendQuoteConfirmationBankTransferEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage, string paymentReference);
     Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl);
     Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount);
 }
 
-public sealed class MailtrapEmailService : IEmailService
+public sealed class GmailSmtpEmailService : IEmailService
 {
     private readonly EmailOptions _options;
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<MailtrapEmailService> _logger;
     private readonly string _currencyCode;
+    private readonly string _bankTransferAccountName;
+    private readonly string _bankTransferIban;
+    private readonly string? _bankTransferBic;
 
-    public MailtrapEmailService(
-        HttpClient httpClient,
+    public GmailSmtpEmailService(
         IOptions<EmailOptions> options,
-        IConfiguration configuration,
-        ILogger<MailtrapEmailService> logger)
+        IConfiguration configuration)
     {
-        _httpClient = httpClient;
         _options = options.Value;
-        _logger = logger;
         _currencyCode = NormalizeCurrencyCode(configuration["CurrencyCode"]);
+        _bankTransferAccountName = configuration["BankTransfer:AccountName"] ?? string.Empty;
+        _bankTransferIban = configuration["BankTransfer:Iban"] ?? string.Empty;
+        _bankTransferBic = configuration["BankTransfer:Bic"];
     }
 
     public Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink)
@@ -110,6 +108,46 @@ public sealed class MailtrapEmailService : IEmailService
         return SendTextEmailAsync(toEmail, subject, body);
     }
 
+    public Task SendQuoteConfirmationBankTransferEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage, string paymentReference)
+    {
+        if (string.IsNullOrWhiteSpace(_bankTransferAccountName) || string.IsNullOrWhiteSpace(_bankTransferIban))
+        {
+            throw new InvalidOperationException("Bank transfer email is not configured. Missing BankTransfer:AccountName or BankTransfer:Iban.");
+        }
+
+        var safeMessage = string.IsNullOrWhiteSpace(quoteMessage)
+            ? "No extra notes."
+            : quoteMessage.Trim();
+
+        var bicLine = string.IsNullOrWhiteSpace(_bankTransferBic)
+            ? string.Empty
+            : $"\nBIC: {_bankTransferBic.Trim()}";
+
+        var subject = "Your quote is ready - bank transfer instructions";
+        var body = $"""
+            Hi {WebUtility.HtmlEncode(toName)},
+
+            Your quote is ready.
+            Reference: {orderId}
+            Total quote: {_currencyCode} {price:F2}
+
+            Message from our team:
+            {safeMessage}
+
+            Please transfer the total amount to the account below and include the payment reference exactly as shown.
+
+            Account name: {_bankTransferAccountName.Trim()}
+            IBAN: {_bankTransferIban.Trim()}{bicLine}
+            Payment reference: {paymentReference}
+
+            Once the transfer is received, we will verify it manually and continue with production.
+
+            - PrintCraft
+            """;
+
+        return SendTextEmailAsync(toEmail, subject, body);
+    }
+
     public Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl)
     {
         var safeTrackingUrl = string.IsNullOrWhiteSpace(trackingUrl)
@@ -159,55 +197,7 @@ public sealed class MailtrapEmailService : IEmailService
             return;
         }
 
-        await SendViaApiAsync(toEmail, subject, body);
-    }
-
-    private async Task SendViaApiAsync(string toEmail, string subject, string body)
-    {
-        var apiToken = _options.ApiToken;
-
-        if (string.IsNullOrWhiteSpace(apiToken))
-        {
-            throw new InvalidOperationException("Email service is not configured. Missing Email:ApiToken (set Email__ApiToken env var).");
-        }
-
-        var payload = new
-        {
-            from = new
-            {
-                email = _options.SenderEmail,
-                name = _options.SenderName,
-            },
-            to = new[]
-            {
-                new { email = toEmail }
-            },
-            subject,
-            text = body,
-            category = _options.Category,
-        };
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, _options.ApiBaseUrl)
-        {
-            Content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json")
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
-
-        using var response = await _httpClient.SendAsync(request);
-        var responseBody = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError(
-                "Mailtrap send failed. Status: {StatusCode}. Body: {Body}",
-                (int)response.StatusCode,
-                responseBody);
-            throw new InvalidOperationException("Failed to send email via Mailtrap.");
-        }
-
-        _logger.LogInformation("Email sent via Mailtrap API. Subject: {Subject}, To: {To}", subject, toEmail);
+        throw new InvalidOperationException("SMTP email is not configured. Missing Email:SmtpHost.");
     }
 
     private async Task SendViaSmtpAsync(string toEmail, string subject, string body)
@@ -224,25 +214,33 @@ public sealed class MailtrapEmailService : IEmailService
             throw new InvalidOperationException("SMTP email is not configured. Missing Email:Username or Email:Password.");
         }
 
-        using var message = new MailMessage
-        {
-            From = new MailAddress(_options.SenderEmail, _options.SenderName),
-            Subject = subject,
-            Body = body,
-            IsBodyHtml = false,
-        };
-        message.To.Add(toEmail);
+        smtpUser = smtpUser.Trim();
+        smtpPassword = new string(smtpPassword.Where(c => !char.IsWhiteSpace(c)).ToArray());
 
-        using var client = new SmtpClient(_options.SmtpHost, _options.SmtpPort)
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.SenderName, _options.SenderEmail));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = subject;
+        message.Body = new TextPart("plain")
         {
-            EnableSsl = _options.EnableSsl,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(smtpUser, smtpPassword),
+            Text = body
         };
 
-        await client.SendMailAsync(message);
-        _logger.LogInformation("Email sent via SMTP. Subject: {Subject}, To: {To}", subject, toEmail);
+        using var client = new MailKit.Net.Smtp.SmtpClient();
+        client.ServerCertificateValidationCallback = (_, _, _, _) => true;
+        client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+        var secureSocketOptions = _options.SmtpPort == 465
+            ? SecureSocketOptions.SslOnConnect
+            : _options.EnableSsl
+                ? SecureSocketOptions.StartTls
+                : SecureSocketOptions.None;
+
+        await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, secureSocketOptions);
+        await client.AuthenticateAsync(smtpUser, smtpPassword);
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
+        Console.WriteLine($"Email sent via SMTP. Subject: {subject}, To: {toEmail}");
     }
 
     private static string NormalizeCurrencyCode(string? currencyCode)

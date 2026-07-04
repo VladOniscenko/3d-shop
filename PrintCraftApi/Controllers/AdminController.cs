@@ -59,6 +59,20 @@ public class AdminController : ControllerBase
     private static string NormalizeStatus(string? status)
         => string.IsNullOrWhiteSpace(status) ? string.Empty : status.Trim().ToLowerInvariant();
 
+    private static string NormalizePaymentFlow(string? paymentFlow)
+    {
+        var normalized = string.IsNullOrWhiteSpace(paymentFlow)
+            ? string.Empty
+            : paymentFlow.Trim().ToLowerInvariant();
+
+        return normalized is "bank_transfer" or "manual" or "invoice"
+            ? "bank_transfer"
+            : "stripe";
+    }
+
+    private static bool IsBankTransferFlow(string? paymentFlow)
+        => string.Equals(NormalizePaymentFlow(paymentFlow), "bank_transfer", StringComparison.OrdinalIgnoreCase);
+
     private static bool IsKnownStatus(string? status)
         => KnownStatuses.Contains(NormalizeStatus(status));
 
@@ -134,15 +148,18 @@ public class AdminController : ControllerBase
     }
     private readonly PrintCraftDb _db;
     private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
     private readonly StripePendingPaymentReconciler? _stripePendingPaymentReconciler;
 
     public AdminController(
         PrintCraftDb db,
         IEmailService emailService,
+        IConfiguration configuration,
         StripePendingPaymentReconciler? stripePendingPaymentReconciler = null)
     {
         _db = db;
         _emailService = emailService;
+        _configuration = configuration;
         _stripePendingPaymentReconciler = stripePendingPaymentReconciler;
     }
 
@@ -1186,25 +1203,52 @@ public class AdminController : ControllerBase
                     ? DefaultQuoteConfirmationMessage
                     : payload.Message.Trim();
 
+                var paymentFlow = NormalizePaymentFlow(payload.PaymentFlow ?? order.PaymentFlow);
+
                 order.QuoteMessage = quoteMessage;
+                order.PaymentFlow = paymentFlow;
                 if (!string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(order.Status, "cancelled", StringComparison.OrdinalIgnoreCase))
                 {
                     var previousStatus = order.Status;
-                    order.Status = "quoted";
+                    order.Status = IsBankTransferFlow(paymentFlow) ? "pending_payment" : "quoted";
                     QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
-                    await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Quote confirmation email sent");
+                    await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", IsBankTransferFlow(paymentFlow)
+                        ? "Quote confirmation email sent with bank transfer instructions"
+                        : "Quote confirmation email sent");
                 }
                 order.UpdatedAt = DateTime.UtcNow;
+
+                Payment? manualPayment = null;
+
+                if (IsBankTransferFlow(paymentFlow))
+                {
+                    manualPayment = await EnsureBankTransferPaymentAsync(order, quotePrice);
+                }
+
                 await _db.SaveChangesAsync();
 
-                await _emailService.SendQuoteConfirmationEmailAsync(
-                    recipientEmail,
-                    recipientName,
-                    order.Id,
-                    quotePrice,
-                    quoteMessage);
-                await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", recipientEmail);
+                if (IsBankTransferFlow(paymentFlow))
+                {
+                    await _emailService.SendQuoteConfirmationBankTransferEmailAsync(
+                        recipientEmail,
+                        recipientName,
+                        order.Id,
+                        quotePrice,
+                        quoteMessage,
+                        manualPayment!.Reference);
+                    await LogOrderCommunicationAsync(order.Id, "quote_confirmation_bank_transfer", "Your quote is ready", recipientEmail);
+                }
+                else
+                {
+                    await _emailService.SendQuoteConfirmationEmailAsync(
+                        recipientEmail,
+                        recipientName,
+                        order.Id,
+                        quotePrice,
+                        quoteMessage);
+                    await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", recipientEmail);
+                }
                 return Ok(new { message = "Quote confirmation email sent." });
 
             case "order_sent_tracking":
@@ -1283,7 +1327,7 @@ public class AdminController : ControllerBase
         string PostalCode,
         string PhoneNumber);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
-    public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl);
+    public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl, string? PaymentFlow);
     public record AdminUserDto(Guid Id, string Name, string Email, string Role);
     public record UpdateUserRequest(string Name, string Email, string Role);
 
@@ -1391,6 +1435,49 @@ public class AdminController : ControllerBase
 
         await _db.SaveChangesAsync();
     }
+
+    private async Task<Payment> EnsureBankTransferPaymentAsync(Order order, decimal amount)
+    {
+        var payment = await _db.Payments
+            .Where(p => p.OrderId == order.Id && p.Provider == "bank_transfer")
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (payment == null)
+        {
+            payment = new Payment
+            {
+                OrderId = order.Id,
+                Provider = "bank_transfer",
+                Reference = BuildPaymentReference(order.Id),
+                Currency = string.IsNullOrWhiteSpace(_configuration["CurrencyCode"]) ? "EUR" : _configuration["CurrencyCode"]!.Trim().ToUpperInvariant(),
+                Amount = amount,
+                Status = "pending",
+                Method = "bank_transfer",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            _db.Payments.Add(payment);
+            return payment;
+        }
+
+        payment.Amount = amount;
+        payment.Currency = string.IsNullOrWhiteSpace(_configuration["CurrencyCode"]) ? payment.Currency : _configuration["CurrencyCode"]!.Trim().ToUpperInvariant();
+        payment.Status = string.Equals(payment.Status, "paid", StringComparison.OrdinalIgnoreCase) ? payment.Status : "pending";
+        payment.Method = "bank_transfer";
+        payment.CheckoutUrl = null;
+        payment.FailureReason = null;
+        payment.CanceledAt = null;
+        payment.ExpiredAt = null;
+        payment.FailedAt = null;
+        payment.UpdatedAt = DateTime.UtcNow;
+
+        return payment;
+    }
+
+    private static string BuildPaymentReference(Guid orderId)
+        => $"PC-{orderId.ToString("N")[..8]}-{Guid.NewGuid().ToString("N")[..12]}";
 
     private static void DeleteUploadFileIfExists(string? rawUrl)
     {

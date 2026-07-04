@@ -38,6 +38,13 @@ export function normalizeOrderStatus(status?: string | null): string {
   return (status || "").trim().toLowerCase();
 }
 
+export function normalizePaymentFlow(flow?: string | null): string {
+  const normalized = (flow || "").trim().toLowerCase();
+  return normalized === "bank_transfer" || normalized === "manual" || normalized === "invoice"
+    ? "bank_transfer"
+    : "stripe";
+}
+
 export function formatOrderStatusLabel(status?: string | null): string {
   const normalized = normalizeOrderStatus(status);
   if (!normalized) return "Unknown";
@@ -200,8 +207,10 @@ export function isOrderPricingLocked(status: string, isPaid: boolean): boolean {
 export function canCustomerRetryPayment(
   status: string,
   isPaid: boolean,
+  paymentFlow?: string | null,
 ): boolean {
   if (isPaid) return false;
+  if (normalizePaymentFlow(paymentFlow) !== "stripe") return false;
 
   const normalized = normalizeOrderStatus(status);
   return CUSTOMER_PAYMENT_RETRYABLE_STATUSES.has(normalized);
@@ -209,7 +218,10 @@ export function canCustomerRetryPayment(
 
 export function getCustomerPaymentActionVariant(
   status: string,
+  paymentFlow?: string | null,
 ): "pay_now" | "try_again" | "pay_again" | null {
+  if (normalizePaymentFlow(paymentFlow) !== "stripe") return null;
+
   const normalized = normalizeOrderStatus(status);
 
   switch (normalized) {
