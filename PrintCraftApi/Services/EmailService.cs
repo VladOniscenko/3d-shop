@@ -209,6 +209,10 @@ public sealed class GmailSmtpEmailService : IEmailService
             ? Environment.GetEnvironmentVariable("Email__Password")
             : _options.Password;
 
+        Console.Clear();
+        System.Console.WriteLine(smtpPassword);
+        System.Console.WriteLine(smtpUser);
+
         if (string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPassword))
         {
             throw new InvalidOperationException("SMTP email is not configured. Missing Email:Username or Email:Password.");
