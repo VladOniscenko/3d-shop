@@ -27,23 +27,19 @@ import { formatCurrencyAmount } from "../../utils/currency";
 const EMAIL_TEMPLATES = {
   quote_requested: {
     subject: "We received your quote request",
-    body:
-      "Hi {{name}},\n\nThanks for reaching out. We have received your quote request and will review the details shortly.\n\nOrder reference: {{orderId}}\n\n- PrintCraft",
+    body: "Hi {{name}},\n\nThanks for reaching out. We have received your quote request and will review the details shortly.\n\nOrder reference: {{orderId}}\n\n- PrintCraft",
   },
   quote_confirmation_stripe: {
     subject: "Your quote is ready",
-    body:
-      "Hi {{name}},\n\nYour quote is ready. You can complete the payment through Stripe using your order page.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\n\n{{message}}\n\n- PrintCraft",
+    body: "Hi {{name}},\n\nYour quote is ready. You can complete the payment through Stripe using your order page.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\n\n{{message}}\n\n- PrintCraft",
   },
   quote_confirmation_bank_transfer: {
     subject: "Your quote is ready and payment details are attached",
-    body:
-      "Hi {{name}},\n\nYour quote is ready. Please complete the payment by bank transfer using the reference below.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\nPayment reference: {{paymentReference}}\n\n{{message}}\n\n- PrintCraft",
+    body: "Hi {{name}},\n\nYour quote is ready. Please complete the payment by bank transfer using the reference below.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\nPayment reference: {{paymentReference}}\n\n{{message}}\n\n- PrintCraft",
   },
   order_sent_tracking: {
     subject: "Your order has shipped",
-    body:
-      "Hi {{name}},\n\nYour order has been shipped. Here is your tracking information.\n\nOrder reference: {{orderId}}\nTracking code: {{trackingCode}}\nTracking link: {{trackingUrl}}\n\n- PrintCraft",
+    body: "Hi {{name}},\n\nYour order has been shipped. Here is your tracking information.\n\nOrder reference: {{orderId}}\nTracking code: {{trackingCode}}\nTracking link: {{trackingUrl}}\n\n- PrintCraft",
   },
   custom: {
     subject: "",
@@ -51,7 +47,10 @@ const EMAIL_TEMPLATES = {
   },
 } as const;
 
-function replaceTemplateTokens(template: string, values: Record<string, string>) {
+function replaceTemplateTokens(
+  template: string,
+  values: Record<string, string>,
+) {
   return Object.entries(values).reduce(
     (current, [key, value]) => current.replaceAll(`{{${key}}}`, value),
     template,
@@ -530,7 +529,9 @@ export default function AdminOrderDetail() {
       notifySuccess(t("admin.order.markPaidSuccess"));
     } catch (err: any) {
       console.error(err);
-      notifyError(err?.response?.data?.message || t("admin.order.markPaidFailed"));
+      notifyError(
+        err?.response?.data?.message || t("admin.order.markPaidFailed"),
+      );
     } finally {
       setReconcilingPayments(false);
     }
@@ -1035,7 +1036,10 @@ export default function AdminOrderDetail() {
                         trackingCode: trackingCode || order.trackingCode || "",
                         trackingUrl: trackingUrl || order.trackingUrl || "",
                       };
-                      const preset = getEmailTemplatePreset("custom", orderValues);
+                      const preset = getEmailTemplatePreset(
+                        "custom",
+                        orderValues,
+                      );
                       setEmailSubject(preset.subject);
                       setEmailBody(preset.body);
                       return;
@@ -1109,7 +1113,8 @@ export default function AdminOrderDetail() {
                     <select
                       value={emailTemplate}
                       onChange={(e) => {
-                        const template = e.target.value as keyof typeof EMAIL_TEMPLATES;
+                        const template = e.target
+                          .value as keyof typeof EMAIL_TEMPLATES;
                         setEmailTemplate(template);
                         const orderValues = {
                           name: order.fullName || "Customer",
@@ -1117,10 +1122,14 @@ export default function AdminOrderDetail() {
                           amount: formatCurrencyAmount(totalPrice),
                           message: order.quoteMessage || "",
                           paymentReference: payments[0]?.reference || "",
-                          trackingCode: trackingCode || order.trackingCode || "",
+                          trackingCode:
+                            trackingCode || order.trackingCode || "",
                           trackingUrl: trackingUrl || order.trackingUrl || "",
                         };
-                        const preset = getEmailTemplatePreset(template, orderValues);
+                        const preset = getEmailTemplatePreset(
+                          template,
+                          orderValues,
+                        );
                         setEmailBody(preset.body);
                       }}
                       className="admin-select"
@@ -1597,8 +1606,12 @@ function buildAdminActionFlow(
         steps:
           input.paymentFlow === "bank_transfer"
             ? [
-                t("admin.order.actionFlow.quotedBankTransfer.steps.waitForTransfer"),
-                t("admin.order.actionFlow.quotedBankTransfer.steps.confirmReceipt"),
+                t(
+                  "admin.order.actionFlow.quotedBankTransfer.steps.waitForTransfer",
+                ),
+                t(
+                  "admin.order.actionFlow.quotedBankTransfer.steps.confirmReceipt",
+                ),
                 t("admin.order.actionFlow.quotedBankTransfer.steps.markPaid"),
               ]
             : [
@@ -1642,13 +1655,21 @@ function buildAdminActionFlow(
         steps:
           input.paymentFlow === "bank_transfer"
             ? [
-                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.waitForTransfer"),
-                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.confirmReceipt"),
-                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.markPaid"),
+                t(
+                  "admin.order.actionFlow.pendingPaymentBankTransfer.steps.waitForTransfer",
+                ),
+                t(
+                  "admin.order.actionFlow.pendingPaymentBankTransfer.steps.confirmReceipt",
+                ),
+                t(
+                  "admin.order.actionFlow.pendingPaymentBankTransfer.steps.markPaid",
+                ),
               ]
             : [
                 t("admin.order.actionFlow.pendingPayment.steps.checkAttempts"),
-                t("admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid"),
+                t(
+                  "admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid",
+                ),
                 t("admin.order.actionFlow.pendingPayment.steps.returnToQuote"),
               ],
         checks:
