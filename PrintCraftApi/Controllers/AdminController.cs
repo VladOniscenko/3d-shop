@@ -130,7 +130,9 @@ public class AdminController : ControllerBase
     [HttpPut("orders/{id:guid}/paid")]
     public async Task<IActionResult> MarkPaid([FromRoute] Guid id)
     {
-        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _db.Orders
+            .Include(o => o.Payments)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { message = "Order not found" });
 
         if (!CanTransitionStatus(order.Status, "paid", order.IsPaid))
@@ -140,6 +142,17 @@ public class AdminController : ControllerBase
         order.Status = "paid";
         order.IsPaid = true;
         order.UpdatedAt = DateTime.UtcNow;
+
+        var paymentRecord = order.Payments
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefault();
+
+        if (paymentRecord != null)
+        {
+            paymentRecord.Status = "paid";
+            paymentRecord.PaidAt ??= DateTime.UtcNow;
+            paymentRecord.UpdatedAt = DateTime.UtcNow;
+        }
 
         await _db.SaveChangesAsync();
         await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Marked as paid");
@@ -188,6 +201,9 @@ public class AdminController : ControllerBase
         var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
         if (order == null)
             return NotFound(new { message = "Order not found" });
+
+        if (!string.Equals(NormalizePaymentFlow(order.PaymentFlow), "stripe", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Payment reconciliation is only available for Stripe payment flow." });
 
         var started = await _stripePendingPaymentReconciler.RunOnceForOrderAsync(id, cancellationToken);
 
@@ -1279,6 +1295,24 @@ public class AdminController : ControllerBase
                 await LogOrderCommunicationAsync(order.Id, "order_sent_tracking", "Your order has been sent", recipientEmail);
                 return Ok(new { message = "Order sent email sent." });
 
+            case "custom":
+                if (string.IsNullOrWhiteSpace(payload.Subject) || string.IsNullOrWhiteSpace(payload.Body))
+                    return BadRequest(new { message = "Custom email requires a subject and body." });
+
+                await _emailService.SendCustomEmailAsync(
+                    recipientEmail,
+                    recipientName,
+                    payload.Subject.Trim(),
+                    payload.Body.Trim());
+
+                await LogOrderCommunicationAsync(
+                    order.Id,
+                    string.IsNullOrWhiteSpace(payload.Template) ? "custom_email" : $"custom_email:{payload.Template.Trim().ToLowerInvariant()}",
+                    payload.Subject.Trim(),
+                    recipientEmail);
+
+                return Ok(new { message = "Custom email sent." });
+
             default:
                 return BadRequest(new { message = "Unsupported email type." });
         }
@@ -1327,7 +1361,7 @@ public class AdminController : ControllerBase
         string PostalCode,
         string PhoneNumber);
     public record TrackingRequest(string? TrackingCode, string? TrackingUrl);
-    public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl, string? PaymentFlow);
+    public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl, string? PaymentFlow, string? Subject, string? Body, string? Template);
     public record AdminUserDto(Guid Id, string Name, string Email, string Role);
     public record UpdateUserRequest(string Name, string Email, string Role);
 

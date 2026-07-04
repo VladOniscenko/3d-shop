@@ -26,6 +26,7 @@ public interface IEmailService
     Task SendQuoteConfirmationBankTransferEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage, string paymentReference);
     Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl);
     Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount);
+    Task SendCustomEmailAsync(string toEmail, string toName, string subject, string body);
 }
 
 public sealed class GmailSmtpEmailService : IEmailService
@@ -189,6 +190,19 @@ public sealed class GmailSmtpEmailService : IEmailService
         return SendTextEmailAsync(toEmail, subject, body);
     }
 
+    public Task SendCustomEmailAsync(string toEmail, string toName, string subject, string body)
+    {
+        var safeSubject = string.IsNullOrWhiteSpace(subject)
+            ? "PrintCraft"
+            : subject.Trim();
+
+        var safeBody = string.IsNullOrWhiteSpace(body)
+            ? ""
+            : body.Trim();
+
+        return SendTextEmailAsync(toEmail, safeSubject, safeBody);
+    }
+
     private async Task SendTextEmailAsync(string toEmail, string subject, string body)
     {
         if (!string.IsNullOrWhiteSpace(_options.SmtpHost))
@@ -209,9 +223,6 @@ public sealed class GmailSmtpEmailService : IEmailService
             ? Environment.GetEnvironmentVariable("Email__Password")
             : _options.Password;
 
-        Console.Clear();
-        System.Console.WriteLine(smtpPassword);
-        System.Console.WriteLine(smtpUser);
 
         if (string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPassword))
         {
@@ -244,7 +255,6 @@ public sealed class GmailSmtpEmailService : IEmailService
         await client.AuthenticateAsync(smtpUser, smtpPassword);
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
-        Console.WriteLine($"Email sent via SMTP. Subject: {subject}, To: {toEmail}");
     }
 
     private static string NormalizeCurrencyCode(string? currencyCode)

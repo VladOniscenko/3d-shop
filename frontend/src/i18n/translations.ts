@@ -409,6 +409,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.actionFlow.checks.paidPaymentConfirmed":
       "Paid payment confirmed",
     "admin.order.actionFlow.checks.trackingCodeAdded": "Tracking code added",
+    "admin.order.actionFlow.quotedBankTransfer.title":
+      "Confirm bank transfer before production",
+    "admin.order.actionFlow.quotedBankTransfer.steps.waitForTransfer":
+      "Wait for the bank transfer to arrive and keep the quote valid.",
+    "admin.order.actionFlow.quotedBankTransfer.steps.confirmReceipt":
+      "Check the transfer reference and incoming payment details.",
+    "admin.order.actionFlow.quotedBankTransfer.steps.markPaid":
+      "Mark the order as paid once the transfer is confirmed.",
     "admin.order.actionFlow.pendingQuote.title":
       "Prepare quote before customer confirmation",
     "admin.order.actionFlow.pendingQuote.steps.reviewModels":
@@ -445,6 +453,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "If paid is confirmed, move forward with production flow.",
     "admin.order.actionFlow.pendingPayment.steps.returnToQuote":
       "If payment fails or expires, return to quote flow.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.title":
+      "Manual payment confirmation",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.waitForTransfer":
+      "Wait until the bank transfer lands in the account.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.confirmReceipt":
+      "Verify the incoming transfer and customer reference.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.markPaid":
+      "Mark the order as paid and continue production.",
     "admin.order.actionFlow.paid.title": "Ready to start production",
     "admin.order.actionFlow.paid.steps.confirmPayment":
       "Confirm payment amount/reference and selected print specs.",
@@ -520,8 +536,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Reconciliation is already running.",
     "admin.order.reconcilePaymentsFailed":
       "Could not reconcile this order payment right now.",
-    "admin.order.paymentAttemptsHelp":
+    "admin.order.paymentAttemptsHelpStripe":
       "Use this to ask Stripe for the latest state of this order's payment attempts.",
+    "admin.order.paymentAttemptsHelpBankTransfer":
+      "This order uses manual payment confirmation. Review the incoming transfer and mark the order paid when it arrives.",
+    "admin.order.markPaidButton": "Mark as paid",
+    "admin.order.markingPaid": "Marking as paid...",
+    "admin.order.markPaidSuccess": "Order marked as paid.",
+    "admin.order.markPaidFailed": "Could not mark order as paid.",
     "admin.order.trackingRequired": "Tracking code is required.",
     "admin.order.trackingSaved": "Tracking saved on order.",
     "admin.order.trackingSaveFailed": "Could not save tracking details.",
@@ -590,6 +612,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.emailTypeQuote": "Quote Requested",
     "admin.order.emailTypeConfirmation": "Quote Confirmation + Price",
     "admin.order.emailTypeTracking": "Order Sent + Track & Trace",
+    "admin.order.emailTypeCustom": "Custom email",
     "admin.order.paymentFlowLabel": "Payment Flow",
     "admin.order.paymentFlowStripe": "Stripe checkout",
     "admin.order.paymentFlowBankTransfer": "Bank transfer / invoice",
@@ -599,6 +622,19 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "This email includes the quoted price, bank details, and a payment reference.",
     "admin.order.emailTrackingNote":
       "This email includes tracking information for the shipped order.",
+    "admin.order.emailCustomNote":
+      "Pick a template, then edit the subject and body before sending.",
+    "admin.order.emailTemplateLabel": "Template",
+    "admin.order.emailTemplateQuoteRequested": "Quote requested",
+    "admin.order.emailTemplateQuoteStripe": "Quote confirmation for Stripe",
+    "admin.order.emailTemplateQuoteBankTransfer":
+      "Quote confirmation for bank transfer",
+    "admin.order.emailTemplateTracking": "Tracking email",
+    "admin.order.emailTemplateBlank": "Blank custom email",
+    "admin.order.emailSubjectLabel": "Subject",
+    "admin.order.emailSubjectPlaceholder": "Write a subject line",
+    "admin.order.emailBodyLabel": "Body",
+    "admin.order.emailBodyPlaceholder": "Write the email body here...",
     "admin.order.sendingButton": "Sending...",
     "admin.order.sendEmailButton": "Send Email",
     "admin.order.notesTitle": "Notes",
@@ -1617,6 +1653,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Betaalde betaling bevestigd",
     "admin.order.actionFlow.checks.trackingCodeAdded":
       "Track & trace toegevoegd",
+    "admin.order.actionFlow.quotedBankTransfer.title":
+      "Bevestig bankoverschrijving vóór productie",
+    "admin.order.actionFlow.quotedBankTransfer.steps.waitForTransfer":
+      "Wacht tot de bankoverschrijving is aangekomen en houd de offerte geldig.",
+    "admin.order.actionFlow.quotedBankTransfer.steps.confirmReceipt":
+      "Controleer de betalingsreferentie en inkomende betaalgegevens.",
+    "admin.order.actionFlow.quotedBankTransfer.steps.markPaid":
+      "Markeer de order als betaald zodra de overschrijving is bevestigd.",
     "admin.order.actionFlow.pendingQuote.title":
       "Bereid de offerte voor voordat de klant bevestigt",
     "admin.order.actionFlow.pendingQuote.steps.reviewModels":
@@ -1653,6 +1697,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Ga verder met productieflow zodra betaald is bevestigd.",
     "admin.order.actionFlow.pendingPayment.steps.returnToQuote":
       "Bij mislukte of verlopen betaling: terug naar offerteflow.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.title":
+      "Handmatige betaalbevestiging",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.waitForTransfer":
+      "Wacht tot de bankoverschrijving op de rekening staat.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.confirmReceipt":
+      "Controleer de inkomende overschrijving en klantreferentie.",
+    "admin.order.actionFlow.pendingPaymentBankTransfer.steps.markPaid":
+      "Markeer de order als betaald en ga verder met productie.",
     "admin.order.actionFlow.paid.title": "Klaar om productie te starten",
     "admin.order.actionFlow.paid.steps.confirmPayment":
       "Controleer betaalbedrag/referentie en gekozen printspecificaties.",
@@ -1729,8 +1781,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.reconcilePaymentsAlreadyRunning": "Bijwerken is al bezig.",
     "admin.order.reconcilePaymentsFailed":
       "Deze orderbetaling kon nu niet worden bijgewerkt.",
-    "admin.order.paymentAttemptsHelp":
+    "admin.order.paymentAttemptsHelpStripe":
       "Gebruik dit om Stripe om de nieuwste status van deze betalingspogingen te vragen.",
+    "admin.order.paymentAttemptsHelpBankTransfer":
+      "Deze order gebruikt handmatige betaalbevestiging. Controleer de inkomende overschrijving en markeer de order als betaald zodra deze binnen is.",
+    "admin.order.markPaidButton": "Markeer als betaald",
+    "admin.order.markingPaid": "Wordt gemarkeerd als betaald...",
+    "admin.order.markPaidSuccess": "Order gemarkeerd als betaald.",
+    "admin.order.markPaidFailed": "Kon order niet als betaald markeren.",
     "admin.order.trackingRequired": "Volgcode is verplicht.",
     "admin.order.trackingSaved": "Track & trace opgeslagen op order.",
     "admin.order.trackingSaveFailed": "Kon track & trace niet opslaan.",
@@ -1800,6 +1858,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "admin.order.emailTypeQuote": "Offerte Aangevraagd",
     "admin.order.emailTypeConfirmation": "Offerte Bevestiging + Prijs",
     "admin.order.emailTypeTracking": "Order Verzonden + Track & Trace",
+    "admin.order.emailTypeCustom": "Aangepaste e-mail",
     "admin.order.paymentFlowLabel": "Betaalroute",
     "admin.order.paymentFlowStripe": "Stripe checkout",
     "admin.order.paymentFlowBankTransfer": "Bankoverschrijving / factuur",
@@ -1809,6 +1868,19 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Deze e-mail bevat de geoffreerde prijs, bankgegevens en een betalingsreferentie.",
     "admin.order.emailTrackingNote":
       "Deze e-mail bevat trackinginformatie voor de verzonden order.",
+    "admin.order.emailCustomNote":
+      "Kies een sjabloon en pas daarna onderwerp en inhoud aan voordat je verzendt.",
+    "admin.order.emailTemplateLabel": "Sjabloon",
+    "admin.order.emailTemplateQuoteRequested": "Offerte aangevraagd",
+    "admin.order.emailTemplateQuoteStripe": "Offertebevestiging voor Stripe",
+    "admin.order.emailTemplateQuoteBankTransfer":
+      "Offertebevestiging voor bankoverschrijving",
+    "admin.order.emailTemplateTracking": "Tracking e-mail",
+    "admin.order.emailTemplateBlank": "Lege aangepaste e-mail",
+    "admin.order.emailSubjectLabel": "Onderwerp",
+    "admin.order.emailSubjectPlaceholder": "Schrijf een onderwerpregel",
+    "admin.order.emailBodyLabel": "Inhoud",
+    "admin.order.emailBodyPlaceholder": "Schrijf hier de e-mailinhoud...",
     "admin.order.sendingButton": "Bezig met verzenden...",
     "admin.order.sendEmailButton": "E-mail Verzenden",
     "admin.order.notesTitle": "Notities",

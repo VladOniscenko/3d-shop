@@ -20,8 +20,54 @@ import {
   getOrderStatusPillClass,
   isOrderPricingLocked,
   normalizeOrderStatus,
+  normalizePaymentFlow,
 } from "../../utils/orderStatus";
 import { formatCurrencyAmount } from "../../utils/currency";
+
+const EMAIL_TEMPLATES = {
+  quote_requested: {
+    subject: "We received your quote request",
+    body:
+      "Hi {{name}},\n\nThanks for reaching out. We have received your quote request and will review the details shortly.\n\nOrder reference: {{orderId}}\n\n- PrintCraft",
+  },
+  quote_confirmation_stripe: {
+    subject: "Your quote is ready",
+    body:
+      "Hi {{name}},\n\nYour quote is ready. You can complete the payment through Stripe using your order page.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\n\n{{message}}\n\n- PrintCraft",
+  },
+  quote_confirmation_bank_transfer: {
+    subject: "Your quote is ready and payment details are attached",
+    body:
+      "Hi {{name}},\n\nYour quote is ready. Please complete the payment by bank transfer using the reference below.\n\nOrder reference: {{orderId}}\nQuoted amount: {{amount}}\nPayment reference: {{paymentReference}}\n\n{{message}}\n\n- PrintCraft",
+  },
+  order_sent_tracking: {
+    subject: "Your order has shipped",
+    body:
+      "Hi {{name}},\n\nYour order has been shipped. Here is your tracking information.\n\nOrder reference: {{orderId}}\nTracking code: {{trackingCode}}\nTracking link: {{trackingUrl}}\n\n- PrintCraft",
+  },
+  custom: {
+    subject: "",
+    body: "",
+  },
+} as const;
+
+function replaceTemplateTokens(template: string, values: Record<string, string>) {
+  return Object.entries(values).reduce(
+    (current, [key, value]) => current.replaceAll(`{{${key}}}`, value),
+    template,
+  );
+}
+
+function getEmailTemplatePreset(
+  template: keyof typeof EMAIL_TEMPLATES,
+  values: Record<string, string>,
+) {
+  const preset = EMAIL_TEMPLATES[template];
+  return {
+    subject: replaceTemplateTokens(preset.subject, values),
+    body: replaceTemplateTokens(preset.body, values),
+  };
+}
 
 export default function AdminOrderDetail() {
   const { notifyError, notifySuccess } = useNotify();
@@ -52,6 +98,9 @@ export default function AdminOrderDetail() {
   const [savingOrderDiscount, setSavingOrderDiscount] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailType, setEmailType] = useState("quote_requested");
+  const [emailTemplate, setEmailTemplate] = useState("quote_requested");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [paymentFlow, setPaymentFlow] = useState("stripe");
   const [trackingCode, setTrackingCode] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
@@ -97,6 +146,31 @@ export default function AdminOrderDetail() {
       setPaymentFlow(data.paymentFlow || "stripe");
       setTrackingCode(data.trackingCode || "");
       setTrackingUrl(data.trackingUrl || "");
+
+      const orderValues = {
+        name: data.fullName || "Customer",
+        orderId: data.id,
+        amount: formatCurrencyAmount(
+          Math.max(
+            0,
+            (data.items || []).reduce((sum: number, item: any) => {
+              const price = item.price || 0;
+              return sum + price * (item.count ?? 1);
+            }, 0) +
+              (data.deliveryPrice || 0) +
+              (data.serviceFeePrice || 0) -
+              (data.orderDiscountAmount || 0),
+          ),
+        ),
+        message: data.quoteMessage || "",
+        paymentReference: data.payments?.[0]?.reference || "",
+        trackingCode: data.trackingCode || "",
+        trackingUrl: data.trackingUrl || "",
+      };
+      const preset = getEmailTemplatePreset("quote_requested", orderValues);
+      setEmailTemplate("quote_requested");
+      setEmailSubject(preset.subject);
+      setEmailBody(preset.body);
     };
 
     const getOrder = async () => {
@@ -147,6 +221,37 @@ export default function AdminOrderDetail() {
     setTrackingCode(res.data.trackingCode || "");
     setTrackingUrl(res.data.trackingUrl || "");
     setPaymentFlow(res.data.paymentFlow || "stripe");
+    const orderValues = {
+      name: res.data.fullName || "Customer",
+      orderId: res.data.id,
+      amount: formatCurrencyAmount(
+        Math.max(
+          0,
+          (res.data.items || []).reduce((sum: number, item: any) => {
+            const price = item.price || 0;
+            return sum + price * (item.count ?? 1);
+          }, 0) +
+            (res.data.deliveryPrice || 0) +
+            (res.data.serviceFeePrice || 0) -
+            (res.data.orderDiscountAmount || 0),
+        ),
+      ),
+      message: res.data.quoteMessage || "",
+      paymentReference:
+        (Array.isArray(paymentsRes.data) && paymentsRes.data[0]?.reference) ||
+        res.data.payments?.[0]?.reference ||
+        "",
+      trackingCode: res.data.trackingCode || "",
+      trackingUrl: res.data.trackingUrl || "",
+    };
+    const preset = getEmailTemplatePreset(
+      emailTemplate as keyof typeof EMAIL_TEMPLATES,
+      orderValues,
+    );
+    if (emailType !== "custom") {
+      setEmailSubject(preset.subject);
+      setEmailBody(preset.body);
+    }
     setCommunications(commsRes.data || []);
     setStatusHistory(statusRes.data || []);
     setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
@@ -352,17 +457,27 @@ export default function AdminOrderDetail() {
       return;
     }
 
+    if (emailType === "custom") {
+      if (!emailSubject.trim() || !emailBody.trim()) {
+        notifyError(t("admin.order.customEmailRequired"));
+        return;
+      }
+    }
+
     setSendingEmail(true);
     try {
       await api.post(`/admin/orders/${id}/email`, {
         type: emailType,
         price: null,
-        message: null,
+        message: emailType === "quote_confirmation" ? emailBody : null,
         trackingCode:
           emailType === "order_sent_tracking" ? trackingCode.trim() : null,
         trackingUrl:
           emailType === "order_sent_tracking" ? trackingUrl.trim() : null,
         paymentFlow: emailType === "quote_confirmation" ? paymentFlow : null,
+        subject: emailType === "custom" ? emailSubject.trim() : null,
+        body: emailType === "custom" ? emailBody.trim() : null,
+        template: emailType === "custom" ? emailTemplate : null,
       });
       notifySuccess(t("admin.order.emailSent"));
     } catch (err: any) {
@@ -400,6 +515,22 @@ export default function AdminOrderDetail() {
         err?.response?.data?.message ||
           t("admin.order.reconcilePaymentsFailed"),
       );
+    } finally {
+      setReconcilingPayments(false);
+    }
+  };
+
+  const markOrderPaid = async () => {
+    if (!id) return;
+
+    setReconcilingPayments(true);
+    try {
+      await api.put(`/admin/orders/${id}/paid`);
+      await refresh();
+      notifySuccess(t("admin.order.markPaidSuccess"));
+    } catch (err: any) {
+      console.error(err);
+      notifyError(err?.response?.data?.message || t("admin.order.markPaidFailed"));
     } finally {
       setReconcilingPayments(false);
     }
@@ -539,9 +670,11 @@ export default function AdminOrderDetail() {
       hasPaymentAttempts,
       hasPaidPayment,
       hasTrackingInfo,
+      paymentFlow: normalizePaymentFlow(order.paymentFlow),
     },
     t,
   );
+  const normalizedPaymentFlow = normalizePaymentFlow(order.paymentFlow);
 
   return (
     <AdminLayout>
@@ -888,7 +1021,41 @@ export default function AdminOrderDetail() {
                 </label>
                 <select
                   value={emailType}
-                  onChange={(e) => setEmailType(e.target.value)}
+                  onChange={(e) => {
+                    const nextType = e.target.value;
+                    setEmailType(nextType);
+
+                    if (nextType === "custom") {
+                      const orderValues = {
+                        name: order.fullName || "Customer",
+                        orderId: order.id,
+                        amount: formatCurrencyAmount(totalPrice),
+                        message: order.quoteMessage || "",
+                        paymentReference: payments[0]?.reference || "",
+                        trackingCode: trackingCode || order.trackingCode || "",
+                        trackingUrl: trackingUrl || order.trackingUrl || "",
+                      };
+                      const preset = getEmailTemplatePreset("custom", orderValues);
+                      setEmailSubject(preset.subject);
+                      setEmailBody(preset.body);
+                      return;
+                    }
+
+                    if (nextType === "quote_requested") {
+                      const preset = getEmailTemplatePreset("quote_requested", {
+                        name: order.fullName || "Customer",
+                        orderId: order.id,
+                        amount: formatCurrencyAmount(totalPrice),
+                        message: order.quoteMessage || "",
+                        paymentReference: payments[0]?.reference || "",
+                        trackingCode: trackingCode || order.trackingCode || "",
+                        trackingUrl: trackingUrl || order.trackingUrl || "",
+                      });
+                      setEmailTemplate("quote_requested");
+                      setEmailSubject(preset.subject);
+                      setEmailBody(preset.body);
+                    }
+                  }}
                   className="admin-select"
                 >
                   <option value="quote_requested">
@@ -899,6 +1066,9 @@ export default function AdminOrderDetail() {
                   </option>
                   <option value="order_sent_tracking">
                     {t("admin.order.emailTypeTracking")}
+                  </option>
+                  <option value="custom">
+                    {t("admin.order.emailTypeCustom")}
                   </option>
                 </select>
               </div>
@@ -930,9 +1100,83 @@ export default function AdminOrderDetail() {
                 </>
               )}
 
+              {emailType === "custom" && (
+                <>
+                  <div>
+                    <label className="block text-xs uppercase text-[#6c817a]">
+                      {t("admin.order.emailTemplateLabel")}
+                    </label>
+                    <select
+                      value={emailTemplate}
+                      onChange={(e) => {
+                        const template = e.target.value as keyof typeof EMAIL_TEMPLATES;
+                        setEmailTemplate(template);
+                        const orderValues = {
+                          name: order.fullName || "Customer",
+                          orderId: order.id,
+                          amount: formatCurrencyAmount(totalPrice),
+                          message: order.quoteMessage || "",
+                          paymentReference: payments[0]?.reference || "",
+                          trackingCode: trackingCode || order.trackingCode || "",
+                          trackingUrl: trackingUrl || order.trackingUrl || "",
+                        };
+                        const preset = getEmailTemplatePreset(template, orderValues);
+                        setEmailBody(preset.body);
+                      }}
+                      className="admin-select"
+                    >
+                      <option value="quote_requested">
+                        {t("admin.order.emailTemplateQuoteRequested")}
+                      </option>
+                      <option value="quote_confirmation_stripe">
+                        {t("admin.order.emailTemplateQuoteStripe")}
+                      </option>
+                      <option value="quote_confirmation_bank_transfer">
+                        {t("admin.order.emailTemplateQuoteBankTransfer")}
+                      </option>
+                      <option value="order_sent_tracking">
+                        {t("admin.order.emailTemplateTracking")}
+                      </option>
+                      <option value="custom">
+                        {t("admin.order.emailTemplateBlank")}
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase text-[#6c817a]">
+                      {t("admin.order.emailSubjectLabel")}
+                    </label>
+                    <input
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      className="admin-field"
+                      placeholder={t("admin.order.emailSubjectPlaceholder")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase text-[#6c817a]">
+                      {t("admin.order.emailBodyLabel")}
+                    </label>
+                    <textarea
+                      value={emailBody}
+                      onChange={(e) => setEmailBody(e.target.value)}
+                      rows={8}
+                      className="admin-textarea"
+                      placeholder={t("admin.order.emailBodyPlaceholder")}
+                    />
+                  </div>
+                </>
+              )}
+
               {emailType === "order_sent_tracking" && (
                 <p className="text-sm text-[#5b706a]">
                   {t("admin.order.emailTrackingNote")}
+                </p>
+              )}
+
+              {emailType === "custom" && (
+                <p className="text-sm text-[#5b706a]">
+                  {t("admin.order.emailCustomNote")}
                 </p>
               )}
 
@@ -1116,24 +1360,49 @@ export default function AdminOrderDetail() {
             <h3 className="font-bold mb-2 text-[#1b2b25]">
               {t("admin.order.paymentAttempts")}
             </h3>
-            <p className="mb-3 text-xs text-[#5f736d]">
-              {t("admin.order.paymentAttemptsHelp")}
-            </p>
-            <button
-              type="button"
-              onClick={reconcileOrderPayments}
-              disabled={reconcilingPayments}
-              className="admin-btn admin-btn-secondary mb-3"
-            >
-              {reconcilingPayments ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="animate-spin" size={16} />
-                  {t("admin.order.reconcilingPayments")}
-                </span>
-              ) : (
-                t("admin.order.checkPaymentStatusButton")
-              )}
-            </button>
+            {normalizedPaymentFlow === "stripe" ? (
+              <>
+                <p className="mb-3 text-xs text-[#5f736d]">
+                  {t("admin.order.paymentAttemptsHelpStripe")}
+                </p>
+                <button
+                  type="button"
+                  onClick={reconcileOrderPayments}
+                  disabled={reconcilingPayments}
+                  className="admin-btn admin-btn-secondary mb-3"
+                >
+                  {reconcilingPayments ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="animate-spin" size={16} />
+                      {t("admin.order.reconcilingPayments")}
+                    </span>
+                  ) : (
+                    t("admin.order.checkPaymentStatusButton")
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mb-3 text-xs text-[#5f736d]">
+                  {t("admin.order.paymentAttemptsHelpBankTransfer")}
+                </p>
+                <button
+                  type="button"
+                  onClick={markOrderPaid}
+                  disabled={reconcilingPayments}
+                  className="admin-btn admin-btn-secondary mb-3"
+                >
+                  {reconcilingPayments ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="animate-spin" size={16} />
+                      {t("admin.order.markingPaid")}
+                    </span>
+                  ) : (
+                    t("admin.order.markPaidButton")
+                  )}
+                </button>
+              </>
+            )}
             <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <input
                 value={paymentSearch}
@@ -1257,6 +1526,7 @@ export default function AdminOrderDetail() {
 
 type AdminActionFlowInput = {
   status: string;
+  paymentFlow: string;
   hasUnpricedItems: boolean;
   hasShippingInfo: boolean;
   hasQuoteMessage: boolean;
@@ -1291,7 +1561,7 @@ function buildAdminActionFlow(
     },
     {
       label: t("admin.order.actionFlow.checks.paymentAttemptExists"),
-      ok: input.hasPaymentAttempts,
+      ok: input.paymentFlow === "stripe" ? input.hasPaymentAttempts : true,
     },
     {
       label: t("admin.order.actionFlow.checks.paidPaymentConfirmed"),
@@ -1320,15 +1590,35 @@ function buildAdminActionFlow(
 
     case "quoted":
       return {
-        title: t("admin.order.actionFlow.quoted.title"),
-        steps: [
-          t("admin.order.actionFlow.quoted.steps.keepPricingStable"),
-          t("admin.order.actionFlow.quoted.steps.monitorExpiry"),
-          t("admin.order.actionFlow.quoted.steps.waitForPayment"),
-          t("admin.order.actionFlow.quoted.steps.repriceIfChanged"),
-        ],
-        checks: [baseChecks[3], baseChecks[4]],
-        suggestedStatus: input.hasPaidPayment ? "paid" : "quoted",
+        title:
+          input.paymentFlow === "bank_transfer"
+            ? t("admin.order.actionFlow.quotedBankTransfer.title")
+            : t("admin.order.actionFlow.quoted.title"),
+        steps:
+          input.paymentFlow === "bank_transfer"
+            ? [
+                t("admin.order.actionFlow.quotedBankTransfer.steps.waitForTransfer"),
+                t("admin.order.actionFlow.quotedBankTransfer.steps.confirmReceipt"),
+                t("admin.order.actionFlow.quotedBankTransfer.steps.markPaid"),
+              ]
+            : [
+                t("admin.order.actionFlow.quoted.steps.keepPricingStable"),
+                t("admin.order.actionFlow.quoted.steps.monitorExpiry"),
+                t("admin.order.actionFlow.quoted.steps.waitForPayment"),
+                t("admin.order.actionFlow.quoted.steps.repriceIfChanged"),
+              ],
+        checks:
+          input.paymentFlow === "bank_transfer"
+            ? [baseChecks[0], baseChecks[2], baseChecks[4]]
+            : [baseChecks[3], baseChecks[4]],
+        suggestedStatus:
+          input.paymentFlow === "bank_transfer"
+            ? input.hasPaidPayment
+              ? "paid"
+              : "pending_payment"
+            : input.hasPaidPayment
+              ? "paid"
+              : "quoted",
       };
 
     case "expired_quote":
@@ -1345,14 +1635,34 @@ function buildAdminActionFlow(
 
     case "pending_payment":
       return {
-        title: t("admin.order.actionFlow.pendingPayment.title"),
-        steps: [
-          t("admin.order.actionFlow.pendingPayment.steps.checkAttempts"),
-          t("admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid"),
-          t("admin.order.actionFlow.pendingPayment.steps.returnToQuote"),
-        ],
-        checks: [baseChecks[3], baseChecks[4]],
-        suggestedStatus: input.hasPaidPayment ? "paid" : "pending_payment",
+        title:
+          input.paymentFlow === "bank_transfer"
+            ? t("admin.order.actionFlow.pendingPaymentBankTransfer.title")
+            : t("admin.order.actionFlow.pendingPayment.title"),
+        steps:
+          input.paymentFlow === "bank_transfer"
+            ? [
+                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.waitForTransfer"),
+                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.confirmReceipt"),
+                t("admin.order.actionFlow.pendingPaymentBankTransfer.steps.markPaid"),
+              ]
+            : [
+                t("admin.order.actionFlow.pendingPayment.steps.checkAttempts"),
+                t("admin.order.actionFlow.pendingPayment.steps.proceedWhenPaid"),
+                t("admin.order.actionFlow.pendingPayment.steps.returnToQuote"),
+              ],
+        checks:
+          input.paymentFlow === "bank_transfer"
+            ? [baseChecks[0], baseChecks[2], baseChecks[4]]
+            : [baseChecks[3], baseChecks[4]],
+        suggestedStatus:
+          input.paymentFlow === "bank_transfer"
+            ? input.hasPaidPayment
+              ? "paid"
+              : "pending_payment"
+            : input.hasPaidPayment
+              ? "paid"
+              : "pending_payment",
       };
 
     case "paid":
