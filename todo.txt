@@ -1,0 +1,3 @@
+- update user order detail page to show info about how to pay for the order. display bank details where to pay it to.
+
+- when requesting quete ask for shipping details and save to db for the order.

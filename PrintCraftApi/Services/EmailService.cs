@@ -69,14 +69,13 @@ public sealed class GmailSmtpEmailService : IEmailService
 
     public Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId)
     {
-        var subject = "Quote request received";
+        var subject = "We received your quote request";
         var body = $"""
             Hi {WebUtility.HtmlEncode(toName)},
 
-            We received your quote request.
-            Reference: {orderId}
+            We got your quote request (Order: {orderId}). 
 
-            Our team will review your files and send pricing soon.
+            Our team will review your files and send pricing soon. You can check the status of your request anytime in your portal.
 
             - PrintCraft
             """;
@@ -86,22 +85,13 @@ public sealed class GmailSmtpEmailService : IEmailService
 
     public Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage)
     {
-        var safeMessage = string.IsNullOrWhiteSpace(quoteMessage)
-            ? "No extra notes."
-            : quoteMessage.Trim();
-
         var subject = "Your quote is ready";
         var body = $"""
             Hi {WebUtility.HtmlEncode(toName)},
 
-            Your quote is ready.
-            Reference: {orderId}
-            Total quote: {_currencyCode} {price:F2}
+            Good news! Your quote for order {orderId} is ready.
 
-            Message from our team:
-            {safeMessage}
-
-            Please reply if you have any questions.
+            Please log in to your PrintCraft portal to view the price, read any notes from our team, and securely complete your payment.
 
             - PrintCraft
             """;
@@ -111,37 +101,15 @@ public sealed class GmailSmtpEmailService : IEmailService
 
     public Task SendQuoteConfirmationBankTransferEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage, string paymentReference)
     {
-        if (string.IsNullOrWhiteSpace(_bankTransferAccountName) || string.IsNullOrWhiteSpace(_bankTransferIban))
-        {
-            throw new InvalidOperationException("Bank transfer email is not configured. Missing BankTransfer:AccountName or BankTransfer:Iban.");
-        }
-
-        var safeMessage = string.IsNullOrWhiteSpace(quoteMessage)
-            ? "No extra notes."
-            : quoteMessage.Trim();
-
-        var bicLine = string.IsNullOrWhiteSpace(_bankTransferBic)
-            ? string.Empty
-            : $"\nBIC: {_bankTransferBic.Trim()}";
-
-        var subject = "Your quote is ready - bank transfer instructions";
+        var subject = "Your quote is ready for review";
         var body = $"""
             Hi {WebUtility.HtmlEncode(toName)},
 
-            Your quote is ready.
-            Reference: {orderId}
-            Total quote: {_currencyCode} {price:F2}
+            Good news! Your quote for order {orderId} is ready.
 
-            Message from our team:
-            {safeMessage}
+            Please log in to your PrintCraft portal to review the quote and get the bank transfer instructions to complete your payment.
 
-            Please transfer the total amount to the account below and include the payment reference exactly as shown.
-
-            Account name: {_bankTransferAccountName.Trim()}
-            IBAN: {_bankTransferIban.Trim()}{bicLine}
-            Payment reference: {paymentReference}
-
-            Once the transfer is received, we will verify it manually and continue with production.
+            Once your transfer is received, we will start production.
 
             - PrintCraft
             """;
@@ -151,18 +119,13 @@ public sealed class GmailSmtpEmailService : IEmailService
 
     public Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl)
     {
-        var safeTrackingUrl = string.IsNullOrWhiteSpace(trackingUrl)
-            ? "Not provided"
-            : trackingUrl.Trim();
-
-        var subject = "Your order has been sent";
+        var subject = "Your order has shipped";
         var body = $"""
             Hi {WebUtility.HtmlEncode(toName)},
 
-            Your order has been shipped.
-            Reference: {orderId}
-            Tracking code: {trackingCode}
-            Tracking link: {safeTrackingUrl}
+            Your order ({orderId}) has been shipped!
+
+            Please log in to your PrintCraft portal to view your tracking number and shipping details.
 
             Thanks for choosing PrintCraft.
 
@@ -174,15 +137,13 @@ public sealed class GmailSmtpEmailService : IEmailService
 
     public Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount)
     {
-        var subject = "Payment received for your order";
+        var subject = "Payment received";
         var body = $"""
             Hi {WebUtility.HtmlEncode(toName)},
 
-            We received your payment for your order.
-            Reference: {orderId}
-            Paid amount: {_currencyCode} {amount:F2}
+            We successfully received your payment for order {orderId}.
 
-            Your order is now confirmed and will move into production.
+            Your order is now confirmed and moving into production. You can track its progress at any time in your portal.
 
             - PrintCraft
             """;
