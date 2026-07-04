@@ -484,13 +484,17 @@ export default function OrderDetail() {
                 <p className="font-semibold">
                   {t("orderDetail.bankTransferNotice")}
                 </p>
-                <p className="mt-1">
-                  {t("orderDetail.bankTransferEmailHint")}
-                </p>
-                {paymentAttempts.find((payment) => payment.provider === "bank_transfer")?.reference && (
+                <p className="mt-1">{t("orderDetail.bankTransferEmailHint")}</p>
+                {paymentAttempts.find(
+                  (payment) => payment.provider === "bank_transfer",
+                )?.reference && (
                   <p className="mt-2 font-mono text-xs text-amber-800">
                     {t("orderDetail.bankTransferReference")}:{" "}
-                    {paymentAttempts.find((payment) => payment.provider === "bank_transfer")?.reference}
+                    {
+                      paymentAttempts.find(
+                        (payment) => payment.provider === "bank_transfer",
+                      )?.reference
+                    }
                   </p>
                 )}
               </div>

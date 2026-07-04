@@ -1075,8 +1075,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.payNow": "Pay now",
     "orderDetail.tryAgain": "Try again",
     "orderDetail.payAgain": "Pay again",
-    "orderDetail.bankTransferNotice": "Bank transfer payment instructions were sent by email.",
-    "orderDetail.bankTransferEmailHint": "Use the payment reference from the email when transferring the amount.",
+    "orderDetail.bankTransferNotice":
+      "Bank transfer payment instructions were sent by email.",
+    "orderDetail.bankTransferEmailHint":
+      "Use the payment reference from the email when transferring the amount.",
     "orderDetail.bankTransferReference": "Payment reference",
     "orderDetail.requestNewQuote": "Request New Quote",
     "orderDetail.newQuoteRequested": "New quote request sent.",
@@ -2290,8 +2292,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.payNow": "Nu betalen",
     "orderDetail.tryAgain": "Opnieuw proberen",
     "orderDetail.payAgain": "Opnieuw betalen",
-    "orderDetail.bankTransferNotice": "Betaalinstructies voor bankoverschrijving zijn per e-mail verstuurd.",
-    "orderDetail.bankTransferEmailHint": "Gebruik de betalingsreferentie uit de e-mail bij het overmaken van het bedrag.",
+    "orderDetail.bankTransferNotice":
+      "Betaalinstructies voor bankoverschrijving zijn per e-mail verstuurd.",
+    "orderDetail.bankTransferEmailHint":
+      "Gebruik de betalingsreferentie uit de e-mail bij het overmaken van het bedrag.",
     "orderDetail.bankTransferReference": "Betalingsreferentie",
     "orderDetail.requestNewQuote": "Vraag Nieuwe Offerte Aan",
     "orderDetail.newQuoteRequested": "Nieuwe offerteaanvraag verstuurd.",

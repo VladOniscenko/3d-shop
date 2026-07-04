@@ -40,7 +40,9 @@ export function normalizeOrderStatus(status?: string | null): string {
 
 export function normalizePaymentFlow(flow?: string | null): string {
   const normalized = (flow || "").trim().toLowerCase();
-  return normalized === "bank_transfer" || normalized === "manual" || normalized === "invoice"
+  return normalized === "bank_transfer" ||
+    normalized === "manual" ||
+    normalized === "invoice"
     ? "bank_transfer"
     : "stripe";
 }

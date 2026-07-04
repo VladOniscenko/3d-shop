@@ -362,8 +362,7 @@ export default function AdminOrderDetail() {
           emailType === "order_sent_tracking" ? trackingCode.trim() : null,
         trackingUrl:
           emailType === "order_sent_tracking" ? trackingUrl.trim() : null,
-        paymentFlow:
-          emailType === "quote_confirmation" ? paymentFlow : null,
+        paymentFlow: emailType === "quote_confirmation" ? paymentFlow : null,
       });
       notifySuccess(t("admin.order.emailSent"));
     } catch (err: any) {
