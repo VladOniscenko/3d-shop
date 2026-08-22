@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using PrintCraftApi.Controllers;
 using PrintCraftApi.Data;
@@ -288,6 +289,11 @@ public class ProductsControllerTests
 
 public class AdminControllerPricingSyncTests
 {
+    private static AdminController CreateAdminController(PrintCraftDb db)
+    {
+        return new AdminController(db, new NoopEmailService(), new ConfigurationBuilder().Build());
+    }
+
     [Fact]
     public async Task UpdateOrderItem_RecalculatesQuotedPrice()
     {
@@ -296,7 +302,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var itemId = order.Items[0].Id;
 
         var result = await sut.UpdateOrderItem(order.Id, itemId, new AdminController.UpdateItemRequest(12));
@@ -314,7 +320,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateDeliveryPrice(order.Id, new AdminController.DeliveryPriceRequest(9m));
 
         var ok = Assert.IsType<OkObjectResult>(result);
@@ -330,7 +336,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderDiscount(order.Id, new AdminController.OrderDiscountRequest(5m));
 
         var ok = Assert.IsType<OkObjectResult>(result);
@@ -348,7 +354,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderDiscount(order.Id, new AdminController.OrderDiscountRequest(5m));
 
         Assert.IsType<BadRequestObjectResult>(result);
@@ -364,7 +370,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest("quoted"));
 
         Assert.IsType<BadRequestObjectResult>(result);
@@ -379,7 +385,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest("pending_quote"));
 
         Assert.IsType<BadRequestObjectResult>(result);
@@ -394,7 +400,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest("delivered"));
 
         Assert.IsType<BadRequestObjectResult>(result);
@@ -410,7 +416,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateDeliveryPrice(order.Id, new AdminController.DeliveryPriceRequest(12m));
 
         Assert.IsType<BadRequestObjectResult>(result);
@@ -425,7 +431,7 @@ public class AdminControllerPricingSyncTests
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        var sut = new AdminController(db, new NoopEmailService());
+        var sut = CreateAdminController(db);
         var result = await sut.UpdateOrderItem(
             order.Id,
             order.Items[0].Id,
@@ -482,7 +488,9 @@ public class AdminControllerPricingSyncTests
         public Task SendResetPasswordEmailAsync(string toEmail, string toName, string resetLink) => Task.CompletedTask;
         public Task SendQuoteRequestedEmailAsync(string toEmail, string toName, Guid orderId) => Task.CompletedTask;
         public Task SendQuoteConfirmationEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage) => Task.CompletedTask;
+        public Task SendQuoteConfirmationBankTransferEmailAsync(string toEmail, string toName, Guid orderId, decimal price, string? quoteMessage, string paymentReference) => Task.CompletedTask;
         public Task SendOrderSentTrackingEmailAsync(string toEmail, string toName, Guid orderId, string trackingCode, string? trackingUrl) => Task.CompletedTask;
         public Task SendOrderPaidEmailAsync(string toEmail, string toName, Guid orderId, decimal amount) => Task.CompletedTask;
+        public Task SendCustomEmailAsync(string toEmail, string toName, string subject, string body) => Task.CompletedTask;
     }
 }

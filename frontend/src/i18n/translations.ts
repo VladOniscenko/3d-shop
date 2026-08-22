@@ -79,7 +79,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "hero.titleLine1": "Custom 3D Prints,",
     "hero.titleLine2": "Made to Order",
     "hero.description":
-      "Bring your ideas to life with precision prints from our Bambu Lab P2S. We serve customers across the Netherlands.",
+      "Bring your ideas to life with precision prints. We serve customers across the Netherlands.",
     "hero.ctaQuote": "Request a Quote",
     "hero.fastTurnaround": "Fast Turnaround",
     "hero.fastTurnaroundValue": "2-5 business days",
@@ -95,7 +95,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "how.step2.title": "Review & Quote",
     "how.step2.desc": "We review your file and send a personalized price.",
     "how.step3.title": "We Print",
-    "how.step3.desc": "Your order is printed with care on our P2S.",
+    "how.step3.desc": "Your order is printed with care on our printers.",
     "how.step4.title": "Packed & Shipped",
     "how.step4.desc": "We ship your high-quality print to your door.",
 
@@ -980,6 +980,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.uploadPartialFailed":
       "Some files could not be uploaded. Please review and try again.",
     "quote.singleModelPerItem": "Only one 3D model file is allowed per item.",
+    "quote.itemContentRequired":
+      "Each item must have a model, image, or description before you continue.",
     "quote.invalidShipping": "Please fix shipping info before submitting.",
     "quote.submitFailed": "Failed to submit quote. Check your connection.",
     "quote.materialAvailabilityDisclaimer":
@@ -998,12 +1000,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.scaleNeedsStl": "Upload an STL file to enable proportional scaling.",
     "quote.scaleFailed":
       "Could not apply STL scaling. Please try uploading the model again.",
-    "quote.dimensionsMaxHint":
-      "Build volume limit (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsMaxHint": "Build volume limit: 256 x 256 x 256 mm.",
     "quote.dimensionsAllOrNone":
       "If you add dimensions, please fill X, Y and Z.",
-    "quote.dimensionsMaxExceeded":
-      "Each dimension must be 256 mm or less (Bambu Lab P2S).",
+    "quote.dimensionsMaxExceeded": "Each dimension must be 256 mm or less.",
     "quote.notesPlaceholder": "Instructions (Infill, layer height, etc.)",
     "quote.fullName": "Full Name",
     "quote.phone": "Phone Number",
@@ -1011,6 +1011,58 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.city": "City",
     "quote.textDescription": "Text Description",
     "quote.postalCode": "Postal Code",
+    "quote.shippingDetailsTitle": "Shipping details",
+    "quote.shippingDetailsSubtitle":
+      "Tell us where to send the finished order and who should receive it.",
+    "quote.shippingDetailsNote":
+      "Shipping details are saved with your quote so we can prepare delivery before payment.",
+    "quote.stepProgress": "Quote steps",
+    "quote.stepTitle": "Step",
+    "quote.stepOf": "of",
+    "quote.stepLabel": "Step",
+    "quote.step1Title": "Your details",
+    "quote.step1Description":
+      "Start with contact and shipping details so we know who the quote is for and where the order should go.",
+    "quote.step2Title": "Add models",
+    "quote.step2Description":
+      "Upload files, add notes, and set the print details for each item one by one.",
+    "quote.step2SidebarNote":
+      "Add every model and check its details before moving on to review.",
+    "quote.step3Title": "Review & send",
+    "quote.step3Description":
+      "Review the information and submit the quote request when everything looks right.",
+    "quote.reviewTitle": "Review your request",
+    "quote.reviewSubtitle":
+      "Check the details below before you send the quote request.",
+    "quote.reviewItemsCount": "item(s) added",
+    "quote.reviewReadyToSubmit": "Ready to submit when you are.",
+    "quote.reviewSidebarNote":
+      "This final step is just a quick check before sending the quote request.",
+    "quote.nextStep": "Continue",
+    "quote.reviewStep": "Review",
+    "quote.backStep": "Back",
+    "quote.stepModels": "Models",
+    "quote.stepDetails": "Details",
+    "quote.stepReview": "Review",
+    "quote.dragAndDropHint":
+      "Drag and drop your 3D models here, or click to browse.",
+    "quote.browseFiles": "Browse Files",
+    "quote.removeItemTitle": "Remove item",
+    "quote.placeholderName": "Jane Doe",
+    "quote.placeholderEmail": "jane@example.com",
+    "quote.placeholderPhone": "+1 (555) 000-0000",
+    "quote.placeholderShippingName": "Name on package",
+    "quote.placeholderShippingPhone": "Delivery contact number",
+    "quote.placeholderStreet": "123 Main St, Apt 4B",
+    "quote.placeholderCity": "City",
+    "quote.placeholderPostalCode": "Postal Code",
+    "quote.contactInfo": "Contact Info",
+    "quote.loggedInUser": "Using account profile",
+    "quote.orderSummary": "Order Summary",
+    "quote.totalItems": "Total Items",
+    "quote.qty": "Qty:",
+    "quote.mat": "Mat:",
+    "quote.colorLabel": "Color:",
     "quote.shippingLaterNotice":
       "Shipping details are requested after your quote is approved, when you click confirm and pay.",
     "quote.pricingDisclaimer":
@@ -1116,6 +1168,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.bankTransferEmailHint":
       "Use the payment reference from the email when transferring the amount.",
     "orderDetail.bankTransferReference": "Payment reference",
+    "orderDetail.bankTransferTitle": "Bank transfer details",
+    "orderDetail.bankTransferInstructions":
+      "Transfer the total amount to the account below and include the payment reference so we can match your order.",
+    "orderDetail.bankTransferAccountName": "Account name",
+    "orderDetail.bankTransferIban": "IBAN",
+    "orderDetail.bankTransferBic": "BIC / SWIFT",
+    "orderDetail.bankTransferMissingDetails":
+      "Bank details are not configured yet. Please contact support for payment instructions.",
     "orderDetail.requestNewQuote": "Request New Quote",
     "orderDetail.newQuoteRequested": "New quote request sent.",
     "orderDetail.newQuoteRequestFailed": "Could not request a new quote.",
@@ -1312,7 +1372,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "hero.titleLine1": "Maatwerk 3D Prints,",
     "hero.titleLine2": "Op Bestelling Gemaakt",
     "hero.description":
-      "Breng je idee tot leven met nauwkeurige prints op onze Bambu Lab P2S. Wij leveren door heel Nederland.",
+      "Breng je idee tot leven met nauwkeurige prints op onze printers. Wij leveren door heel Nederland.",
     "hero.ctaQuote": "Vraag een Offerte Aan",
     "hero.fastTurnaround": "Snelle Levering",
     "hero.fastTurnaroundValue": "2-5 werkdagen",
@@ -1329,7 +1389,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "how.step2.desc":
       "We controleren je bestand en sturen een persoonlijke prijs.",
     "how.step3.title": "Wij Printen",
-    "how.step3.desc": "Je bestelling wordt zorgvuldig geprint op onze P2S.",
+    "how.step3.desc":
+      "Je bestelling wordt zorgvuldig geprint op onze printers.",
     "how.step4.title": "Verpakt & Verzonden",
     "how.step4.desc": "We verzenden je hoogwaardige print naar je adres.",
 
@@ -2230,6 +2291,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Sommige bestanden konden niet worden geupload. Controleer en probeer opnieuw.",
     "quote.singleModelPerItem":
       "Per item is maar een 3D-modelbestand toegestaan.",
+    "quote.itemContentRequired":
+      "Elk item moet een model, afbeelding of beschrijving hebben voordat je verdergaat.",
     "quote.invalidShipping":
       "Controleer je verzendgegevens voordat je verzendt.",
     "quote.submitFailed":
@@ -2252,12 +2315,10 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
       "Upload een STL-bestand om proportioneel schalen te gebruiken.",
     "quote.scaleFailed":
       "Het schalen van STL is mislukt. Upload het model opnieuw en probeer het nog eens.",
-    "quote.dimensionsMaxHint":
-      "Maximale bouwruimte (Bambu Lab P2S): 256 x 256 x 256 mm.",
+    "quote.dimensionsMaxHint": "Maximale bouwruimte: 256 x 256 x 256 mm.",
     "quote.dimensionsAllOrNone":
       "Als je afmetingen invult, vul dan X, Y en Z in.",
-    "quote.dimensionsMaxExceeded":
-      "Elke afmeting moet 256 mm of kleiner zijn (Bambu Lab P2S).",
+    "quote.dimensionsMaxExceeded": "Elke afmeting moet 256 mm of kleiner zijn.",
     "quote.notesPlaceholder": "Instructies (Infill, laaghoogte, etc.)",
     "quote.fullName": "Volledige naam",
     "quote.phone": "Telefoonnummer",
@@ -2265,6 +2326,58 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "quote.city": "Plaats",
     "quote.textDescription": "Tekst Beschrijving",
     "quote.postalCode": "Postcode",
+    "quote.shippingDetailsTitle": "Verzendgegevens",
+    "quote.shippingDetailsSubtitle":
+      "Geef aan waar we de afgeronde bestelling naartoe moeten sturen en wie deze ontvangt.",
+    "quote.shippingDetailsNote":
+      "Verzendgegevens worden opgeslagen bij je offerte zodat we de levering kunnen voorbereiden vóór betaling.",
+    "quote.stepProgress": "Offertestappen",
+    "quote.stepTitle": "Stap",
+    "quote.stepOf": "van",
+    "quote.stepLabel": "Stap",
+    "quote.step1Title": "Jouw gegevens",
+    "quote.step1Description":
+      "Begin met contact- en verzendgegevens zodat we weten voor wie de offerte is en waar de bestelling naartoe moet.",
+    "quote.step2Title": "Modellen toevoegen",
+    "quote.step2Description":
+      "Upload bestanden, voeg notities toe en stel de printdetails per item stap voor stap in.",
+    "quote.step2SidebarNote":
+      "Voeg elk model toe en controleer de details voordat je verdergaat naar de controlefase.",
+    "quote.step3Title": "Controleren & verzenden",
+    "quote.step3Description":
+      "Controleer de gegevens en verstuur de offerteaanvraag zodra alles klopt.",
+    "quote.reviewTitle": "Controleer je aanvraag",
+    "quote.reviewSubtitle":
+      "Bekijk de gegevens hieronder nog even voordat je de offerteaanvraag verstuurt.",
+    "quote.reviewItemsCount": "item(s) toegevoegd",
+    "quote.reviewReadyToSubmit": "Klaar om te verzenden wanneer jij dat bent.",
+    "quote.reviewSidebarNote":
+      "Deze laatste stap is een snelle controle voordat we de offerteaanvraag verzenden.",
+    "quote.nextStep": "Doorgaan",
+    "quote.reviewStep": "Controleren",
+    "quote.backStep": "Terug",
+    "quote.stepModels": "Modellen",
+    "quote.stepDetails": "Details",
+    "quote.stepReview": "Overzicht",
+    "quote.dragAndDropHint":
+      "Sleep je 3D-modellen hierheen of klik om te bladeren.",
+    "quote.browseFiles": "Bestanden Kiezen",
+    "quote.removeItemTitle": "Item verwijderen",
+    "quote.placeholderName": "Jan Jansen",
+    "quote.placeholderEmail": "jan@voorbeeld.nl",
+    "quote.placeholderPhone": "+31 6 12345678",
+    "quote.placeholderShippingName": "Naam op pakket",
+    "quote.placeholderShippingPhone": "Telefoonnummer voor bezorging",
+    "quote.placeholderStreet": "Hoofdstraat 1, App 4B",
+    "quote.placeholderCity": "Stad",
+    "quote.placeholderPostalCode": "Postcode",
+    "quote.contactInfo": "Contactgegevens",
+    "quote.loggedInUser": "Gebruikt accountprofiel",
+    "quote.orderSummary": "Besteloverzicht",
+    "quote.totalItems": "Totaal aantal items",
+    "quote.qty": "Aantal:",
+    "quote.mat": "Mat:",
+    "quote.colorLabel": "Kleur:",
     "quote.shippingLaterNotice":
       "Verzendgegevens vragen we pas nadat je offerte is goedgekeurd, wanneer je op bevestigen en betalen klikt.",
     "quote.pricingDisclaimer":
@@ -2369,6 +2482,14 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "orderDetail.bankTransferEmailHint":
       "Gebruik de betalingsreferentie uit de e-mail bij het overmaken van het bedrag.",
     "orderDetail.bankTransferReference": "Betalingsreferentie",
+    "orderDetail.bankTransferTitle": "Bankoverschrijvingsgegevens",
+    "orderDetail.bankTransferInstructions":
+      "Maak het totale bedrag over naar het onderstaande rekeningnummer en vermeld de betalingsreferentie zodat we je bestelling kunnen koppelen.",
+    "orderDetail.bankTransferAccountName": "Rekeninghouder",
+    "orderDetail.bankTransferIban": "IBAN",
+    "orderDetail.bankTransferBic": "BIC / SWIFT",
+    "orderDetail.bankTransferMissingDetails":
+      "Bankgegevens zijn nog niet ingesteld. Neem contact op met support voor betaalinstructies.",
     "orderDetail.requestNewQuote": "Vraag Nieuwe Offerte Aan",
     "orderDetail.newQuoteRequested": "Nieuwe offerteaanvraag verstuurd.",
     "orderDetail.newQuoteRequestFailed":

@@ -175,6 +175,22 @@ public class OrdersController : ControllerBase
             user = await _db.Users.FirstOrDefaultAsync(u => u.Email == guestEmail);
         }
 
+        var shippingValidation = ShippingInfoValidator.Validate(
+            request.ShippingFullName,
+            request.ShippingPhoneNumber,
+            request.ShippingAddressLine1,
+            request.ShippingCity,
+            request.ShippingPostalCode);
+
+        if (!shippingValidation.IsValid)
+        {
+            return BadRequest(new
+            {
+                message = "Please provide valid shipping details for the quote.",
+                errors = shippingValidation.Errors
+            });
+        }
+
         if (request.Items == null || request.Items.Count == 0)
         {
             return BadRequest(new { message = "At least one model is required for a quote." });
@@ -267,11 +283,11 @@ public class OrdersController : ControllerBase
             IsPaid = false,
             QuotedPrice = null,
             QuoteMessage = null,
-            FullName = user?.Name?.Trim() ?? guestName ?? string.Empty,
-            PhoneNumber = guestPhone ?? string.Empty,
-            AddressLine1 = string.Empty,
-            City = string.Empty,
-            PostalCode = string.Empty,
+            FullName = shippingValidation.FullName,
+            PhoneNumber = shippingValidation.PhoneNumber,
+            AddressLine1 = shippingValidation.AddressLine1,
+            City = shippingValidation.City,
+            PostalCode = shippingValidation.PostalCode,
             Items = request.Items.Select(item =>
             {
                 var files = (item.Files ?? new List<QuoteItemFileRequest>())
@@ -721,6 +737,13 @@ public class OrdersController : ControllerBase
     private object MapOrderForCustomer(Order order)
     {
         var noteItems = new List<object>();
+        var bankTransferAccountName = _configuration["BankTransfer:AccountName"]?.Trim();
+        var bankTransferIban = _configuration["BankTransfer:Iban"]?.Trim();
+        var bankTransferBic = _configuration["BankTransfer:Bic"]?.Trim();
+        var hasBankTransferDetails =
+            !string.IsNullOrWhiteSpace(bankTransferAccountName)
+            || !string.IsNullOrWhiteSpace(bankTransferIban)
+            || !string.IsNullOrWhiteSpace(bankTransferBic);
 
         if (order.Notes != null)
         {
@@ -850,6 +873,14 @@ public class OrdersController : ControllerBase
             order.IsPaid,
             order.UpdatedAt,
             order.CreatedAt,
+            BankTransferDetails = hasBankTransferDetails
+                ? new
+                {
+                    accountName = bankTransferAccountName,
+                    iban = bankTransferIban,
+                    bic = bankTransferBic,
+                }
+                : null,
             Items = orderItems,
             order.Payments,
             Notes = noteItems,
@@ -893,7 +924,12 @@ public record QuoteRequest(
     List<QuoteItemRequest> Items,
     string? GuestName,
     string? GuestEmail,
-    string? GuestPhone
+    string? GuestPhone,
+    string ShippingFullName,
+    string ShippingPhoneNumber,
+    string ShippingAddressLine1,
+    string ShippingCity,
+    string ShippingPostalCode
 );
 
 public record QuoteItemRequest(

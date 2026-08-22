@@ -36,6 +36,11 @@ export interface Order {
   trackingUrl?: string;
   internalNotes?: string;
   customerNotes?: string;
+  bankTransferDetails?: {
+    accountName?: string | null;
+    iban?: string | null;
+    bic?: string | null;
+  } | null;
   notes?: OrderNote[];
   isPaid?: boolean;
   updatedAt?: string;

@@ -27,7 +27,7 @@ const Logo: React.FC<LogoProps> = ({ className = "", isLink = true }) => {
           PrintCraft
         </h1>
         <p className="text-xs text-gray-500 font-medium mt-0.5">
-          Bambu Lab P2S
+          Powered by Oni
         </p>
       </div>
     </div>

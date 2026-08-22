@@ -14,6 +14,10 @@ import {
   MessageSquare,
   Hash,
   Ruler,
+  MapPin,
+  User,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -26,6 +30,10 @@ import { useNotify } from "../context/NotifyContext";
 import ModelDiscoveryCards from "./ModelDiscoveryCards";
 import { getOrCreateVisitorId } from "../services/api";
 import { resolveAssetUrl } from "../utils/assetUrl";
+import {
+  validateShippingInfo,
+  type ShippingInfo,
+} from "../utils/shippingValidation";
 
 const ALLOWED_UPLOAD_ACCEPT =
   ".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.webp,.gif";
@@ -141,10 +149,105 @@ export default function Quote() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [shippingDetails, setShippingDetails] = useState<ShippingInfo>({
+    fullName: "",
+    phoneNumber: "",
+    addressLine1: "",
+    city: "",
+    postalCode: "",
+  });
   const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
     string | null
   >(null);
   const [guestAccountCreated, setGuestAccountCreated] = useState(false);
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
+
+  // Step 1 is now Models
+  const validateStepOne = () => {
+    if (items.length === 0) {
+      return t("quote.noFiles");
+    }
+
+    if (
+      items.some(
+        (item) =>
+          (!item.files || item.files.length === 0) &&
+          !item.fileUrl &&
+          !item.imageUrl &&
+          !item.notes,
+      )
+    ) {
+      return t("quote.itemContentRequired");
+    }
+
+    for (const item of items) {
+      const dimensions = [item.dimensionX, item.dimensionY, item.dimensionZ];
+      const hasAnyDimension = dimensions.some((value) =>
+        hasDimensionValue(value),
+      );
+
+      if (!hasAnyDimension) continue;
+
+      const allProvided = dimensions.every((value) => hasDimensionValue(value));
+      if (!allProvided) {
+        return t("quote.dimensionsAllOrNone");
+      }
+
+      const allWithinMax = dimensions.every(
+        (value) => typeof value === "number" && value <= MAX_DIMENSION_MM,
+      );
+      if (!allWithinMax) {
+        return t("quote.dimensionsMaxExceeded");
+      }
+    }
+
+    return null;
+  };
+
+  // Step 2 is now Details (Contact & Shipping)
+  const validateStepTwo = () => {
+    if (!isLoggedIn) {
+      const normalizedName = guestName.trim();
+      const normalizedEmail = guestEmail.trim();
+
+      if (normalizedName.length < 2) {
+        return t("quote.guestRequiredName");
+      }
+
+      if (!normalizedEmail) {
+        return t("quote.guestRequiredEmail");
+      }
+
+      if (!isValidEmail(normalizedEmail)) {
+        return t("quote.guestInvalidEmail");
+      }
+    }
+
+    const shippingErrors = validateShippingInfo(shippingDetails);
+    if (Object.keys(shippingErrors).length > 0) {
+      return Object.values(shippingErrors)[0];
+    }
+
+    return null;
+  };
+
+  const goToNextStep = () => {
+    const error = currentStep === 1 ? validateStepOne() : validateStepTwo();
+    if (error) {
+      notifyError(error);
+      return;
+    }
+
+    setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goToPreviousStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const fetchFilaments = async () => {
@@ -599,68 +702,18 @@ export default function Quote() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLoggedIn) {
-      const normalizedName = guestName.trim();
-      const normalizedEmail = guestEmail.trim();
-
-      if (normalizedName.length < 2) {
-        notifyError(t("quote.guestRequiredName"));
-        return;
-      }
-
-      if (!normalizedEmail) {
-        notifyError(t("quote.guestRequiredEmail"));
-        return;
-      }
-
-      if (!isValidEmail(normalizedEmail)) {
-        notifyError(t("quote.guestInvalidEmail"));
-        return;
-      }
-    }
-
-    if (items.length === 0) {
-      notifyError(t("quote.noFiles"));
+    const stepOneError = validateStepOne();
+    if (stepOneError) {
+      notifyError(stepOneError);
+      setCurrentStep(1);
       return;
     }
 
-    // Validate each item has either uploaded files or description
-    if (
-      items.some(
-        (item) =>
-          (!item.files || item.files.length === 0) &&
-          !item.fileUrl &&
-          !item.imageUrl &&
-          !item.notes,
-      )
-    ) {
-      notifyError(
-        "Each item must have either a model, reference image, or description.",
-      );
+    const stepTwoError = validateStepTwo();
+    if (stepTwoError) {
+      notifyError(stepTwoError);
+      setCurrentStep(2);
       return;
-    }
-
-    for (const item of items) {
-      const dimensions = [item.dimensionX, item.dimensionY, item.dimensionZ];
-      const hasAnyDimension = dimensions.some((value) =>
-        hasDimensionValue(value),
-      );
-
-      if (!hasAnyDimension) continue;
-
-      const allProvided = dimensions.every((value) => hasDimensionValue(value));
-      if (!allProvided) {
-        notifyError(t("quote.dimensionsAllOrNone"));
-        return;
-      }
-
-      const allWithinMax = dimensions.every(
-        (value) => typeof value === "number" && value <= MAX_DIMENSION_MM,
-      );
-      if (!allWithinMax) {
-        notifyError(t("quote.dimensionsMaxExceeded"));
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -832,6 +885,7 @@ export default function Quote() {
       setItems([]);
       setGuestSubmittedOrderId(res?.data?.order?.id || res?.data?.id || null);
       setGuestAccountCreated(!!res?.data?.accountCreated);
+      setCurrentStep(1);
     } catch (err: any) {
       const message = err?.response?.data?.message || t("quote.submitFailed");
       notifyError(message);
@@ -875,11 +929,17 @@ export default function Quote() {
     };
   }, []);
 
+  const stepLabels = [
+    t("quote.stepModels"),
+    t("quote.stepDetails"),
+    t("quote.stepReview"),
+  ];
+
   return (
     <div className="site-shell">
       <Navbar />
 
-      <main className="site-main px-4 sm:px-6 py-12">
+      <main className="site-main px-4 sm:px-6 py-12 max-w-7xl mx-auto">
         <div className="mb-10 text-center">
           <h2 className="site-heading text-4xl font-bold mb-2">
             {t("quote.title")}
@@ -891,75 +951,77 @@ export default function Quote() {
           <ModelDiscoveryCards compact lowEmphasis inlineMinimal />
         </div>
 
-        {!isLoggedIn && (
-          <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800">
-              {t("quote.guestContactTitle")}
-            </h3>
-            <p className="mt-1 text-sm text-[#5f736d]">
-              {t("quote.guestContactSubtitle")}
-            </p>
+        {/* Improved Step Progress Indicator */}
+        <div className="mb-10">
+          <div className="flex items-center justify-center max-w-3xl mx-auto">
+            {stepLabels.map((label, index) => {
+              const stepNumber = index + 1;
+              const isActive = currentStep === stepNumber;
+              const isComplete = currentStep > stepNumber;
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  {t("quote.fullName")}
-                </label>
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder={t("quote.fullName")}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  {t("quote.guestEmail")}
-                </label>
-                <input
-                  type="email"
-                  value={guestEmail}
-                  onChange={(e) => setGuestEmail(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="name@example.com"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  {t("quote.phone")}
-                </label>
-                <input
-                  type="text"
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder={t("quote.phone")}
-                />
-              </div>
-            </div>
+              return (
+                <div
+                  key={label}
+                  className="flex items-center flex-1 last:flex-none"
+                >
+                  <div className="flex flex-col items-center relative z-10 w-24">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300 ${
+                        isActive
+                          ? "border-emerald-600 bg-emerald-600 text-white shadow-md"
+                          : isComplete
+                            ? "border-emerald-500 bg-emerald-50 text-emerald-600"
+                            : "border-gray-200 bg-white text-gray-400"
+                      }`}
+                    >
+                      {isComplete ? <CheckCircle size={18} /> : stepNumber}
+                    </div>
+                    <span
+                      className={`absolute top-12 mt-1 text-xs font-semibold whitespace-nowrap transition-colors duration-300 ${
+                        isActive
+                          ? "text-emerald-800"
+                          : isComplete
+                            ? "text-emerald-600"
+                            : "text-gray-400"
+                      }`}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                  {index < stepLabels.length - 1 && (
+                    <div className="flex-1 mx-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
+                        style={{ width: isComplete ? "100%" : "0%" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {!isLoggedIn && guestSubmittedOrderId && (
-          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
-            <h3 className="text-lg font-bold text-emerald-800">
+          <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 text-center">
+            <h3 className="text-xl font-bold text-emerald-800">
               {guestAccountCreated
                 ? t("quote.guestAccountCreatedTitle")
                 : t("quote.guestSubmittedTitle")}
             </h3>
-            <p className="mt-1 text-sm text-emerald-900/80">
+            <p className="mt-2 text-sm text-emerald-900/80 max-w-lg mx-auto">
               {guestAccountCreated
                 ? t("quote.guestAccountCreatedBody")
                 : t("quote.guestSubmittedBody")}
             </p>
-            <p className="mt-2 text-xs font-semibold text-emerald-800">
-              {t("quote.guestSubmittedReference")} {guestSubmittedOrderId}
-            </p>
+            <div className="mt-4 inline-block bg-white px-4 py-2 rounded-lg border border-emerald-100 shadow-sm text-sm font-semibold text-emerald-800">
+              {t("quote.guestSubmittedReference")}{" "}
+              <span className="font-mono text-emerald-600 ml-2">
+                {guestSubmittedOrderId}
+              </span>
+            </div>
             {guestAccountCreated && (
-              <p className="mt-3 text-xs text-[#0f766e] font-semibold">
+              <p className="mt-4 text-xs text-[#0f766e] font-semibold">
                 {t("quote.guestAccountCreatedHint")}
               </p>
             )}
@@ -968,313 +1030,653 @@ export default function Quote() {
 
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start"
         >
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800">
-                  <Package className="text-emerald-600" size={20} />
-                  {t("quote.models")}
-                </h3>
-                <div className="flex gap-2">
+            {/* STEP 1: MODELS */}
+            {currentStep === 1 && (
+              <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800">
+                      <Package className="text-emerald-600" size={24} />
+                      {t("quote.models")}
+                    </h3>
+                    <p className="mt-1 text-sm text-[#5f736d]">
+                      {t("quote.allowedFilesInline")}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={addTextOnlyItem}
-                    className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2"
+                    className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
                     {t("quote.addItem")}
                   </button>
                 </div>
-              </div>
-              <p className="mb-4 text-xs text-[#5f736d]">
-                {t("quote.allowedFilesInline")}
-              </p>
-              <p className="mb-4 text-xs text-amber-700">
-                {t("quote.materialAvailabilityDisclaimer")}
-              </p>
 
-              {items.length === 0 ? (
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                  }}
-                  className={`border-2 border-dashed rounded-xl py-12 text-center transition-colors ${
-                    isDragOver
-                      ? "border-emerald-400 bg-emerald-50/50"
-                      : "border-gray-200"
-                  } ${isUploading ? "opacity-70" : ""}`}
-                >
-                  <Upload className="mx-auto text-gray-300 mb-2" size={32} />
-                  <p className="text-gray-400">{t("quote.noFiles")}</p>
-                  <p className="mt-2 text-xs text-[#5f736d]">
-                    {t("quote.addItem")}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-5 border border-gray-200 rounded-xl bg-gray-50/50"
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, idx)}
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="font-bold text-gray-800 truncate max-w-[300px]">
-                          {item.fileName || t("quote.textDescription")}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1">
-                            {isUploading ? (
-                              <Loader2 className="animate-spin" size={14} />
-                            ) : (
-                              <Plus size={14} />
-                            )}
-                            {t("quote.addFile")}
+                <p className="mb-6 text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                  {t("quote.materialAvailabilityDisclaimer")}
+                </p>
+
+                {items.length === 0 ? (
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                    }}
+                    className={`border-2 border-dashed rounded-2xl py-16 text-center transition-colors ${
+                      isDragOver
+                        ? "border-emerald-400 bg-emerald-50/50"
+                        : "border-gray-200 bg-gray-50/50 hover:bg-gray-50"
+                    } ${isUploading ? "opacity-70" : ""}`}
+                  >
+                    <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                      <Upload className="text-emerald-500" size={28} />
+                    </div>
+                    <p className="text-gray-800 font-semibold text-lg">
+                      {t("quote.noFiles")}
+                    </p>
+                    <p className="mt-2 text-sm text-[#5f736d] max-w-sm mx-auto">
+                      {t("quote.dragAndDropHint")}
+                    </p>
+                    <div className="mt-6 flex justify-center">
+                      <label className="cursor-pointer bg-[#133827] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-[#1c4d37] transition-all flex items-center gap-2 shadow-sm">
+                        {isUploading ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Upload size={16} />
+                        )}
+                        {t("quote.browseFiles")}
+                        <input
+                          type="file"
+                          multiple
+                          accept={ALLOWED_UPLOAD_ACCEPT}
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, 0)}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-5 md:p-6 border border-gray-200 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow"
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, idx)}
+                      >
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-5 border-b border-gray-100 pb-4">
+                          <span className="font-bold text-gray-800 text-lg truncate flex-1">
+                            {item.fileName || t("quote.textDescription")}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <label className="cursor-pointer bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1.5 border border-emerald-100">
+                              {isUploading ? (
+                                <Loader2 className="animate-spin" size={16} />
+                              ) : (
+                                <Plus size={16} />
+                              )}
+                              {t("quote.addFile")}
+                              <input
+                                type="file"
+                                multiple
+                                accept={ALLOWED_UPLOAD_ACCEPT}
+                                className="hidden"
+                                onChange={(e) => handleFileUpload(e, idx)}
+                                disabled={
+                                  isUploading ||
+                                  (item.files || []).length >=
+                                    MAX_FILES_PER_ITEM
+                                }
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(idx)}
+                              className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                              title={t("quote.removeItemTitle")}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {(item.files || []).length > 0 && (
+                          <div className="mb-5 flex flex-wrap gap-2 items-center">
+                            {(item.files || []).map((file, fileIndex) => (
+                              <div
+                                key={`${file.url}-${fileIndex}`}
+                                className="inline-flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-200 pl-3 pr-2 py-1.5 text-sm text-gray-700 font-medium"
+                              >
+                                <span className="truncate max-w-[200px]">
+                                  {file.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeItemFile(idx, fileIndex)}
+                                  className="text-gray-400 hover:text-rose-600 bg-white rounded-md p-0.5 shadow-sm border border-gray-100 hover:border-rose-200 transition-colors"
+                                  aria-label={`Remove ${file.name}`}
+                                  title={t("quote.removeItemTitle")}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => clearItemFiles(idx)}
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-800 ml-2"
+                            >
+                              {t("quote.removeAllFiles")}
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <Layers size={14} /> {t("quote.material")}
+                            </label>
+                            <select
+                              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer"
+                              value={item.material}
+                              onChange={(e) => {
+                                const newMaterial = e.target.value;
+                                const validColors =
+                                  getColorsForMaterial(newMaterial);
+                                const newItems = [...items];
+                                newItems[idx].material = newMaterial;
+                                if (
+                                  !validColors.includes(newItems[idx].color)
+                                ) {
+                                  newItems[idx].color = validColors[0];
+                                }
+                                setItems(newItems);
+                              }}
+                            >
+                              {finalMaterials.map((m) => (
+                                <option key={m} value={m}>
+                                  {m}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <Palette size={14} /> {t("quote.color")}
+                            </label>
+                            <select
+                              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer"
+                              value={item.color}
+                              onChange={(e) =>
+                                updateItem(idx, "color", e.target.value)
+                              }
+                            >
+                              {getColorsForMaterial(item.material).map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <Hash size={14} /> {t("quote.quantity")}
+                            </label>
                             <input
-                              type="file"
-                              multiple
-                              accept={ALLOWED_UPLOAD_ACCEPT}
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, idx)}
-                              disabled={
-                                isUploading ||
-                                (item.files || []).length >= MAX_FILES_PER_ITEM
+                              type="number"
+                              min="1"
+                              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                              value={item.count}
+                              onChange={(e) =>
+                                updateItem(
+                                  idx,
+                                  "count",
+                                  parseInt(e.target.value, 10) || 1,
+                                )
                               }
                             />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => removeItem(idx)}
-                            className="text-red-400 hover:text-red-600"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {(item.files || []).length > 0 && (
-                        <div className="mb-3">
-                          <button
-                            type="button"
-                            onClick={() => clearItemFiles(idx)}
-                            className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
-                          >
-                            {t("quote.removeAllFiles")}
-                          </button>
-                        </div>
-                      )}
-
-                      {(item.files || []).length > 0 && (
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          {(item.files || []).map((file, fileIndex) => (
-                            <span
-                              key={`${file.url}-${fileIndex}`}
-                              className="inline-flex items-center gap-1 rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs text-[#2e423d]"
-                            >
-                              <span>{file.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeItemFile(idx, fileIndex)}
-                                className="text-rose-500 hover:text-rose-700 leading-none"
-                                aria-label={`Remove ${file.name}`}
-                                title={`Remove ${file.name}`}
-                              >
-                                x
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Layers size={12} /> {t("quote.material")}
-                          </label>
-                          <select
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
-                            value={item.material}
-                            onChange={(e) => {
-                              const newMaterial = e.target.value;
-                              const validColors =
-                                getColorsForMaterial(newMaterial);
-
-                              const newItems = [...items];
-                              newItems[idx].material = newMaterial;
-
-                              if (!validColors.includes(newItems[idx].color)) {
-                                newItems[idx].color = validColors[0];
-                              }
-
-                              setItems(newItems);
-                            }}
-                          >
-                            {finalMaterials.map((m) => (
-                              <option key={m} value={m}>
-                                {m}
-                              </option>
-                            ))}
-                          </select>
+                          </div>
                         </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Palette size={12} /> {t("quote.color")}
-                          </label>
-                          <select
-                            className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
-                            value={item.color}
+                        <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50/80 p-4">
+                          <div className="mb-3 flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+                              <Ruler size={14} /> {t("quote.size")}
+                            </label>
+                          </div>
+
+                          {hasDimensionValue(item.dimensionBaseX) &&
+                          hasDimensionValue(item.dimensionBaseY) &&
+                          hasDimensionValue(item.dimensionBaseZ) ? (
+                            <div className="space-y-3">
+                              <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+                                <div className="mb-2 flex items-center justify-between">
+                                  <span className="text-xs font-bold text-gray-700">
+                                    {t("quote.scale")}
+                                  </span>
+                                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                                    {(item.dimensionScale ?? 0).toFixed(2)}x
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max={getMaximumScaleForBase(
+                                    item.dimensionBaseX,
+                                    item.dimensionBaseY,
+                                    item.dimensionBaseZ,
+                                  )}
+                                  step={SCALE_STEP}
+                                  value={item.dimensionScale ?? 0}
+                                  className="w-full accent-emerald-600 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                  onChange={(e) =>
+                                    updateItemScale(idx, Number(e.target.value))
+                                  }
+                                />
+                                <p className="mt-2 text-xs text-gray-500">
+                                  {t("quote.scaleHint")}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-3 text-sm text-gray-500 text-center">
+                              {t("quote.scaleNeedsStl")}
+                            </div>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 px-1">
+                            <p className="text-xs text-gray-500">
+                              {t("quote.dimensionsMaxHint")}
+                            </p>
+                            {hasDimensionValue(item.dimensionX) &&
+                              hasDimensionValue(item.dimensionY) &&
+                              hasDimensionValue(item.dimensionZ) && (
+                                <span className="text-sm font-bold text-gray-800 tracking-tight">
+                                  {item.dimensionX} × {item.dimensionY} ×{" "}
+                                  {item.dimensionZ} mm
+                                </span>
+                              )}
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <MessageSquare
+                            className="absolute left-3.5 top-3.5 text-gray-400"
+                            size={18}
+                          />
+                          <textarea
+                            placeholder={t("quote.notesPlaceholder")}
+                            className="w-full p-3 pl-11 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all min-h-[100px] resize-y"
+                            value={item.notes}
                             onChange={(e) =>
-                              updateItem(idx, "color", e.target.value)
-                            }
-                          >
-                            {getColorsForMaterial(item.material).map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Hash size={12} /> {t("quote.quantity")}
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                            value={item.count}
-                            onChange={(e) =>
-                              updateItem(
-                                idx,
-                                "count",
-                                parseInt(e.target.value, 10) || 1,
-                              )
+                              updateItem(idx, "notes", e.target.value)
                             }
                           />
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-                      <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
-                            <Ruler size={12} /> {t("quote.size")}
-                          </label>
-                        </div>
+            {/* STEP 2: DETAILS (Contact & Shipping) */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                {!isLoggedIn && (
+                  <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600">
+                        <User size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">
+                          {t("quote.guestContactTitle")}
+                        </h3>
+                        <p className="text-sm text-[#5f736d]">
+                          {t("quote.guestContactSubtitle")}
+                        </p>
+                      </div>
+                    </div>
 
-                        {hasDimensionValue(item.dimensionBaseX) &&
-                        hasDimensionValue(item.dimensionBaseY) &&
-                        hasDimensionValue(item.dimensionBaseZ) ? (
-                          <div className="grid grid-cols-1 gap-2.5">
-                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                              <div className="mb-1 flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-slate-600">
-                                  {t("quote.scale")}
-                                </span>
-                                <span className="text-[11px] font-semibold text-slate-500">
-                                  {(item.dimensionScale ?? 0).toFixed(2)}x
-                                </span>
-                              </div>
-                              <input
-                                type="range"
-                                min="0"
-                                max={getMaximumScaleForBase(
-                                  item.dimensionBaseX,
-                                  item.dimensionBaseY,
-                                  item.dimensionBaseZ,
-                                )}
-                                step={SCALE_STEP}
-                                value={item.dimensionScale ?? 0}
-                                className="w-full accent-emerald-600"
-                                onChange={(e) =>
-                                  updateItemScale(idx, Number(e.target.value))
-                                }
-                              />
-                              <p className="mt-1 text-[11px] text-slate-500">
-                                {t("quote.scaleHint")}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-[11px] text-slate-500">
-                            {t("quote.scaleNeedsStl")}
-                          </p>
-                        )}
-
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-[11px] text-slate-500">
-                            {t("quote.dimensionsMaxHint")}
-                          </p>
-                          {hasDimensionValue(item.dimensionX) &&
-                            hasDimensionValue(item.dimensionY) &&
-                            hasDimensionValue(item.dimensionZ) && (
-                              <span className="text-[11px] font-bold text-slate-700">
-                                {item.dimensionX} x {item.dimensionY} x{" "}
-                                {item.dimensionZ} mm
-                              </span>
-                            )}
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          {t("quote.fullName")}
+                        </label>
+                        <input
+                          type="text"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          placeholder={t("quote.placeholderName")}
+                        />
                       </div>
 
-                      <div className="relative">
-                        <MessageSquare
-                          className="absolute left-3 top-3 text-gray-300"
-                          size={16}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          {t("quote.guestEmail")}
+                        </label>
+                        <input
+                          type="email"
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          placeholder={t("quote.placeholderEmail")}
                         />
-                        <textarea
-                          placeholder={t("quote.notesPlaceholder")}
-                          className="w-full p-3 pl-10 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
-                          value={item.notes}
-                          onChange={(e) =>
-                            updateItem(idx, "notes", e.target.value)
-                          }
+                      </div>
+
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          {t("quote.phone")}
+                        </label>
+                        <input
+                          type="text"
+                          value={guestPhone}
+                          onChange={(e) => setGuestPhone(e.target.value)}
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                          placeholder={t("quote.placeholderPhone")}
                         />
                       </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600">
+                      <MapPin size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">
+                        {t("quote.shippingDetailsTitle")}
+                      </h3>
+                      <p className="text-sm text-[#5f736d]">
+                        {t("quote.shippingDetailsSubtitle")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {t("quote.fullName")}
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingDetails.fullName}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            fullName: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder={t("quote.placeholderShippingName")}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {t("quote.phone")}
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingDetails.phoneNumber}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            phoneNumber: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder={t("quote.placeholderShippingPhone")}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {t("quote.street")}
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingDetails.addressLine1}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            addressLine1: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder={t("quote.placeholderStreet")}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {t("quote.city")}
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingDetails.city}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder={t("quote.placeholderCity")}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {t("quote.postalCode")}
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingDetails.postalCode}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            postalCode: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        placeholder={t("quote.placeholderPostalCode")}
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* STEP 3: REVIEW */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                    <CheckCircle className="text-emerald-500" size={28} />
+                    {t("quote.reviewTitle")}
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Models Review */}
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">
+                        {t("quote.models")} ({items.length})
+                      </h4>
+                      <ul className="space-y-4">
+                        {items.map((item, idx) => (
+                          <li
+                            key={idx}
+                            className="bg-gray-50 p-4 rounded-xl border border-gray-100"
+                          >
+                            <p className="font-bold text-gray-800 text-sm truncate mb-1">
+                              {item.fileName || t("quote.textDescription")}
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                              <span>
+                                <span className="font-semibold text-gray-400">
+                                  {t("quote.qty")}
+                                </span>{" "}
+                                {item.count}
+                              </span>
+                              <span>
+                                <span className="font-semibold text-gray-400">
+                                  {t("quote.mat")}
+                                </span>{" "}
+                                {item.material}
+                              </span>
+                              <span>
+                                <span className="font-semibold text-gray-400">
+                                  {t("quote.colorLabel")}
+                                </span>{" "}
+                                {item.color}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Details Review */}
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">
+                          {t("quote.contactInfo")}
+                        </h4>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm text-gray-700 space-y-1">
+                          {isLoggedIn ? (
+                            <p className="font-medium text-emerald-700">
+                              {t("quote.loggedInUser")}
+                            </p>
+                          ) : (
+                            <>
+                              <p className="font-bold text-gray-800">
+                                {guestName || "-"}
+                              </p>
+                              <p>{guestEmail || "-"}</p>
+                              <p>{guestPhone || "-"}</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">
+                          {t("quote.shippingDetailsTitle")}
+                        </h4>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm text-gray-700 space-y-1">
+                          <p className="font-bold text-gray-800">
+                            {shippingDetails.fullName || "-"}
+                          </p>
+                          <p>{shippingDetails.phoneNumber || "-"}</p>
+                          <p>{shippingDetails.addressLine1 || "-"}</p>
+                          <p>
+                            {shippingDetails.city || "-"},{" "}
+                            {shippingDetails.postalCode || "-"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600">
-                {t("quote.shippingLaterNotice")}
-              </p>
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1 sticky top-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
+              <div>
+                <h4 className="font-bold text-gray-800 text-lg mb-2">
+                  {t("quote.orderSummary")}
+                </h4>
+                <p className="text-sm text-gray-600 mb-6 pb-6 border-b border-gray-100">
+                  {currentStep === 1
+                    ? t("quote.step2SidebarNote") // Actually step 1 now (Models)
+                    : currentStep === 2
+                      ? t("quote.shippingDetailsNote") // Step 2 (Details)
+                      : t("quote.reviewSidebarNote")}
+                </p>
 
-              <p className="mt-3 text-xs leading-relaxed text-[#5e7069]">
-                {t("quote.pricingDisclaimer")}{" "}
-                <Link
-                  to="/terms"
-                  className="font-semibold text-[#0f766e] hover:underline"
-                >
-                  {t("footer.terms")}
-                </Link>
-              </p>
+                <div className="flex justify-between items-center mb-6 font-semibold text-gray-700">
+                  <span>{t("quote.totalItems")}</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                    {items.reduce((acc, curr) => acc + curr.count, 0)}
+                  </span>
+                </div>
+              </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting || items.length === 0}
-                className="w-full mt-8 bg-[#133827] text-white font-bold py-4 rounded-xl hover:bg-[#1c4d37] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <CheckCircle size={20} />
-                )}
-                {t("quote.submit")}
-              </button>
-              <p className="mt-4 text-[10px] text-gray-400 text-center uppercase tracking-widest">
-                {t("quote.secure")}
-              </p>
+              <div className="mt-auto pt-6">
+                <p className="text-xs leading-relaxed text-[#5e7069] mb-4 text-center">
+                  {t("quote.pricingDisclaimer")}{" "}
+                  <Link
+                    to="/terms"
+                    className="font-semibold text-emerald-700 hover:underline"
+                  >
+                    {t("footer.terms")}
+                  </Link>
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={
+                      currentStep === totalSteps ? handleSubmit : goToNextStep
+                    }
+                    disabled={
+                      isSubmitting || (currentStep === 1 && items.length === 0)
+                    }
+                    className="w-full bg-[#133827] text-white font-bold py-4 rounded-xl hover:bg-[#1c4d37] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="animate-spin" />
+                    ) : currentStep === totalSteps ? (
+                      <>
+                        <CheckCircle size={20} />
+                        {t("quote.submit")}
+                      </>
+                    ) : (
+                      <>
+                        {currentStep === 1
+                          ? t("quote.nextStep")
+                          : t("quote.reviewStep")}
+                        <ChevronRight size={18} />
+                      </>
+                    )}
+                  </button>
+
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={goToPreviousStep}
+                      disabled={isSubmitting}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ChevronLeft size={16} />
+                      {t("quote.backStep")}
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-5 flex items-center justify-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  {t("quote.secure")}
+                </div>
+              </div>
             </div>
           </div>
         </form>
