@@ -177,8 +177,9 @@ export default function OrderSidebar({
                 </div>
               ) : null}
 
-              {order.payments?.find((payment) => payment.provider === "bank_transfer")
-                ?.reference ? (
+              {order.payments?.find(
+                (payment) => payment.provider === "bank_transfer",
+              )?.reference ? (
                 <div className="flex items-start justify-between gap-4 pt-2 border-t border-amber-100">
                   <span className="text-amber-700 font-semibold">
                     {t("orderDetail.bankTransferReference")}
