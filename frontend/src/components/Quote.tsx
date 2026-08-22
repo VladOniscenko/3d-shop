@@ -225,7 +225,7 @@ export default function Quote() {
       }
     }
 
-    const shippingErrors = validateShippingInfo(shippingDetails);
+    const shippingErrors = validateShippingInfo(shippingDetails, t);
     if (Object.keys(shippingErrors).length > 0) {
       return Object.values(shippingErrors)[0];
     }

@@ -23,8 +23,10 @@ export function normalizeShippingInfo(input: ShippingInfo): ShippingInfo {
   };
 }
 
+// t functie toegevoegd als parameter
 export function validateShippingInfo(
   input: ShippingInfo,
+  t: (key: string) => string,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   const normalized = normalizeShippingInfo(input);
@@ -36,55 +38,55 @@ export function validateShippingInfo(
   const postalRegex = /^[A-Za-z0-9][A-Za-z0-9\s-]{1,11}$/;
 
   if (!normalized.fullName) {
-    errors.fullName = "Full name is required";
+    errors.fullName = t("shipping.error.fullNameRequired");
   } else if (
     normalized.fullName.length < 2 ||
     normalized.fullName.length > 100
   ) {
-    errors.fullName = "Full name must be 2-100 characters";
+    errors.fullName = t("shipping.error.fullNameLength");
   } else if (!nameRegex.test(normalized.fullName)) {
-    errors.fullName = "Full name contains unsupported characters";
+    errors.fullName = t("shipping.error.fullNameInvalid");
   }
 
   if (!input.phoneNumber.trim()) {
-    errors.phoneNumber = "Phone number is required";
+    errors.phoneNumber = t("shipping.error.phoneRequired");
   } else if (!phoneRegex.test(input.phoneNumber.trim())) {
-    errors.phoneNumber = "Phone number format is invalid";
+    errors.phoneNumber = t("shipping.error.phoneInvalid");
   } else if (
     normalized.phoneNumber.replace(/\D/g, "").length < 7 ||
     normalized.phoneNumber.replace(/\D/g, "").length > 15
   ) {
-    errors.phoneNumber = "Phone number must contain 7-15 digits";
+    errors.phoneNumber = t("shipping.error.phoneLength");
   }
 
   if (!normalized.addressLine1) {
-    errors.addressLine1 = "Address is required";
+    errors.addressLine1 = t("shipping.error.addressRequired");
   } else if (
     normalized.addressLine1.length < 5 ||
     normalized.addressLine1.length > 120
   ) {
-    errors.addressLine1 = "Address must be 5-120 characters";
+    errors.addressLine1 = t("shipping.error.addressLength");
   } else if (!addressRegex.test(normalized.addressLine1)) {
-    errors.addressLine1 = "Address contains unsupported characters";
+    errors.addressLine1 = t("shipping.error.addressInvalid");
   }
 
   if (!normalized.city) {
-    errors.city = "City is required";
+    errors.city = t("shipping.error.cityRequired");
   } else if (normalized.city.length < 2 || normalized.city.length > 80) {
-    errors.city = "City must be 2-80 characters";
+    errors.city = t("shipping.error.cityLength");
   } else if (!cityRegex.test(normalized.city)) {
-    errors.city = "City contains unsupported characters";
+    errors.city = t("shipping.error.cityInvalid");
   }
 
   if (!normalized.postalCode) {
-    errors.postalCode = "Postal code is required";
+    errors.postalCode = t("shipping.error.postalRequired");
   } else if (
     normalized.postalCode.length < 3 ||
     normalized.postalCode.length > 12
   ) {
-    errors.postalCode = "Postal code must be 3-12 characters";
+    errors.postalCode = t("shipping.error.postalLength");
   } else if (!postalRegex.test(normalized.postalCode)) {
-    errors.postalCode = "Postal code format is invalid";
+    errors.postalCode = t("shipping.error.postalInvalid");
   }
 
   return errors;

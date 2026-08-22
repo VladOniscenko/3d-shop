@@ -1300,6 +1300,22 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "seo.notFound.description":
       "The requested page could not be found. Return to PrintCraft to start your next 3D print project.",
     "seo.notFound.keywords": "404, page not found, PrintCraft",
+    "shipping.error.fullNameRequired": "Full name is required",
+    "shipping.error.fullNameLength": "Full name must be 2-100 characters",
+    "shipping.error.fullNameInvalid":
+      "Full name contains unsupported characters",
+    "shipping.error.phoneRequired": "Phone number is required",
+    "shipping.error.phoneInvalid": "Phone number format is invalid",
+    "shipping.error.phoneLength": "Phone number must contain 7-15 digits",
+    "shipping.error.addressRequired": "Address is required",
+    "shipping.error.addressLength": "Address must be 5-120 characters",
+    "shipping.error.addressInvalid": "Address contains unsupported characters",
+    "shipping.error.cityRequired": "City is required",
+    "shipping.error.cityLength": "City must be 2-80 characters",
+    "shipping.error.cityInvalid": "City contains unsupported characters",
+    "shipping.error.postalRequired": "Postal code is required",
+    "shipping.error.postalLength": "Postal code must be 3-12 characters",
+    "shipping.error.postalInvalid": "Postal code format is invalid",
   },
   nl: {
     // Navbar
@@ -2615,5 +2631,23 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "seo.notFound.description":
       "De opgevraagde pagina kon niet worden gevonden. Ga terug naar PrintCraft om je volgende 3D-printproject te starten.",
     "seo.notFound.keywords": "404, pagina niet gevonden, PrintCraft",
+    "shipping.error.fullNameRequired": "Volledige naam is verplicht",
+    "shipping.error.fullNameLength":
+      "Volledige naam moet tussen 2-100 tekens zijn",
+    "shipping.error.fullNameInvalid":
+      "Volledige naam bevat niet-ondersteunde tekens",
+    "shipping.error.phoneRequired": "Telefoonnummer is verplicht",
+    "shipping.error.phoneInvalid": "Telefoonnummer formaat is ongeldig",
+    "shipping.error.phoneLength":
+      "Telefoonnummer moet tussen 7-15 cijfers bevatten",
+    "shipping.error.addressRequired": "Adres is verplicht",
+    "shipping.error.addressLength": "Adres moet tussen 5-120 tekens zijn",
+    "shipping.error.addressInvalid": "Adres bevat niet-ondersteunde tekens",
+    "shipping.error.cityRequired": "Stad is verplicht",
+    "shipping.error.cityLength": "Stad moet tussen 2-80 tekens zijn",
+    "shipping.error.cityInvalid": "Stad bevat niet-ondersteunde tekens",
+    "shipping.error.postalRequired": "Postcode is verplicht",
+    "shipping.error.postalLength": "Postcode moet tussen 3-12 tekens zijn",
+    "shipping.error.postalInvalid": "Postcode formaat is ongeldig",
   },
 };
