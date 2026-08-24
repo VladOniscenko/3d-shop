@@ -32,6 +32,8 @@ public class AdminController : ControllerBase
         "delivered",
         "failed",
         "cancelled",
+        "returned",
+        "refunded"
     };
 
     private static readonly HashSet<string> PostPaymentStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -42,6 +44,8 @@ public class AdminController : ControllerBase
         "shipped",
         "delivered",
         "completed",
+        "returned",
+        "refunded"
     };
 
     private static readonly HashSet<string> AllowedNoteVisibilities = new(StringComparer.OrdinalIgnoreCase)
@@ -49,6 +53,23 @@ public class AdminController : ControllerBase
         "internal",
         "customer",
     };
+
+    private readonly PrintCraftDb _db;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+    private readonly StripePendingPaymentReconciler? _stripePendingPaymentReconciler;
+
+    public AdminController(
+        PrintCraftDb db,
+        IEmailService emailService,
+        IConfiguration configuration,
+        StripePendingPaymentReconciler? stripePendingPaymentReconciler = null)
+    {
+        _db = db;
+        _emailService = emailService;
+        _configuration = configuration;
+        _stripePendingPaymentReconciler = stripePendingPaymentReconciler;
+    }
 
     private static bool IsPendingStatus(string? status)
     {
@@ -99,7 +120,10 @@ public class AdminController : ControllerBase
         if (!IsKnownStatus(next)) return false;
         if (string.Equals(current, next, StringComparison.OrdinalIgnoreCase)) return true;
 
-        if (current is "cancelled" or "completed")
+        // Allow jumping to cancelled, returned, or refunded from almost anywhere
+        if (next is "cancelled" || next is "returned" || next is "refunded") return true;
+
+        if (current is "cancelled" or "completed" or "returned" or "refunded")
             return false;
 
         if (isPaid || string.Equals(current, "paid", StringComparison.OrdinalIgnoreCase))
@@ -125,6 +149,73 @@ public class AdminController : ControllerBase
         order.ServiceFeePrice = normalizedServiceFee;
         order.OrderDiscountAmount = normalizedDiscount;
         order.QuotedPrice = total > 0 ? total : null;
+    }
+
+    [HttpPost("orders/{id:guid}/process-quote")]
+    public async Task<IActionResult> ProcessFullQuote([FromRoute] Guid id, [FromBody] ProcessFullQuoteRequest payload)
+    {
+        var order = await _db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound(new { message = "Order not found" });
+
+        if (IsPricingLocked(order))
+            return BadRequest(new { message = "Pricing cannot be changed after payment." });
+
+        // 1. Update all prices
+        foreach (var item in order.Items)
+        {
+            if (payload.ItemPrices.TryGetValue(item.Id, out var price))
+            {
+                item.Price = price >= 0 ? price : 0;
+            }
+        }
+
+        order.DeliveryPrice = payload.DeliveryPrice >= 0 ? payload.DeliveryPrice : 0;
+        order.ServiceFeePrice = payload.ServiceFeePrice >= 0 ? payload.ServiceFeePrice : 0;
+        order.OrderDiscountAmount = payload.OrderDiscountAmount >= 0 ? payload.OrderDiscountAmount : 0;
+
+        RecalculateQuotedPrice(order);
+
+        if ((order.QuotedPrice ?? 0m) <= 0)
+            return BadRequest(new { message = "Quote total must be greater than zero." });
+
+        // 2. Set Status & Details
+        var paymentFlow = NormalizePaymentFlow(payload.PaymentFlow);
+        var previousStatus = order.Status;
+
+        order.QuoteMessage = string.IsNullOrWhiteSpace(payload.QuoteMessage) ? DefaultQuoteConfirmationMessage : payload.QuoteMessage;
+        order.PaymentFlow = paymentFlow;
+        order.Status = IsBankTransferFlow(paymentFlow) ? "pending_payment" : "quoted";
+        QuoteLifecycle.MarkQuoteConfirmed(order, DateTime.UtcNow);
+        order.UpdatedAt = DateTime.UtcNow;
+
+        // 3. Handle Bank Transfer Payment Generation
+        Payment? manualPayment = null;
+        if (IsBankTransferFlow(paymentFlow))
+        {
+            manualPayment = await EnsureBankTransferPaymentAsync(order, order.QuotedPrice ?? 0m);
+        }
+
+        await _db.SaveChangesAsync();
+        await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Full quote processed and sent.");
+
+        // 4. Send the Email
+        var recipient = await ResolveOrderEmailRecipientAsync(order);
+        if (recipient != null)
+        {
+            if (IsBankTransferFlow(paymentFlow))
+            {
+                await _emailService.SendQuoteConfirmationBankTransferEmailAsync(
+                    recipient.Value.Email, recipient.Value.Name, order.Id, order.QuotedPrice ?? 0m, order.QuoteMessage, manualPayment!.Reference);
+            }
+            else
+            {
+                await _emailService.SendQuoteConfirmationEmailAsync(
+                    recipient.Value.Email, recipient.Value.Name, order.Id, order.QuotedPrice ?? 0m, order.QuoteMessage);
+            }
+            await LogOrderCommunicationAsync(order.Id, "quote_confirmation", "Your quote is ready", recipient.Value.Email);
+        }
+
+        return Ok(order);
     }
 
     [HttpPut("orders/{id:guid}/paid")]
@@ -158,22 +249,6 @@ public class AdminController : ControllerBase
         await LogStatusHistoryAsync(order.Id, previousStatus, order.Status, "admin", "Marked as paid");
 
         return Ok(order);
-    }
-    private readonly PrintCraftDb _db;
-    private readonly IEmailService _emailService;
-    private readonly IConfiguration _configuration;
-    private readonly StripePendingPaymentReconciler? _stripePendingPaymentReconciler;
-
-    public AdminController(
-        PrintCraftDb db,
-        IEmailService emailService,
-        IConfiguration configuration,
-        StripePendingPaymentReconciler? stripePendingPaymentReconciler = null)
-    {
-        _db = db;
-        _emailService = emailService;
-        _configuration = configuration;
-        _stripePendingPaymentReconciler = stripePendingPaymentReconciler;
     }
 
     [HttpPost("payments/reconcile-pending")]
@@ -1364,6 +1439,15 @@ public class AdminController : ControllerBase
     public record SendOrderEmailRequest(string Type, decimal? Price, string? Message, string? TrackingCode, string? TrackingUrl, string? PaymentFlow, string? Subject, string? Body, string? Template);
     public record AdminUserDto(Guid Id, string Name, string Email, string Role);
     public record UpdateUserRequest(string Name, string Email, string Role);
+
+    public record ProcessFullQuoteRequest(
+        Dictionary<Guid, double> ItemPrices,
+        decimal DeliveryPrice,
+        decimal ServiceFeePrice,
+        decimal OrderDiscountAmount,
+        string QuoteMessage,
+        string PaymentFlow
+    );
 
     private static bool IsValidEmail(string? email)
     {
