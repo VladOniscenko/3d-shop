@@ -148,6 +148,32 @@ public class AuthController : ControllerBase
         return Ok(new { message = "If the account exists, a reset email has been sent." });
     }
 
+    [HttpPut("change-password")]
+    [EnableRateLimiting("AuthBurst")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized(new { message = "Unauthorized." });
+
+        // Fix 1: Parse the string to a Guid
+        var user = await _db.Users.FindAsync(Guid.Parse(userId));
+        if (user == null)
+            return BadRequest(new { message = "User not found." });
+
+        // Fix 2: Verify the CURRENT password before allowing the change
+        if (!BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
+            return BadRequest(new { message = "Incorrect current password." });
+
+        if (string.IsNullOrWhiteSpace(req.NewPassword) || req.NewPassword.Length < 8)
+            return BadRequest(new { message = "Password must be at least 8 characters." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Password has been updated." });
+    }
+
     [HttpPost("reset-password")]
     [EnableRateLimiting("AuthBurst")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
@@ -262,3 +288,4 @@ public record RegisterRequest(string Name, string Email, string Password);
 public record LoginRequest(string Email, string Password);
 public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Token, string NewPassword);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

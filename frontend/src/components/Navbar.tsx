@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart, Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Logo from "./Logo";
+import Logo from "./logos/Logo";
 import { useI18n } from "../i18n/I18nContext";
 import { ALLOWED_PRODUCT_ORDER } from "../constants";
 
@@ -53,6 +53,7 @@ const Navbar = () => {
     ? [
         ...navLinks,
         { name: t("nav.myOrders"), path: "/orders" },
+        { name: t("nav.myProfile"), path: "/profile" },
         ...(userRole === "admin"
           ? [{ name: t("nav.admin"), path: "/admin" }]
           : []),
@@ -110,9 +111,6 @@ const Navbar = () => {
           <>
             <Link to="/login" className="site-btn-soft">
               {t("nav.logIn")}
-            </Link>
-            <Link to="/signup" className="site-btn-primary">
-              {t("nav.getStarted")}
             </Link>
           </>
         ) : (

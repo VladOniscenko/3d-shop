@@ -43,7 +43,8 @@ const Materials = lazy(() => import("./components/Materials.tsx"));
 const Gallery = lazy(() => import("./components/Gallery.tsx"));
 const ProductDetail = lazy(() => import("./components/ProductDetail.tsx"));
 const FAQ = lazy(() => import("./components/FAQ.tsx"));
-const Orders = lazy(() => import("./components/Orders"));
+const Orders = lazy(() => import("./components/user/Orders.tsx"));
+const Profile = lazy(() => import("./components/user/Profile.tsx"));
 const OrderDetail = lazy(() => import("./components/OrderDetail.tsx"));
 const Cart = lazy(() => import("./components/Cart.tsx"));
 const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
@@ -217,14 +218,28 @@ export default function App() {
           <Route path="/refunds" element={<RefundPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
 
-          <Route path="/quote" element={<Quote />} />
-
           {/* Private Routes - Only logged-in users can see these */}
+          <Route
+            path="/quote"
+            element={
+              <ProtectedRoute>
+                <Quote />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/orders"
             element={
               <ProtectedRoute>
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

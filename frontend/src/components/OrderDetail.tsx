@@ -323,7 +323,7 @@ export default function OrderDetail() {
   const handleSaveAddressAndCheckout = async () => {
     if (!id) return;
 
-    const errors = validateShippingInfo(shippingDetails);
+    const errors = validateShippingInfo(shippingDetails, t);
     setShippingErrors(errors);
     if (Object.keys(errors).length > 0) {
       notifyError(t("quote.invalidShipping"));

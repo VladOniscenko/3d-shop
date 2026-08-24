@@ -18,6 +18,7 @@ import {
   User,
   ChevronRight,
   ChevronLeft,
+  Home,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import api from "../services/api";
@@ -133,6 +134,18 @@ async function detectStlDimensions(file: File): Promise<{
   }
 }
 
+interface SavedAddress {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  postalCode: string;
+  label?: string;
+  isDefault: boolean;
+}
+
 export default function Quote() {
   const { t } = useI18n();
   const { notifyError } = useNotify();
@@ -145,10 +158,22 @@ export default function Quote() {
   const [isDragOver, setIsDragOver] = useState(false);
   const submittedRef = useRef(false);
   const uploadedFileUrlsRef = useRef<Set<string>>(new Set());
+
   const isLoggedIn = !!localStorage.getItem("token");
+
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
+    string | null
+  >(null);
+  const [guestAccountCreated, setGuestAccountCreated] = useState(false);
+
+  // Address State
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
   const [shippingDetails, setShippingDetails] = useState<ShippingInfo>({
     fullName: "",
     phoneNumber: "",
@@ -156,10 +181,6 @@ export default function Quote() {
     city: "",
     postalCode: "",
   });
-  const [guestSubmittedOrderId, setGuestSubmittedOrderId] = useState<
-    string | null
-  >(null);
-  const [guestAccountCreated, setGuestAccountCreated] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
@@ -249,21 +270,37 @@ export default function Quote() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Fetch Filaments & Saved Addresses
   useEffect(() => {
     const fetchFilaments = async () => {
       try {
         const res = await api.get("/filaments");
-        if (Array.isArray(res.data)) {
-          setFilaments(res.data);
-        } else {
-          setFilaments([]);
-        }
+        if (Array.isArray(res.data)) setFilaments(res.data);
       } catch (err) {
         console.error("Failed to fetch filaments", err);
       }
     };
     fetchFilaments();
-  }, []);
+
+    if (isLoggedIn) {
+      const fetchAddresses = async () => {
+        try {
+          const res = await api.get("/me/addresses");
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            setSavedAddresses(res.data);
+
+            // Auto-select default address if available
+            const defaultAddr =
+              res.data.find((a: SavedAddress) => a.isDefault) || res.data[0];
+            handleSelectSavedAddress(defaultAddr);
+          }
+        } catch (err) {
+          console.error("Failed to fetch addresses", err);
+        }
+      };
+      fetchAddresses();
+    }
+  }, [isLoggedIn]);
 
   const availableMaterials = Array.from(
     new Set(filaments.map((f) => f.material)),
@@ -281,6 +318,25 @@ export default function Quote() {
     );
     const colors = Array.from(new Set(matchingFilaments.map((f) => f.name)));
     return colors.length > 0 ? colors : finalColors;
+  };
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    setShippingDetails({
+      fullName: addr.fullName,
+      phoneNumber: addr.phoneNumber,
+      addressLine1: addr.addressLine1,
+      city: addr.city,
+      postalCode: addr.postalCode,
+    });
+  };
+
+  const handleManualShippingChange = (
+    field: keyof ShippingInfo,
+    value: string,
+  ) => {
+    setSelectedAddressId("manual"); // Switch to manual mode immediately
+    setShippingDetails((prev) => ({ ...prev, [field]: value }));
   };
 
   const uploadSelectedFilesForItem = async (
@@ -534,7 +590,7 @@ export default function Quote() {
       });
       uploadedFileUrlsRef.current.delete(fileUrl);
     } catch {
-      // Best-effort cleanup; ignore if file is already linked or removed.
+      // Best-effort cleanup
     }
   };
 
@@ -542,13 +598,8 @@ export default function Quote() {
     const removed = items[index];
     setItems(items.filter((_, i) => i !== index));
 
-    if (removed?.fileUrl) {
-      void deleteTempUpload(removed.fileUrl);
-    }
-
-    if (removed?.imageUrl) {
-      void deleteTempUpload(removed.imageUrl);
-    }
+    if (removed?.fileUrl) void deleteTempUpload(removed.fileUrl);
+    if (removed?.imageUrl) void deleteTempUpload(removed.imageUrl);
 
     if (Array.isArray(removed?.files)) {
       for (const file of removed.files) {
@@ -595,9 +646,7 @@ export default function Quote() {
           : {}),
       };
 
-      if (removed?.url) {
-        void deleteTempUpload(removed.url);
-      }
+      if (removed?.url) void deleteTempUpload(removed.url);
 
       return nextItems;
     });
@@ -822,26 +871,7 @@ export default function Quote() {
         }),
       );
 
-      const payload: {
-        items: Array<{
-          fileUrl?: string;
-          imageUrl?: string;
-          fileName?: string;
-          notes?: string;
-          size?: string;
-          material: string;
-          color: string;
-          count: number;
-          files: Array<{
-            url: string;
-            name: string;
-            kind: "model" | "image" | "other";
-          }>;
-        }>;
-        guestName?: string;
-        guestEmail?: string;
-        guestPhone?: string;
-      } = {
+      const payload: any = {
         items: itemsForPayload.map((item) => ({
           fileUrl: item.fileUrl || undefined,
           imageUrl: item.imageUrl || undefined,
@@ -861,6 +891,13 @@ export default function Quote() {
             kind: file.kind || "other",
           })),
         })),
+        shippingDetails: {
+          fullName: shippingDetails.fullName,
+          phoneNumber: shippingDetails.phoneNumber,
+          addressLine1: shippingDetails.addressLine1,
+          city: shippingDetails.city,
+          postalCode: shippingDetails.postalCode,
+        },
       };
 
       if (!isLoggedIn) {
@@ -1407,7 +1444,54 @@ export default function Quote() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Saved Address Selector (Only if logged in and has addresses) */}
+                  {isLoggedIn && savedAddresses.length > 0 && (
+                    <div className="mb-8">
+                      <label className="text-sm font-bold text-gray-700 block mb-3">
+                        {t("profile.addressBook") || "Saved Addresses"}
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {savedAddresses.map((addr) => (
+                          <div
+                            key={addr.id}
+                            onClick={() => handleSelectSavedAddress(addr)}
+                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                              selectedAddressId === addr.id
+                                ? "border-emerald-500 bg-emerald-50/50"
+                                : "border-gray-200 hover:border-emerald-300 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Home
+                                size={14}
+                                className={
+                                  selectedAddressId === addr.id
+                                    ? "text-emerald-600"
+                                    : "text-gray-400"
+                                }
+                              />
+                              <span className="font-bold text-gray-900 text-sm">
+                                {addr.label || "Address"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 truncate">
+                              {addr.fullName}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {addr.addressLine1}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {addr.postalCode} {addr.city}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative">
+                    {/* Visual overlay if a saved address is selected, optional based on UX preference, but simply updating states works well. */}
+
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                         {t("quote.fullName")}
@@ -1416,10 +1500,7 @@ export default function Quote() {
                         type="text"
                         value={shippingDetails.fullName}
                         onChange={(e) =>
-                          setShippingDetails((prev) => ({
-                            ...prev,
-                            fullName: e.target.value,
-                          }))
+                          handleManualShippingChange("fullName", e.target.value)
                         }
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         placeholder={t("quote.placeholderShippingName")}
@@ -1434,10 +1515,10 @@ export default function Quote() {
                         type="text"
                         value={shippingDetails.phoneNumber}
                         onChange={(e) =>
-                          setShippingDetails((prev) => ({
-                            ...prev,
-                            phoneNumber: e.target.value,
-                          }))
+                          handleManualShippingChange(
+                            "phoneNumber",
+                            e.target.value,
+                          )
                         }
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         placeholder={t("quote.placeholderShippingPhone")}
@@ -1452,10 +1533,10 @@ export default function Quote() {
                         type="text"
                         value={shippingDetails.addressLine1}
                         onChange={(e) =>
-                          setShippingDetails((prev) => ({
-                            ...prev,
-                            addressLine1: e.target.value,
-                          }))
+                          handleManualShippingChange(
+                            "addressLine1",
+                            e.target.value,
+                          )
                         }
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         placeholder={t("quote.placeholderStreet")}
@@ -1470,10 +1551,7 @@ export default function Quote() {
                         type="text"
                         value={shippingDetails.city}
                         onChange={(e) =>
-                          setShippingDetails((prev) => ({
-                            ...prev,
-                            city: e.target.value,
-                          }))
+                          handleManualShippingChange("city", e.target.value)
                         }
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         placeholder={t("quote.placeholderCity")}
@@ -1488,10 +1566,10 @@ export default function Quote() {
                         type="text"
                         value={shippingDetails.postalCode}
                         onChange={(e) =>
-                          setShippingDetails((prev) => ({
-                            ...prev,
-                            postalCode: e.target.value,
-                          }))
+                          handleManualShippingChange(
+                            "postalCode",
+                            e.target.value,
+                          )
                         }
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                         placeholder={t("quote.placeholderPostalCode")}

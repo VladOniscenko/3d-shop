@@ -10,7 +10,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "./Logo";
+import Logo from "./logos/Logo";
 import api from "../services/api"; // Your axios instance
 import { useI18n } from "../i18n/I18nContext";
 

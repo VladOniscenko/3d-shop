@@ -161,6 +161,12 @@ export default function SeoManager() {
         keywords: "orders",
         index: false,
       },
+      "/profile": {
+        title: `${t("nav.myProfile")} | PrintCraft`,
+        description: `${t("nav.myProfile")} PrintCraft`,
+        keywords: "orders",
+        index: false,
+      },
       "/cart": {
         title: "Cart | PrintCraft",
         description: "Cart PrintCraft",

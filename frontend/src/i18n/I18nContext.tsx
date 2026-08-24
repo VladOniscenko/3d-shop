@@ -24,6 +24,23 @@ function getInitialLanguage(): SupportedLanguage {
   return browser.startsWith("nl") ? "nl" : "en";
 }
 
+function getNestedTranslation(
+  obj: Record<string, any>,
+  path: string,
+): string | undefined {
+  const keys = path.split(".");
+  let current = obj;
+
+  for (const key of keys) {
+    if (current === undefined || current === null) {
+      return undefined;
+    }
+    current = current[key];
+  }
+
+  return typeof current === "string" ? current : undefined;
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] =
     useState<SupportedLanguage>(getInitialLanguage);
@@ -34,7 +51,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string): string => {
-    return translations[language][key] || translations.en[key] || key;
+    // 1. Try to find the key in the current language
+    const primaryValue = getNestedTranslation(translations[language], key);
+    if (primaryValue) return primaryValue;
+
+    // 2. Fallback to English if it's missing in the current language
+    const fallbackValue = getNestedTranslation(translations.en, key);
+    if (fallbackValue) return fallbackValue;
+
+    // 3. SAFE HIGHLIGHT: Return a string that stands out
+    return `🔴 [${key}]`;
   };
 
   const value = useMemo(

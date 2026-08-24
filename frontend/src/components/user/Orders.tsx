@@ -10,18 +10,18 @@ import {
   Box,
   MapPin,
 } from "lucide-react";
-import Navbar from "./Navbar";
-import type { Order } from "../types";
-import api from "../services/api";
+import Navbar from "../Navbar";
+import type { Order } from "../../types";
+import api from "../../services/api";
 import { Link } from "react-router-dom";
-import { useI18n } from "../i18n/I18nContext";
-import Footer from "./Footer";
+import { useI18n } from "../../i18n/I18nContext";
+import Footer from "../Footer";
 import {
   formatOrderStatusLabel,
   getOrderStatusBadgeClass,
   getOrderStatusTranslationKey,
   normalizeOrderStatus,
-} from "../utils/orderStatus";
+} from "../../utils/orderStatus";
 
 export default function Orders() {
   const { t } = useI18n();

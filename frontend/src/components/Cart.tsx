@@ -101,7 +101,7 @@ export default function CheckoutPage() {
   };
 
   const validateForm = (): boolean => {
-    const errors = validateShippingInfo(address);
+    const errors = validateShippingInfo(address, t);
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
