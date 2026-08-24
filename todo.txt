@@ -3,3 +3,4 @@
 - fully remove stripe from the project
 - allow user to notify us if he made an manual payment (like button that sends us a message that he made a payment so we can check it)
 - decrease statuses in user order detail by removing all steps after sent if sent order is completed to prevent extra manual job for admins to check statuses and adjust them.
+- mogelijk maken om een factuur te maken voor de order als admin
