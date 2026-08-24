@@ -7,17 +7,17 @@ import {
   Loader2,
   Mail,
   Phone,
-  Shield,
-  CheckCircle,
   Plus,
   Edit2,
   Trash2,
   Star,
+  Shield,
 } from "lucide-react";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
 import api from "../../services/api";
 import { useI18n } from "../../i18n/I18nContext";
+import { useNotify } from "../../context/NotifyContext";
 
 export interface UserData {
   id: string;
@@ -50,14 +50,11 @@ const emptyAddress: AddressData = {
 
 export default function Profile() {
   const { t } = useI18n();
+  const { notifySuccess, notifyError } = useNotify(); // Using your global notification context
+
   const [loading, setLoading] = useState(true);
   const [savingAddress, setSavingAddress] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-
-  const [statusMessage, setStatusMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const [userData, setUserData] = useState<UserData>({
     id: "",
@@ -113,13 +110,11 @@ export default function Profile() {
   const openNewAddressForm = () => {
     setCurrentAddress({ ...emptyAddress, fullName: userData.name });
     setIsAddressFormOpen(true);
-    setStatusMessage(null);
   };
 
   const openEditAddressForm = (address: AddressData) => {
     setCurrentAddress(address);
     setIsAddressFormOpen(true);
-    setStatusMessage(null);
   };
 
   const closeAddressForm = () => {
@@ -130,7 +125,7 @@ export default function Profile() {
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingAddress(true);
-    setStatusMessage(null);
+
     try {
       const payload = {
         fullName: currentAddress.fullName || userData.name,
@@ -150,10 +145,11 @@ export default function Profile() {
       }
 
       await fetchProfileData(); // Refresh list
-      setStatusMessage({ type: "success", text: t("profile.updateSuccess") });
+      notifySuccess(t("profile.updateSuccess")); // Show success toast
       closeAddressForm();
-    } catch (error) {
-      setStatusMessage({ type: "error", text: t("profile.updateError") });
+    } catch (error: any) {
+      const backendMessage = error?.response?.data?.message;
+      notifyError(backendMessage || t("profile.updateError")); // Show backend error or fallback toast
       console.error(error);
     } finally {
       setSavingAddress(false);
@@ -168,19 +164,19 @@ export default function Profile() {
       )
     )
       return;
+
     try {
       await api.delete(`/me/addresses/${id}`);
       await fetchProfileData();
-      setStatusMessage({
-        type: "success",
-        text: t("profile.addressDeleted") || "Address deleted.",
-      });
-    } catch (error) {
+      notifySuccess(t("profile.addressDeleted") || "Address deleted.");
+    } catch (error: any) {
+      const backendMessage = error?.response?.data?.message;
+      notifyError(
+        backendMessage ||
+          t("profile.deleteError") ||
+          "Failed to delete address.",
+      );
       console.error(error);
-      setStatusMessage({
-        type: "error",
-        text: t("profile.deleteError") || "Failed to delete address.",
-      });
     }
   };
 
@@ -188,7 +184,10 @@ export default function Profile() {
     try {
       await api.put(`/me/addresses/${id}/default`);
       await fetchProfileData();
-    } catch (error) {
+      notifySuccess(t("profile.updateSuccess") || "Default address updated.");
+    } catch (error: any) {
+      const backendMessage = error?.response?.data?.message;
+      notifyError(backendMessage || "Failed to update default address.");
       console.error(error);
     }
   };
@@ -196,25 +195,28 @@ export default function Profile() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setStatusMessage({ type: "error", text: t("profile.passwordMismatch") });
+      notifyError(t("profile.passwordMismatch"));
       return;
     }
 
     setSavingPassword(true);
-    setStatusMessage(null);
+
     try {
       await api.put("/auth/change-password", {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      setStatusMessage({ type: "success", text: t("profile.passwordSuccess") });
+
+      notifySuccess(t("profile.passwordSuccess"));
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-    } catch (error) {
-      setStatusMessage({ type: "error", text: t("profile.passwordError") });
+    } catch (error: any) {
+      // This will grab the "Incorrect current password" from your C# backend!
+      const backendMessage = error?.response?.data?.message;
+      notifyError(backendMessage || t("profile.passwordError"));
       console.error(error);
     } finally {
       setSavingPassword(false);
@@ -240,24 +242,6 @@ export default function Profile() {
             <User size={32} className="text-emerald-600" />
           </div>
         </div>
-
-        {/* Global Status Message */}
-        {statusMessage && (
-          <div
-            className={`mb-8 p-4 rounded-xl flex items-center gap-3 ${
-              statusMessage.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                : "bg-red-50 text-red-800 border border-red-200"
-            }`}
-          >
-            {statusMessage.type === "success" ? (
-              <CheckCircle size={20} className="text-emerald-600" />
-            ) : (
-              <Shield size={20} className="text-red-600" />
-            )}
-            <span className="font-medium text-sm">{statusMessage.text}</span>
-          </div>
-        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-gray-400">

@@ -891,13 +891,11 @@ export default function Quote() {
             kind: file.kind || "other",
           })),
         })),
-        shippingDetails: {
-          fullName: shippingDetails.fullName,
-          phoneNumber: shippingDetails.phoneNumber,
-          addressLine1: shippingDetails.addressLine1,
-          city: shippingDetails.city,
-          postalCode: shippingDetails.postalCode,
-        },
+        shippingFullName: shippingDetails.fullName,
+        shippingPhoneNumber: shippingDetails.phoneNumber,
+        shippingAddressLine1: shippingDetails.addressLine1,
+        shippingCity: shippingDetails.city,
+        shippingPostalCode: shippingDetails.postalCode,
       };
 
       if (!isLoggedIn) {
